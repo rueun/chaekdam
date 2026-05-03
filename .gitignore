@@ -1,8 +1,31 @@
-# Nestjs specific
-/dist
+# Dependencies
 /node_modules
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+
+# TypeScript 인크리멘털 빌드 캐시
+tsconfig.tsbuildinfo
+
+# Build / temp
+/dist
 /build
 /tmp
+/.temp
+/.tmp
+
+# Vercel
+.vercel
+
+# Playwright
+/playwright-report/
+/test-results/
+/playwright/.cache/
+
+# Vitest
+/coverage/
 
 # Logs
 logs
@@ -13,12 +36,21 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-# dotenv environment variable files
+# Environment variables (.env.local.example 만 추적)
 .env
+.env.local
 .env.development
+.env.development.local
 .env.test
+.env.test.local
 .env.production
+.env.production.local
 
-# temp directory
-.temp
-.tmp
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
