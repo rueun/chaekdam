@@ -16,15 +16,15 @@ import { describe, it, expect } from 'vitest';
 import { ReadingNote } from '@/lib/domain/reading-note/reading-note';
 
 describe('ReadingNote', () => {
-    it('텍스트 구절로부터 노트를 생성한다', () => {
-        const note = ReadingNote.fromText('book-1', '인상 깊은 한 구절');
-        expect(note.source).toBe('TEXT');
-        expect(note.photoUrl).toBeNull();
-    });
+  it('텍스트 구절로부터 노트를 생성한다', () => {
+    const note = ReadingNote.fromText('book-1', '인상 깊은 한 구절');
+    expect(note.source).toBe('TEXT');
+    expect(note.photoUrl).toBeNull();
+  });
 
-    it('빈 본문으로는 생성할 수 없다', () => {
-        expect(() => ReadingNote.fromText('book-1', '')).toThrow();
-    });
+  it('빈 본문으로는 생성할 수 없다', () => {
+    expect(() => ReadingNote.fromText('book-1', '')).toThrow();
+  });
 });
 ```
 
@@ -34,16 +34,20 @@ describe('ReadingNote', () => {
 - Port를 Fake / Stub으로 주입 (Mock 대신 진짜 구현 우선)
 
 ```typescript
-class InMemoryDiscussionRepository implements DiscussionRepository { /* ... */ }
-class FakeAiDiscussionPartner implements AiDiscussionPartner { /* ... */ }
+class InMemoryDiscussionRepository implements DiscussionRepository {
+  /* ... */
+}
+class FakeAiDiscussionPartner implements AiDiscussionPartner {
+  /* ... */
+}
 
 it('토론을 시작하면 첫 AI 응답이 포함된다', async () => {
-    const useCase = new StartDiscussionUseCase(
-        new InMemoryDiscussionRepository(),
-        new FakeAiDiscussionPartner(),
-    );
-    const result = await useCase.execute({ bookId: 'b1', readingNoteIds: ['n1'] });
-    expect(result.messages).toHaveLength(1);
+  const useCase = new StartDiscussionUseCase(
+    new InMemoryDiscussionRepository(),
+    new FakeAiDiscussionPartner(),
+  );
+  const result = await useCase.execute({ bookId: 'b1', readingNoteIds: ['n1'] });
+  expect(result.messages).toHaveLength(1);
 });
 ```
 
@@ -57,18 +61,15 @@ it('토론을 시작하면 첫 AI 응답이 포함된다', async () => {
 import { createClient } from '@supabase/supabase-js';
 
 describe('SupabaseReadingNoteRepository', () => {
-    const supabase = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_ANON_KEY!,
-    );
+  const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!);
 
-    it('노트를 저장하고 조회할 수 있다', async () => {
-        const note = ReadingNote.fromText('b1', '구절');
-        const repo = new SupabaseReadingNoteRepository(supabase);
-        await repo.save(note);
-        const found = await repo.findById(note.id);
-        expect(found?.content).toBe('구절');
-    });
+  it('노트를 저장하고 조회할 수 있다', async () => {
+    const note = ReadingNote.fromText('b1', '구절');
+    const repo = new SupabaseReadingNoteRepository(supabase);
+    await repo.save(note);
+    const found = await repo.findById(note.id);
+    expect(found?.content).toBe('구절');
+  });
 });
 ```
 
@@ -78,6 +79,7 @@ describe('SupabaseReadingNoteRepository', () => {
 - 너무 많이 만들면 유지보수 부담
 
 핵심 시나리오 후보:
+
 - 회원가입 → 로그인 → 책 검색 → 선택 → 노트 추가 → 토론 시작 → 메시지 1턴
 - 사진 업로드 → 자동 구절 추출 → 토론 시작
 - 본인 토론 기록 조회
@@ -86,15 +88,15 @@ describe('SupabaseReadingNoteRepository', () => {
 import { test, expect } from '@playwright/test';
 
 test('사용자가 사진으로 노트를 만들고 토론을 시작한다', async ({ page }) => {
-    await page.goto('/login');
-    // ... 로그인
-    await page.goto('/books/search');
-    await page.fill('[name="query"]', '데미안');
-    await page.click('button:has-text("검색")');
-    await page.click('text=데미안');
-    await page.setInputFiles('input[type="file"]', 'tests/fixtures/page.jpg');
-    await page.click('text=토론 시작');
-    await expect(page).toHaveURL(/\/discussions\/\w+/);
+  await page.goto('/login');
+  // ... 로그인
+  await page.goto('/books/search');
+  await page.fill('[name="query"]', '데미안');
+  await page.click('button:has-text("검색")');
+  await page.click('text=데미안');
+  await page.setInputFiles('input[type="file"]', 'tests/fixtures/page.jpg');
+  await page.click('text=토론 시작');
+  await expect(page).toHaveURL(/\/discussions\/\w+/);
 });
 ```
 

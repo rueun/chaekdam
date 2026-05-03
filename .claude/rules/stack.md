@@ -69,14 +69,14 @@ import { createStartDiscussionUseCase } from '@/lib/infrastructure/di-container'
 import { revalidatePath } from 'next/cache';
 
 export async function startDiscussion(formData: FormData) {
-    const useCase = await createStartDiscussionUseCase();
-    const result = await useCase.execute({
-        bookId: formData.get('bookId') as string,
-        readingNoteIds: formData.getAll('noteIds') as string[],
-    });
+  const useCase = await createStartDiscussionUseCase();
+  const result = await useCase.execute({
+    bookId: formData.get('bookId') as string,
+    readingNoteIds: formData.getAll('noteIds') as string[],
+  });
 
-    revalidatePath('/discussions');
-    return result;
+  revalidatePath('/discussions');
+  return result;
 }
 ```
 
@@ -153,22 +153,22 @@ URL 경로를 하드코딩하지 않고 `lib/router/routes.ts`에 함수형 상�
 ```typescript
 // lib/router/routes.ts
 export const ROUTES = {
-    HOME: () => '/' as const,
-    AUTH: {
-        LOGIN: () => '/login' as const,
-        SIGNUP: () => '/signup' as const,
-    },
-    BOOKS: {
-        LIST: () => '/books' as const,
-        DETAIL: (bookId: string) => `/books/${bookId}` as const,
-    },
-    NOTES: {
-        LIST: () => '/notes' as const,
-    },
-    DISCUSSIONS: {
-        LIST: () => '/discussions' as const,
-        DETAIL: (id: string) => `/discussions/${id}` as const,
-    },
+  HOME: () => '/' as const,
+  AUTH: {
+    LOGIN: () => '/login' as const,
+    SIGNUP: () => '/signup' as const,
+  },
+  BOOKS: {
+    LIST: () => '/books' as const,
+    DETAIL: (bookId: string) => `/books/${bookId}` as const,
+  },
+  NOTES: {
+    LIST: () => '/notes' as const,
+  },
+  DISCUSSIONS: {
+    LIST: () => '/discussions' as const,
+    DETAIL: (id: string) => `/discussions/${id}` as const,
+  },
 } as const;
 ```
 
@@ -182,26 +182,26 @@ zod 스키마 1개로 클라이언트 검증 + Server Action 입력 검증을 �
 // lib/domain/reading-note/schemas.ts (도메인 계층 — 외부 의존 0)
 import { z } from 'zod';
 export const createNoteSchema = z.object({
-    bookId: z.string().uuid(),
-    content: z.string().min(1).max(5000),
+  bookId: z.string().uuid(),
+  content: z.string().min(1).max(5000),
 });
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
 
 // app/(dashboard)/notes/actions.ts (Server Action)
-'use server';
+('use server');
 export async function createNote(formData: FormData) {
-    const parsed = createNoteSchema.safeParse({
-        bookId: formData.get('bookId'),
-        content: formData.get('content'),
-    });
-    if (!parsed.success) return { error: parsed.error.flatten() };
+  const parsed = createNoteSchema.safeParse({
+    bookId: formData.get('bookId'),
+    content: formData.get('content'),
+  });
+  if (!parsed.success) return { error: parsed.error.flatten() };
 
-    const useCase = await createAddReadingNoteUseCase();
-    return await useCase.execute(parsed.data);
+  const useCase = await createAddReadingNoteUseCase();
+  return await useCase.execute(parsed.data);
 }
 
 // components/feature/note-capture/note-form.tsx (Client)
-'use client';
+('use client');
 const form = useForm<CreateNoteInput>({ resolver: zodResolver(createNoteSchema) });
 ```
 

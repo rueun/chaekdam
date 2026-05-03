@@ -9,6 +9,7 @@
 **책담**은 Next.js + Supabase + Claude API 기반의 AI 독서 토론 웹 / 앱입니다. 사용자가 책의 인상 깊은 페이지를 사진 / 텍스트로 캡처하면, Claude가 그 내용을 기반으로 1:1 깊이 있는 토론을 진행합니다.
 
 핵심 설계 목표:
+
 - **빠른 MVP** — Vercel + Supabase 무료 티어로 검증
 - **언제든 별도 백엔드(Nest 등)로 이전 가능한 구조** — 도메인 / 유스케이스가 프레임워크에 의존하지 않음
 - **AI 통합 친화적** — Claude API의 vision · 스트리밍 · 프롬프트 캐싱을 자연스럽게 활용
@@ -22,11 +23,13 @@
 **컨텍스트**: 1인 / MVP 단계. 비즈니스 로직 복잡도는 중간. 모바일 앱은 추후 확장.
 
 **결정**:
+
 - Next.js (App Router)에 Server Actions로 백엔드 코드를 둠
 - Supabase가 Auth · DB · Storage · 권한(RLS) 담당
 - Claude API는 Server Action 내부에서 호출 (API 키 서버 측 보호)
 
 **트레이드오프**:
+
 - ✅ 풀스택 통합·빠른 MVP·인프라 관리 거의 없음
 - ⚠️ 복잡한 도메인 로직이 늘면 Server Action에 뭉치기 쉬움 → ADR-002로 보완
 - ⚠️ Supabase RLS는 백엔드 분리 시 이전 비용 있음 → ADR-004로 대비
@@ -36,6 +39,7 @@
 **컨텍스트**: ADR-001의 한계 보완 + 추후 백엔드 분리 가능성.
 
 **결정**:
+
 - 4계층 분리: Domain / Application / Infrastructure / Presentation
 - 의존성 방향: 내부(Domain)는 외부(Service / Infra / Presentation)를 모름
 - 개발 순서: 도메인 → Port → Application → Infrastructure → Presentation
@@ -45,6 +49,7 @@
 **컨텍스트**: 도메인 코드가 프레임워크 / BaaS에 의존하면 백엔드 분리 시 코드 손실.
 
 **결정**: `lib/domain/`에서 다음 import 금지
+
 - `next/*`, `next/server`
 - `@supabase/*`
 - `@anthropic-ai/sdk`
@@ -58,6 +63,7 @@
 **컨텍스트**: Supabase RLS는 SQL 기반이라 별도 백엔드로 옮기면 그대로 못 씀.
 
 **결정**: 권한 검증을 **두 곳**에서 표현
+
 1. Supabase RLS 정책 (현재 1차 방어)
 2. 도메인 Specification 객체 — `lib/domain/**/specs/`
 
@@ -66,9 +72,9 @@
 ```typescript
 // lib/domain/discussion/specs/can-read-discussion.spec.ts
 export class CanReadDiscussionSpec {
-    isSatisfiedBy(user: User, discussion: Discussion): boolean {
-        return discussion.ownerId === user.id;
-    }
+  isSatisfiedBy(user: User, discussion: Discussion): boolean {
+    return discussion.ownerId === user.id;
+  }
 }
 ```
 
@@ -107,6 +113,7 @@ Domain (lib/domain/)            ◄────── Infrastructure (lib/infras
 ```
 
 핵심 규칙:
+
 - **내부 계층은 외부 계층을 모른다**
 - **DIP**: Infrastructure가 Domain의 Port를 구현
 - **프레임워크 독립**: Domain은 표준 라이브러리만 사용
@@ -204,16 +211,16 @@ chaekdam/
 
 ### 핵심 엔티티
 
-| 이름 | 종류 | 책임 |
-|------|------|------|
-| `User` | Entity | 사용자 식별·기본 프로필 |
-| `Book` | Entity | 책 메타데이터 (제목·저자·표지 등) |
-| `Author` | VO | 작가 정보 (이름·소개) |
-| `ReadingNote` | Entity | 인상 깊은 구절 (사진 또는 텍스트) |
-| `NoteSource` | VO | `PHOTO` / `TEXT` |
-| `Discussion` | Aggregate Root | 책 + 노트 묶음에 대한 토론 세션 |
-| `Message` | Entity | 토론 내 발화 (User / AI) |
-| `Role` | VO | `USER` / `AI` |
+| 이름          | 종류           | 책임                              |
+| ------------- | -------------- | --------------------------------- |
+| `User`        | Entity         | 사용자 식별·기본 프로필           |
+| `Book`        | Entity         | 책 메타데이터 (제목·저자·표지 등) |
+| `Author`      | VO             | 작가 정보 (이름·소개)             |
+| `ReadingNote` | Entity         | 인상 깊은 구절 (사진 또는 텍스트) |
+| `NoteSource`  | VO             | `PHOTO` / `TEXT`                  |
+| `Discussion`  | Aggregate Root | 책 + 노트 묶음에 대한 토론 세션   |
+| `Message`     | Entity         | 토론 내 발화 (User / AI)          |
+| `Role`        | VO             | `USER` / `AI`                     |
 
 ### Aggregate 경계
 
@@ -223,15 +230,15 @@ chaekdam/
 
 ### Port (도메인이 정의)
 
-| Port | 역할 | 주요 Adapter |
-|------|------|--------------|
-| `BookSearcher` | 외부 API에서 책 검색 | `NaverBookSearcher` |
-| `BookRepository` | 책 메타데이터 캐시 저장·조회 | `SupabaseBookRepository` |
-| `ReadingNoteRepository` | 노트 저장·조회 | `SupabaseReadingNoteRepository` |
-| `DiscussionRepository` | 토론·메시지 저장·조회 | `SupabaseDiscussionRepository` |
-| `AiDiscussionPartner` | AI 응답 생성 | `ClaudeAiDiscussionPartner` |
-| `PhotoStorage` | 사진 업로드·URL 발급 | `SupabasePhotoStorage` |
-| `AuthSession` | 현재 사용자 ID 조회 | `SupabaseAuthSession` |
+| Port                    | 역할                         | 주요 Adapter                    |
+| ----------------------- | ---------------------------- | ------------------------------- |
+| `BookSearcher`          | 외부 API에서 책 검색         | `NaverBookSearcher`             |
+| `BookRepository`        | 책 메타데이터 캐시 저장·조회 | `SupabaseBookRepository`        |
+| `ReadingNoteRepository` | 노트 저장·조회               | `SupabaseReadingNoteRepository` |
+| `DiscussionRepository`  | 토론·메시지 저장·조회        | `SupabaseDiscussionRepository`  |
+| `AiDiscussionPartner`   | AI 응답 생성                 | `ClaudeAiDiscussionPartner`     |
+| `PhotoStorage`          | 사진 업로드·URL 발급         | `SupabasePhotoStorage`          |
+| `AuthSession`           | 현재 사용자 ID 조회          | `SupabaseAuthSession`           |
 
 ### 도메인 이벤트 (후보)
 
@@ -246,17 +253,17 @@ chaekdam/
 A = 현재 구조 (Next.js + Supabase)
 B = 별도 백엔드 (예: NestJS) + Next.js 프론트
 
-| 영역 | A (현재) | B (전환 후) | 전환 비용 |
-|------|----------|-------------|----------|
-| `lib/domain/` | 그대로 | Nest `src/domain/` 으로 **복사** | **0** |
-| `lib/application/` | 그대로 | Nest `Service`로 **복사** | **0** |
-| `lib/infrastructure/supabase/` | Supabase Adapter | TypeORM·Prisma Adapter로 **교체** | 중 |
-| `lib/infrastructure/claude/` | 그대로 | 위치만 이동 | 소 |
-| 진입점 | Server Actions | Nest `Controller` | 소 |
-| 인증 | Supabase Auth | JWT / OAuth 직접 구현 | 중 |
-| DB 스키마 | Supabase migrations | TypeORM 매핑 또는 그대로 | 소 |
-| **권한 검증 (RLS)** | DB 정책 | 백엔드 도메인 Spec으로 이전 | **대** (ADR-004로 완화) |
-| 모바일 앱 | PWA 또는 Expo | 동일 백엔드 호출 | — |
+| 영역                           | A (현재)            | B (전환 후)                       | 전환 비용               |
+| ------------------------------ | ------------------- | --------------------------------- | ----------------------- |
+| `lib/domain/`                  | 그대로              | Nest `src/domain/` 으로 **복사**  | **0**                   |
+| `lib/application/`             | 그대로              | Nest `Service`로 **복사**         | **0**                   |
+| `lib/infrastructure/supabase/` | Supabase Adapter    | TypeORM·Prisma Adapter로 **교체** | 중                      |
+| `lib/infrastructure/claude/`   | 그대로              | 위치만 이동                       | 소                      |
+| 진입점                         | Server Actions      | Nest `Controller`                 | 소                      |
+| 인증                           | Supabase Auth       | JWT / OAuth 직접 구현             | 중                      |
+| DB 스키마                      | Supabase migrations | TypeORM 매핑 또는 그대로          | 소                      |
+| **권한 검증 (RLS)**            | DB 정책             | 백엔드 도메인 Spec으로 이전       | **대** (ADR-004로 완화) |
+| 모바일 앱                      | PWA 또는 Expo       | 동일 백엔드 호출                  | —                       |
 
 ---
 
@@ -264,12 +271,12 @@ B = 별도 백엔드 (예: NestJS) + Next.js 프론트
 
 다음 4가지가 결정되면 도메인 모델·UX·프롬프트가 확정됩니다.
 
-| 항목 | 옵션 | 영향 |
-|------|------|------|
-| **토론 모드** | 구절 한정 / 책 전체 맥락 / 하이브리드 | 시스템 프롬프트, 비용 구조 |
-| **사용자 수** | 1:1 / 북클럽 (다중) | 도메인 모델 (Participant 엔티티 필요 여부), 실시간 인프라 |
-| **AI 페르소나** | 고정 1개 / 선택형 | Persona 엔티티·UX |
-| **핵심 가치** | 정서 / 학습 / 저널링 | 모든 UX·프롬프트의 톤 |
+| 항목            | 옵션                                  | 영향                                                      |
+| --------------- | ------------------------------------- | --------------------------------------------------------- |
+| **토론 모드**   | 구절 한정 / 책 전체 맥락 / 하이브리드 | 시스템 프롬프트, 비용 구조                                |
+| **사용자 수**   | 1:1 / 북클럽 (다중)                   | 도메인 모델 (Participant 엔티티 필요 여부), 실시간 인프라 |
+| **AI 페르소나** | 고정 1개 / 선택형                     | Persona 엔티티·UX                                         |
+| **핵심 가치**   | 정서 / 학습 / 저널링                  | 모든 UX·프롬프트의 톤                                     |
 
 → 결정되면 **이 문서 §5 도메인 모델 섹션**과 §2 ADR을 업데이트.
 

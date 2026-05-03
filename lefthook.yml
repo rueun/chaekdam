@@ -3,14 +3,13 @@ pre-commit:
   jobs:
     - name: oxlint
       run: pnpm exec oxlint --fix {staged_files}
-      glob: "*.{ts,tsx,js,jsx}"
+      glob: '*.{ts,tsx,js,jsx}'
       stage_fixed: true
     - name: eslint
       run: pnpm exec eslint --fix {staged_files}
-      glob: "*.{ts,tsx,js,jsx}"
+      glob: '*.{ts,tsx,js,jsx}'
       stage_fixed: true
-    # TODO: oxfmt 0.46 native binding 누락 이슈 해결 후 재활성화
-    # - name: oxfmt
-    #   run: pnpm exec oxfmt {staged_files}
-    #   glob: "*.{ts,tsx,js,jsx,css,json,md,yml,yaml}"
-    #   stage_fixed: true
+    - name: prettier
+      run: pnpm exec prettier --write {staged_files}
+      glob: '*.{ts,tsx,js,jsx,css,json,md,yml,yaml}'
+      stage_fixed: true

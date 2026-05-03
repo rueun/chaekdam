@@ -15,15 +15,15 @@
 
 ## 기술 스택
 
-| 영역 | 기술 |
-|------|------|
-| 프레임워크 | Next.js 15+ (App Router) |
-| 언어 | TypeScript (strict mode) |
-| 스타일링 | Tailwind CSS |
-| 인증·DB·스토리지 | Supabase (Auth + Postgres + Storage) |
-| AI | Claude API (Anthropic SDK, multimodal vision) |
-| 배포 | Vercel |
-| 테스트 | Vitest + Playwright |
+| 영역             | 기술                                          |
+| ---------------- | --------------------------------------------- |
+| 프레임워크       | Next.js 15+ (App Router)                      |
+| 언어             | TypeScript (strict mode)                      |
+| 스타일링         | Tailwind CSS                                  |
+| 인증·DB·스토리지 | Supabase (Auth + Postgres + Storage)          |
+| AI               | Claude API (Anthropic SDK, multimodal vision) |
+| 배포             | Vercel                                        |
+| 테스트           | Vitest + Playwright                           |
 
 ## 아키텍처
 

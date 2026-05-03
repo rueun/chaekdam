@@ -4,15 +4,30 @@ import oxlintPlugin from 'eslint-plugin-oxlint';
 import queryPlugin from '@tanstack/eslint-plugin-query';
 import globals from 'globals';
 
-export default [
+export default tseslint.config(
   {
-    ignores: ['.next/**', 'node_modules/**', 'dist/**', 'coverage/**', 'playwright-report/**', 'test-results/**'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'dist/**',
+      'coverage/**',
+      'playwright-report/**',
+      'test-results/**',
+      'next-env.d.ts',
+    ],
   },
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  // TypeScript typed linting (recommended-type-checked + stylistic-type-checked)
+  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
   {
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       globals: { ...globals.browser, ...globals.node },
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     plugins: {
       '@tanstack/query': queryPlugin,
@@ -22,13 +37,18 @@ export default [
       '@tanstack/query/no-rest-destructuring': 'error',
       '@tanstack/query/stable-query-client': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/consistent-type-exports': 'error',
       '@typescript-eslint/naming-convention': [
         'error',
         { selector: 'variable', format: ['camelCase', 'UPPER_CASE', 'PascalCase'] },
         { selector: 'typeLike', format: ['PascalCase'] },
       ],
-      // TODO: typed linting 셋업 후 consistent-type-exports / no-floating-promises 등 type-aware 룰 추가
     },
   },
+  // JS 파일은 type-checked 룰 비활성화
+  {
+    files: ['**/*.{js,mjs,cjs}'],
+    ...tseslint.configs.disableTypeChecked,
+  },
   oxlintPlugin.configs['flat/recommended'],
-];
+);
