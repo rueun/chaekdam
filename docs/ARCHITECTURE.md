@@ -203,48 +203,57 @@ chaekdam/
 
 ---
 
-## 5. 도메인 모델 (잠정)
+## 5. 도메인 모델
 
-> ⚠️ 기획 4가지(토론 모드 / 사용자 수 / AI 페르소나 / 핵심 가치) 미확정. 아래는 **기본값 가정 모델**이며, 결정 후 갱신.
+> 기획 4가지 결정 완료 (자세한 결정 사항·근거: [`ADR.md`](./ADR.md) ADR-007 ~ ADR-010 참조).
 >
-> 가정: 구절 한정 토론 / 1:1 / 고정 페르소나 / 정서·자기 표현 가치
+> 토론 모드 = **하이브리드** (책 메타 + 구절) / 사용자 수 = **1:1 (다중 확장 가능 구조)** / AI 페르소나 = **선택형 + 사망 작가** / 핵심 가치 = **정서·자기 표현(메인) + 회고·저널링(보조)**
 
 ### 핵심 엔티티
 
-| 이름          | 종류           | 책임                              |
-| ------------- | -------------- | --------------------------------- |
-| `User`        | Entity         | 사용자 식별·기본 프로필           |
-| `Book`        | Entity         | 책 메타데이터 (제목·저자·표지 등) |
-| `Author`      | VO             | 작가 정보 (이름·소개)             |
-| `ReadingNote` | Entity         | 인상 깊은 구절 (사진 또는 텍스트) |
-| `NoteSource`  | VO             | `PHOTO` / `TEXT`                  |
-| `Discussion`  | Aggregate Root | 책 + 노트 묶음에 대한 토론 세션   |
-| `Message`     | Entity         | 토론 내 발화 (User / AI)          |
-| `Role`        | VO             | `USER` / `AI`                     |
+| 이름          | 종류           | 책임                                                                             |
+| ------------- | -------------- | -------------------------------------------------------------------------------- |
+| `User`        | Entity         | 사용자 식별·기본 프로필                                                          |
+| `Participant` | Entity         | 토론 참가자 (User 또는 AI Persona 참조). **다중 사용자 확장 대비** (ADR-008)     |
+| `Book`        | Entity         | 책 메타데이터 (제목·저자·장르·간단 요약·저자 스타일) — 하이브리드 모드용         |
+| `Author`      | Entity         | 작가 정보 (이름·소개·생몰년·저작권 만료 여부)                                    |
+| `Persona`     | Entity         | AI 페르소나 (일반: 학구파/캐주얼/비평가, 작가: 사망 작가) — 시스템 프롬프트 보유 |
+| `ReadingNote` | Entity         | 인상 깊은 구절 (사진 또는 텍스트)                                                |
+| `NoteSource`  | VO             | `PHOTO` / `TEXT`                                                                 |
+| `Discussion`  | Aggregate Root | 책 + 노트 + 페르소나 + 참가자 묶음 토론 세션                                     |
+| `Message`     | Entity         | 토론 내 발화                                                                     |
+| `Role`        | VO             | `USER` / `AI`                                                                    |
+| `Reflection`  | Entity         | 토론 종료 후 본인 회고 노트 (저널링 — ADR-010)                                   |
 
 ### Aggregate 경계
 
-- **`Discussion`**: 트랜잭션 단위. 메시지 추가·완료·재시작이 한 Aggregate 내에서.
-- **`ReadingNote`**: 독립 Aggregate. Discussion은 Note ID 참조로만 연결.
+- **`Discussion`**: 트랜잭션 단위. 메시지 추가·완료·재시작·참가자 추가가 한 Aggregate 내. Persona / Book / ReadingNote 는 ID 참조.
+- **`Reflection`**: 독립 Aggregate. Discussion 종료 후 사용자가 별도로 작성. Discussion ID 참조로만 연결.
+- **`ReadingNote`**: 독립 Aggregate. Discussion 은 Note ID 참조로만 연결.
 - **`Book`**: 외부 데이터 캐시. 단순.
+- **`Persona`**: 시스템에서 큐레이션 / 제공. 사용자가 만들지 않음.
 
 ### Port (도메인이 정의)
 
-| Port                    | 역할                         | 주요 Adapter                    |
-| ----------------------- | ---------------------------- | ------------------------------- |
-| `BookSearcher`          | 외부 API에서 책 검색         | `NaverBookSearcher`             |
-| `BookRepository`        | 책 메타데이터 캐시 저장·조회 | `SupabaseBookRepository`        |
-| `ReadingNoteRepository` | 노트 저장·조회               | `SupabaseReadingNoteRepository` |
-| `DiscussionRepository`  | 토론·메시지 저장·조회        | `SupabaseDiscussionRepository`  |
-| `AiDiscussionPartner`   | AI 응답 생성                 | `ClaudeAiDiscussionPartner`     |
-| `PhotoStorage`          | 사진 업로드·URL 발급         | `SupabasePhotoStorage`          |
-| `AuthSession`           | 현재 사용자 ID 조회          | `SupabaseAuthSession`           |
+| Port                    | 역할                                                 | 주요 Adapter                    |
+| ----------------------- | ---------------------------------------------------- | ------------------------------- |
+| `BookSearcher`          | 외부 API 에서 책 검색                                | `NaverBookSearcher`             |
+| `BookRepository`        | 책 메타데이터 캐시 저장·조회                         | `SupabaseBookRepository`        |
+| `ReadingNoteRepository` | 노트 저장·조회                                       | `SupabaseReadingNoteRepository` |
+| `DiscussionRepository`  | 토론·메시지·참가자 저장·조회                         | `SupabaseDiscussionRepository`  |
+| `ReflectionRepository`  | 회고 노트 저장·조회                                  | `SupabaseReflectionRepository`  |
+| `PersonaRepository`     | 페르소나 목록·시스템 프롬프트 조회 (큐레이션 데이터) | `SupabasePersonaRepository`     |
+| `AiDiscussionPartner`   | AI 응답 생성 (Persona 시스템 프롬프트 포함)          | `ClaudeAiDiscussionPartner`     |
+| `PhotoStorage`          | 사진 업로드·URL 발급                                 | `SupabasePhotoStorage`          |
+| `AuthSession`           | 현재 사용자 ID 조회                                  | `SupabaseAuthSession`           |
 
 ### 도메인 이벤트 (후보)
 
-- `DiscussionStarted` — 토론 시작 시
+- `DiscussionStarted` — 토론 시작 시 (Persona·Book·Note 정보 포함)
 - `MessageAdded` — 메시지 추가 시
-- `ReadingNoteCaptured` — 노트 추가 시 (통계·추천에 활용 가능)
+- `DiscussionCompleted` — 토론 종료 시 (회고 작성 유도 트리거)
+- `ReflectionWritten` — 회고 작성 완료 시 (재방문 통계·추천)
+- `ReadingNoteCaptured` — 노트 추가 시
 
 ---
 
@@ -267,18 +276,16 @@ B = 별도 백엔드 (예: NestJS) + Next.js 프론트
 
 ---
 
-## 7. 미결정 사항 (기획 확정 시 갱신)
+## 7. 기획 결정 사항 (확정)
 
-다음 4가지가 결정되면 도메인 모델·UX·프롬프트가 확정됩니다.
+| 항목            | 결정                                                | 관련 ADR |
+| --------------- | --------------------------------------------------- | -------- |
+| **토론 모드**   | 하이브리드 (책 메타 + 사용자 구절)                  | ADR-007  |
+| **사용자 수**   | 1:1 (다중 사용자 확장 가능 구조 — Participant 분리) | ADR-008  |
+| **AI 페르소나** | 선택형 + 사망 작가 (생존 작가 영구 금지)            | ADR-009  |
+| **핵심 가치**   | 정서·자기 표현 (메인) + 회고·저널링 (보조)          | ADR-010  |
 
-| 항목            | 옵션                                  | 영향                                                      |
-| --------------- | ------------------------------------- | --------------------------------------------------------- |
-| **토론 모드**   | 구절 한정 / 책 전체 맥락 / 하이브리드 | 시스템 프롬프트, 비용 구조                                |
-| **사용자 수**   | 1:1 / 북클럽 (다중)                   | 도메인 모델 (Participant 엔티티 필요 여부), 실시간 인프라 |
-| **AI 페르소나** | 고정 1개 / 선택형                     | Persona 엔티티·UX                                         |
-| **핵심 가치**   | 정서 / 학습 / 저널링                  | 모든 UX·프롬프트의 톤                                     |
-
-→ 결정되면 **이 문서 §5 도메인 모델 섹션**과 §2 ADR을 업데이트.
+→ 자세한 근거·트레이드오프: [`ADR.md`](./ADR.md). 제품 측면 정의: [`PRD.md`](./PRD.md).
 
 ---
 
