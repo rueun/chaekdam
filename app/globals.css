@@ -1,22 +1,480 @@
 @import 'tailwindcss';
 
+/* =============================================================
+   책담 디자인 토큰 — `design/handoff/colors_and_type.css` 가 원본.
+   단일 라이트(페이퍼) 테마. 다크 모드 없음(ADR-011).
+   컴포넌트는 raw hex 대신 아래 의미 토큰(var(--x))을 참조한다.
+
+   폰트 @font-face(Pretendard) / Noto Serif KR 임포트는 폰트 파이프라인
+   셋업 시 별도 슬라이스에서 추가한다. --font-serif 는 Pretendard 별칭이라
+   현재도 시스템 폰트 폴백으로 동일하게 렌더된다.
+   ============================================================= */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ---- 팔레트 (raw) — 앱 코드는 아래 의미 토큰을 쓰고 이건 직접 쓰지 않는다 ---- */
+
+  /* 크림 / 페이퍼 중립색 */
+  --paper-50: #faf8f2; /* 페이지 배경 */
+  --paper-100: #f2efe6; /* 카드 / 표면 */
+  --paper-200: #e6e1d2; /* divider, 옅은 채움 */
+  --paper-300: #cbc4ae; /* 진한 divider */
+  --paper-400: #9d9784; /* placeholder / disabled */
+  --paper-500: #6f6c62; /* 크림 위 보조 텍스트 */
+
+  /* 잉크 — 살짝 따뜻한 니어블랙 (순검정 금지) */
+  --ink-900: #1a1a18; /* 본문 */
+  --ink-800: #2a2a26;
+  --ink-700: #45433d;
+  --ink-600: #5e5c53;
+  --ink-500: #82807a;
+  --ink-300: #c3c1b9;
+
+  /* 브랜드 — 딥 포레스트 그린. --terra-* 는 back-compat 별칭(값은 그린). */
+  --terra-50: #ebeedf;
+  --terra-100: #d5dac1;
+  --terra-200: #b0bca0;
+  --terra-300: #809a7e;
+  --terra-400: #557a65;
+  --terra-500: #3f6750; /* PRIMARY accent */
+  --terra-600: #2d5240;
+  --terra-700: #1f4030;
+
+  /* 별칭 — 신규 코드 권장 */
+  --leaf-50: var(--terra-50);
+  --leaf-100: var(--terra-100);
+  --leaf-200: var(--terra-200);
+  --leaf-300: var(--terra-300);
+  --leaf-400: var(--terra-400);
+  --leaf-500: var(--terra-500);
+  --leaf-600: var(--terra-600);
+  --leaf-700: var(--terra-700);
+
+  /* sage — 저장/완료 보조 */
+  --sage-50: #eff1e5;
+  --sage-100: #dde3cc;
+  --sage-300: #a8b98f;
+  --sage-500: #6e8b5e;
+  --sage-700: #4a6741;
+  --ember-100: var(--sage-100);
+  --ember-500: var(--sage-500);
+  --ember-700: var(--sage-700);
+
+  /* clay — 완독 */
+  --clay-50: #faede2;
+  --clay-100: #f2dbca;
+  --clay-300: #d8a48a;
+  --clay-500: #a85f37;
+  --clay-700: #6e3d22;
+
+  /* mark — 사용자 강조(하이라이트) 전용 */
+  --mark-100: #e8dc7f;
+  --mark-300: #dfcc4d;
+  --mark-500: #c7b22a;
+
+  /* talk — AI 귀속 */
+  --talk-100: #d7dee2;
+  --talk-500: #6b7e89;
+
+  /* 상태 의미색 */
+  --success: var(--sage-500);
+  --warning: #d9963d;
+  --danger: #c44a3f;
+  --danger-hover: #b23b30;
+  --info: var(--talk-500);
+
+  /* ---- 의미 토큰 (앱 코드에서 사용) ---- */
+  --bg: var(--paper-50);
+  --bg-elevated: #ffffff;
+  --surface: var(--paper-100);
+  --surface-2: var(--paper-200);
+  --divider: var(--paper-200);
+  --divider-strong: var(--paper-300);
+
+  --fg: var(--ink-900);
+  --fg-1: var(--ink-900);
+  --fg-2: var(--ink-600);
+  --fg-3: var(--ink-500);
+  --fg-dim: var(--paper-500);
+  --fg-on-accent: #ffffff;
+
+  --accent: var(--terra-500);
+  --accent-hover: var(--terra-600);
+  --accent-press: var(--terra-700);
+  --accent-soft: var(--terra-50);
+  --accent-ring: rgba(63, 103, 80, 0.24);
+
+  --mark-bg: var(--mark-100);
+  --mark-fg: var(--ink-900);
+
+  /* ---- 타입 ---- */
+  --font-sans:
+    'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Noto Sans KR', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: var(--font-sans); /* Pretendard 별칭 (편집체 슬롯) */
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  --fs-display: 56px;
+  --fs-h1: 40px;
+  --fs-h2: 30px;
+  --fs-h3: 22px;
+  --fs-h4: 18px;
+  --fs-body: 16px;
+  --fs-body-sm: 14px;
+  --fs-caption: 13px;
+  --fs-micro: 11px;
+
+  --lh-tight: 1.2;
+  --lh-snug: 1.35;
+  --lh-normal: 1.55;
+  --lh-loose: 1.75;
+
+  --ls-tight: -0.02em;
+  --ls-normal: -0.01em;
+  --ls-wide: 0.02em;
+
+  /* ---- 형태 / 그림자 / 모션 ---- */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* 따뜻한 올리브 틴트 그림자 (차가운 유리 느낌 금지) */
+  --shadow-1: 0 1px 2px rgba(34, 42, 24, 0.07);
+  --shadow-2: 0 2px 8px rgba(34, 42, 24, 0.09), 0 1px 2px rgba(34, 42, 24, 0.05);
+  --shadow-3: 0 8px 24px rgba(34, 42, 24, 0.11), 0 2px 6px rgba(34, 42, 24, 0.06);
+  --shadow-4: 0 18px 48px rgba(34, 42, 24, 0.15), 0 4px 12px rgba(34, 42, 24, 0.07);
+  --shadow-inset: inset 0 1px 2px rgba(34, 42, 24, 0.1);
+  /* 책등(spine) 효과가 들어간 표지 전용 그림자 */
+  --shadow-cover: 0 4px 12px rgba(34, 42, 24, 0.1), inset -2px 0 0 rgba(0, 0, 0, 0.14);
+
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --dur-4: 480ms;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss06', 'ss07'; /* Pretendard stylistic */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: var(--ls-normal);
+}
+
+/* =============================================================
+   디자인시스템 프리미티브 — Status Badge
+   `colors_and_type.css` 원본을 충실 이식. 점·체크 의사요소 때문에
+   유틸리티가 아닌 컴포넌트 CSS로 둔다. React 래퍼: components/ui/status-badge.tsx
+   reading→포레스트 그린 / done→클레이(+체크) / wish→그레이블루 / paused→하이라이트
+   ============================================================= */
+@layer components {
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px 3px 8px;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1.45;
+    border: 1px solid transparent;
+  }
+  /* 선행 점 — done 은 체크 글리프로 대체 */
+  .status-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  .status-badge.is-reading {
+    background: var(--terra-50);
+    color: var(--terra-700);
+    border-color: var(--terra-100);
+  }
+  .status-badge.is-done {
+    background: var(--clay-100);
+    color: var(--clay-700);
+    border-color: var(--clay-300);
+  }
+  /* done 은 점 대신 체크. ✓ 글리프는 폰트별 정렬 편차가 커서 SVG 마스크로 그린다. */
+  .status-badge.is-done::before {
+    content: '';
+    width: 9px;
+    height: 9px;
+    background: currentColor;
+    opacity: 1;
+    border-radius: 0;
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.4 6.3 L5 8.7 L9.6 3.6' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>")
+      no-repeat center / contain;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.4 6.3 L5 8.7 L9.6 3.6' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>")
+      no-repeat center / contain;
+  }
+  .status-badge.sm.is-done::before {
+    width: 8px;
+    height: 8px;
+  }
+  .status-badge.is-wish {
+    background: var(--talk-100);
+    color: #3f5e6b;
+    border-color: rgba(63, 94, 107, 0.18);
+  }
+  .status-badge.is-paused {
+    background: var(--mark-100);
+    color: #7a5b0f;
+    border-color: rgba(122, 91, 15, 0.18);
+  }
+
+  /* 작은 변형 — 좁은 행 / BookCard */
+  .status-badge.sm {
+    padding: 2px 8px 2px 7px;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+  .status-badge.sm::before {
+    width: 5px;
+    height: 5px;
+  }
+
+  /* 솔리드 변형 — 선택/활성 카드 강조 */
+  .status-badge.solid.is-reading {
+    background: var(--terra-500);
+    color: #fdfbf7;
+    border-color: transparent;
+  }
+  .status-badge.solid.is-done {
+    background: var(--clay-500);
+    color: #ffffff;
+    border-color: transparent;
+  }
+  .status-badge.solid.is-wish {
+    background: #4f6b7b;
+    color: #ffffff;
+    border-color: transparent;
+  }
+  .status-badge.solid.is-paused {
+    background: var(--mark-500);
+    color: #1f1a15;
+    border-color: transparent;
+  }
+  .status-badge.solid::before {
+    opacity: 1;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+/* =============================================================
+   디자인시스템 프리미티브 — G1: Button / Card / Progress
+   Button·Progress 는 web.css 원본을 토큰 기반으로 이식.
+   Card 는 디자인시스템에 제네릭 클래스가 없어 design-system.md 규칙
+   (그림자 '또는' 크림 채움 — 둘 다 X)으로 합성한다.
+   React 래퍼: components/ui/{button,card,progress}.tsx
+   ============================================================= */
+@layer components {
+  /* ---- Button ---- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    border: 1px solid transparent; /* 변형 간 높이 정렬용 */
+    cursor: pointer;
+    transition: all 200ms var(--ease-out);
+  }
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-ring);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--fg-on-accent);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+  .btn-secondary {
+    background: var(--paper-100);
+    color: var(--ink-900);
+    border-color: var(--divider-strong);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--paper-200);
+  }
+  .btn-ghost {
+    color: var(--ink-700);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--paper-100);
+  }
+  .btn-danger {
+    background: var(--danger);
+    color: var(--fg-on-accent);
+    border-color: var(--danger);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: var(--danger-hover);
+    border-color: var(--danger-hover);
+  }
+
+  /* 작은 변형 */
+  .btn-sm {
+    padding: 7px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+  /* 아이콘 전용(정사각) */
+  .btn-icon {
+    padding: 9px;
+    border-radius: 10px;
+  }
+  .btn-icon.btn-sm {
+    padding: 7px;
+  }
+
+  /* ---- Card (합성) ----
+     plain = 크림 채움(채움만), elevated = 흰 표면 + 그림자(그림자만). */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--divider);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+  }
+  .card-elevated {
+    background: var(--bg-elevated);
+    border-color: transparent;
+    box-shadow: var(--shadow-2);
+  }
+
+  /* ---- Progress ---- */
+  .progress {
+    height: 4px;
+    background: var(--paper-200);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress > i {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width 320ms var(--ease-out);
+  }
+}
+
+/* =============================================================
+   디자인시스템 프리미티브 — G2: Badge / Chip / Tag
+   colors_and_type.css 원본을 토큰 기반으로 이식.
+   React 래퍼: components/ui/{badge,chip,tag}.tsx
+   ============================================================= */
+@layer components {
+  /* ---- Badge — 작은 상태 핍 (new/ai/done) ---- */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .badge-new {
+    background: var(--mark-100);
+    color: #7a5b0f;
+  }
+  .badge-ai {
+    background: var(--talk-100);
+    color: #3f5e6b;
+  }
+  .badge-done {
+    background: var(--clay-100);
+    color: var(--clay-700);
+  }
+
+  /* ---- Chip — 필터/선택 라운드 필 버튼 ---- */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    background: #ffffff;
+    color: var(--ink-700);
+    border: 1px solid var(--divider-strong);
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      background var(--dur-2) var(--ease-out),
+      color var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out);
+  }
+  .chip:hover {
+    background: var(--paper-100);
+  }
+  .chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-ring);
+  }
+  .chip.is-active,
+  .chip[aria-pressed='true'] {
+    background: var(--terra-500);
+    color: #fff;
+    border-color: var(--terra-500);
+    font-weight: 600;
+  }
+  .chip.is-active:hover,
+  .chip[aria-pressed='true']:hover {
+    background: var(--terra-600);
+  }
+  /* soft — 옅은 그린 정적 변형 */
+  .chip.chip-soft {
+    background: var(--terra-50);
+    color: var(--terra-700);
+    border-color: var(--terra-100);
+  }
+  .chip.chip-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  /* ---- Tag — 콘텐츠 인라인 태그 (#소설 등). 비인터랙티브 ---- */
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--ink-700);
+    background: var(--paper-100);
+    border: 1px solid var(--paper-200);
+  }
 }
