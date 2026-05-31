@@ -52,6 +52,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 const SAMPLE_BOOKS: BookCardView[] = [
   {
+    id: 'sample-1',
     title: '일곱 해의 마지막',
     author: '김연수',
     status: 'reading',
@@ -60,6 +61,7 @@ const SAMPLE_BOOKS: BookCardView[] = [
     lastActive: '2일 전',
   },
   {
+    id: 'sample-2',
     title: '데미안',
     author: '헤르만 헤세',
     status: 'done',
@@ -68,6 +70,7 @@ const SAMPLE_BOOKS: BookCardView[] = [
     finishedAt: '5월 20일',
   },
   {
+    id: 'sample-3',
     title: '아주 사적인 독서',
     author: '이현우',
     status: 'wish',
@@ -75,6 +78,7 @@ const SAMPLE_BOOKS: BookCardView[] = [
     startedAt: '5월 28일',
   },
   {
+    id: 'sample-4',
     title: '바깥은 여름',
     author: '김애란',
     status: 'paused',
@@ -326,7 +330,7 @@ export default function UiKitPage() {
       <Section title="G0 · BookCard" note="상태별 보조 메타 — bookMetaLine">
         <div className="grid grid-cols-4 gap-[22px]">
           {SAMPLE_BOOKS.map((book) => (
-            <BookCard key={`${book.title}-${book.author}`} book={book} />
+            <BookCard key={book.id} book={book} />
           ))}
         </div>
       </Section>

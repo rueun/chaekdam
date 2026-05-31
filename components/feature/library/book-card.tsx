@@ -10,6 +10,8 @@ import { StatusBadge, type BookStatusKey } from '@/components/ui/status-badge';
  * 상태별로 다른 사용자 입력값을 보조 메타로 노출한다(아래 `bookMetaLine`).
  */
 export interface BookCardView {
+  /** 책 식별자 — 목록 key·상세 이동에 사용 (도메인 Book.id 매핑) */
+  id: string;
   title: string;
   author: string;
   status: BookStatusKey;

@@ -8,6 +8,14 @@ export const ROUTES = {
     LOGIN: () => '/login' as const,
     SIGNUP: () => '/signup' as const,
   },
+  // 대시보드(인증 후) 화면
+  DASHBOARD: () => '/home' as const,
+  LIBRARY: () => '/library' as const,
+  WISHLIST: () => '/wishlist' as const,
+  READING: () => '/reading' as const,
+  HIGHLIGHTS: () => '/highlights' as const,
+  STATS: () => '/stats' as const,
+  SETTINGS: () => '/settings' as const,
   BOOKS: {
     LIST: () => '/books' as const,
     DETAIL: (bookId: string) => `/books/${bookId}` as const,
