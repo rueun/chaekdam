@@ -1,7 +1,8 @@
 import { TopBar } from '@/components/layout/top-bar';
 import { LibraryShelf } from '@/components/feature/library/library-shelf';
 import type { BookCardView } from '@/components/feature/library/book-card';
-import { ROUTES } from '@/lib/router/routes';
+import { BookSearchTrigger } from '@/components/feature/book-search/book-search-trigger';
+import { Icon } from '@/components/ui/icon';
 
 // 샘플 책장 — 추후 책장 조회 유스케이스로 대체
 const BOOKS: BookCardView[] = [
@@ -99,7 +100,11 @@ export default function LibraryPage() {
       <TopBar
         title="내 서재"
         subtitle="총 10권 · 올해 3권 완독"
-        action={{ label: '책 추가', href: ROUTES.BOOKS.LIST(), icon: 'plus' }}
+        action={
+          <BookSearchTrigger className="btn btn-primary">
+            <Icon name="plus" size={16} />책 추가
+          </BookSearchTrigger>
+        }
       />
       <LibraryShelf books={BOOKS} />
     </>

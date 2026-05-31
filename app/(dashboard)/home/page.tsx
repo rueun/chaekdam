@@ -1,10 +1,13 @@
+import Link from 'next/link';
 import { TopBar } from '@/components/layout/top-bar';
 import { SectionHeader } from '@/components/layout/section-header';
+import { Icon } from '@/components/ui/icon';
 import { Hero } from '@/components/feature/home/hero';
 import { ReadingLogPanel } from '@/components/feature/reading-log/reading-log';
 import { BookCard, type BookCardView } from '@/components/feature/library/book-card';
 import { WishlistCard, type WishlistBookView } from '@/components/feature/library/wishlist-card';
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
+import { BookSearchTrigger } from '@/components/feature/book-search/book-search-trigger';
 import { ROUTES } from '@/lib/router/routes';
 
 // 슬라이스 B 샘플 데이터 — 추후 유스케이스(읽는 중 책장 조회)로 대체
@@ -101,7 +104,11 @@ export default function HomePage() {
       <TopBar
         title="안녕하세요, 길동님"
         subtitle="어제까지 12권 · 이번 달 3권 완독했어요"
-        action={{ label: '한 줄 담기', href: ROUTES.NOTES.LIST(), icon: 'pen-line' }}
+        action={
+          <Link href={ROUTES.NOTES.LIST()} className="btn btn-primary">
+            <Icon name="pen-line" size={16} />한 줄 담기
+          </Link>
+        }
       />
 
       <Hero minutesToday={24} deltaMinutes={6} />
@@ -123,7 +130,14 @@ export default function HomePage() {
           ))}
         </div>
         <div>
-          <WishlistCard items={WISH_ITEMS} />
+          <WishlistCard
+            items={WISH_ITEMS}
+            footAction={
+              <BookSearchTrigger className="wish-card-foot">
+                <Icon name="plus" size={16} />책 더 담기
+              </BookSearchTrigger>
+            }
+          />
         </div>
       </div>
     </>

@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Home,
   ImageUp,
+  Info,
   Library,
   LineChart,
   MessagesSquare,
@@ -14,6 +15,7 @@ import {
   Plus,
   Quote,
   Search,
+  SearchX,
   Settings,
   X,
   type LucideIcon,
@@ -42,6 +44,8 @@ const ICON_MAP = {
   'pen-line': PenLine,
   camera: Camera,
   'image-up': ImageUp,
+  info: Info,
+  'search-x': SearchX,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICON_MAP;

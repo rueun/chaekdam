@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/icon';
 import { ROUTES } from '@/lib/router/routes';
@@ -14,10 +15,16 @@ export interface WishlistBookView {
 }
 
 /**
- * 홈 우측 레일 — 최근 담은 '읽고 싶은 책' + 더 담기.
- * 스타일은 디자인시스템 CSS(`.rail-card`/`.wish-card`).
+ * 홈 우측 레일 — 최근 담은 '읽고 싶은 책' + 더 담기. 스타일은 `.rail-card`/`.wish-card`.
+ * '책 더 담기' 액션은 슬롯(footAction)으로 주입받아 book-search 기능과 결합하지 않는다(ADR-006).
  */
-export function WishlistCard({ items }: { items: WishlistBookView[] }) {
+export function WishlistCard({
+  items,
+  footAction,
+}: {
+  items: WishlistBookView[];
+  footAction?: ReactNode;
+}) {
   const isEmpty = items.length === 0;
 
   return (
@@ -57,9 +64,7 @@ export function WishlistCard({ items }: { items: WishlistBookView[] }) {
         ))
       )}
 
-      <Link href={ROUTES.BOOKS.LIST()} className="wish-card-foot">
-        <Icon name="plus" size={16} />책 더 담기
-      </Link>
+      {footAction}
     </div>
   );
 }
