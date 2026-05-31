@@ -58,6 +58,7 @@
   --color-mark-100: var(--mark-100);
   --color-talk-100: var(--talk-100);
   --color-talk-500: var(--talk-500);
+  --color-talk-700: var(--talk-700);
 
   /* 타입 스케일 — text-h1 / text-body 등 (이름이 :root --fs-* 와 달라 안전) */
   --text-display: var(--fs-display);
@@ -167,6 +168,7 @@
   /* talk — AI 귀속 */
   --talk-100: #d7dee2;
   --talk-500: #6b7e89;
+  --talk-700: #3f5e6b; /* 밝은 배경 위 텍스트(읽고 싶은/AI 귀속) */
 
   /* 상태 의미색 */
   --success: var(--sage-500);
@@ -306,7 +308,7 @@ body {
   }
   .status-badge.is-wish {
     background: var(--talk-100);
-    color: #3f5e6b;
+    color: var(--talk-700);
     border-color: rgba(63, 94, 107, 0.18);
   }
   .status-badge.is-paused {
@@ -488,7 +490,7 @@ body {
   }
   .badge-ai {
     background: var(--talk-100);
-    color: #3f5e6b;
+    color: var(--talk-700);
   }
   .badge-done {
     background: var(--clay-100);

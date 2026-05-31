@@ -1,5 +1,6 @@
 import {
   Bookmark,
+  BookmarkX,
   BookOpen,
   Camera,
   Check,
@@ -46,6 +47,7 @@ const ICON_MAP = {
   'image-up': ImageUp,
   info: Info,
   'search-x': SearchX,
+  'bookmark-x': BookmarkX,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICON_MAP;
