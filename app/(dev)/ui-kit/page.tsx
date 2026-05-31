@@ -5,7 +5,11 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Chip } from '@/components/ui/chip';
 import { Tag } from '@/components/ui/tag';
+import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
+import { Select } from '@/components/ui/select';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { SearchDemo } from './search-demo';
 import { BookCard, type BookCardView } from '@/components/feature/library/book-card';
 
 /**
@@ -83,6 +87,43 @@ export default function UiKitPage() {
       <p className="mb-10 text-[14px] text-[var(--fg-2)]">
         디자인시스템 프리미티브 쇼케이스 — 그룹 단위로 누적됩니다.
       </p>
+
+      {/* ───── G3 — 텍스트 입력 ───── */}
+      <Section title="G3 · Input" note="기본 / 값 / disabled / error">
+        <div className="flex max-w-md flex-col gap-3">
+          <Input placeholder="제목을 입력하세요" />
+          <Input defaultValue="데미안" />
+          <Input placeholder="비활성" disabled />
+          <Input defaultValue="잘못된 값" error />
+        </div>
+      </Section>
+
+      <Section title="G3 · Search" note="돋보기 아이콘 + 지우기(가운데는 라이브 동작)">
+        <div className="flex max-w-md flex-col gap-3">
+          <SearchInput placeholder="책 검색" />
+          <SearchDemo />
+          <SearchDemo pill />
+        </div>
+      </Section>
+
+      <Section
+        title="G3 · Select"
+        note="커스텀 드롭다운(.sel-menu) — 클릭/↑↓·Enter·Esc, 선택 항목 체크"
+      >
+        <div className="flex flex-wrap gap-3">
+          <Select
+            aria-label="책 상태"
+            defaultValue="reading"
+            options={[
+              { value: 'reading', label: '읽는 중' },
+              { value: 'done', label: '완독' },
+              { value: 'wish', label: '읽고 싶은' },
+              { value: 'paused', label: '쉬는 중' },
+            ]}
+          />
+          <Select aria-label="비활성" disabled placeholder="비활성" options={[]} />
+        </div>
+      </Section>
 
       {/* ───── G2 — 표시·상태 ───── */}
       <Section title="G2 · Badge" note="작은 상태 핍 — new/ai/done">

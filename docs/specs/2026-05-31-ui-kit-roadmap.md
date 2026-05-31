@@ -33,7 +33,7 @@
 | G0   | 토큰 기반 · `StatusBadge` · `BookCard`                                                        | ✅ 완료 |
 | G1   | `Button`(primary/secondary/ghost/danger × md/sm × icon) · `Card`(plain/elevated) · `Progress` | ✅ 완료 |
 | G2   | `Badge`(new/ai/done) · `Chip`(default/soft/sm/active) · `Tag`                                 | ✅ 완료 |
-| G3   | `Input`(+error) · `Search`(+pill/clear) · `Select`                                            | ⬜      |
+| G3   | `Input`(+error) · `Search`(+pill/clear) · `Select`                                            | ✅ 완료 |
 | G4   | `Checkbox` · `Radio` · `Toggle`(+lg) · `Segmented`                                            | ⬜      |
 | G5   | (후순위) `Stepper` · `Slider` · `DatePicker/Calendar` — MVP 미사용 시 보류                    | ⬜      |
 
@@ -58,3 +58,5 @@
 - **Progress `<i>` → 시맨틱 요소** — `<i>`(이탤릭용) 대신 `<span>`/`<div>` + `aria-hidden`.
 - **대문자↔소문자 BookStatus 매핑 위치** — 도메인 도입 시 인프라 Adapter/유스케이스 입력 매핑에서 처리(표현 계층 누수 방지).
 - **쇼케이스 인터랙션 데모** — Chip 토글·BookCard onOpen 동작 시연은 별도 Client 컴포넌트로 분리.
+- **Select = 커스텀 드롭다운** — 네이티브 `<select>` 의 OS 드롭다운을 못 꾸며서 `.sel`(트리거) + `.sel-menu`(목록) 커스텀 listbox 로 전환(키보드·바깥클릭·포커스 복귀 포함). 폼 연동은 react-hook-form `Controller` 사용(네이티브 ref 직결 아님). 모바일 네이티브 피커는 미사용.
+- **SearchInput** — 네이티브 `type=search` 취소 버튼(`::-webkit-search-cancel-button`)을 제거하고 우리 `.clear` 버튼만 사용.
