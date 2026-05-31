@@ -1,6 +1,11 @@
+'use client';
+
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { openQuoteMenu } from '@/components/ui/quote-menu';
+import { openConfirm } from '@/components/ui/confirm-dialog';
+import { toast } from '@/components/ui/toast';
 
 export interface HighlightView {
   id: string;
@@ -30,15 +35,41 @@ function markEmphasis(content: string, emphasis?: string): ReactNode {
 
 interface HighlightCardProps {
   highlight: HighlightView;
-  /** 더보기 메뉴 핸들러 (없으면 더보기 버튼 미표시) */
-  onMore?: () => void;
 }
 
 /**
- * 담은 '한 줄'(Highlight) 카드 — 개인 기록용. 본문 + 출처 + (선택)더보기.
+ * 담은 '한 줄'(Highlight) 카드 — 개인 기록용. 본문 + 출처 + 더보기 메뉴(QuoteMenu).
+ * 메뉴 액션은 현재 토스트/복사/삭제확인 스텁 — 추후 Highlight 유스케이스로 교체.
  * 스타일은 디자인시스템 CSS(`.quote-card`).
  */
-export function HighlightCard({ highlight, onMore }: HighlightCardProps) {
+export function HighlightCard({ highlight }: HighlightCardProps) {
+  const openMenu = (anchor: HTMLElement) => {
+    openQuoteMenu(anchor, {
+      // TODO(highlight): 각 액션을 Highlight 유스케이스(수정·고정·이동·보관)로 교체
+      onEdit: () => toast('문장 수정은 곧 제공돼요'),
+      onPin: () => toast('홈에 고정했어요'),
+      onCopy: () => {
+        navigator.clipboard
+          ?.writeText(highlight.content)
+          .then(() => toast('문장을 복사했어요'))
+          .catch(() => toast('복사에 실패했어요'));
+      },
+      onMove: () => toast('다른 책으로 이동은 곧 제공돼요'),
+      onArchive: () => toast('보관함에 넣었어요'),
+      onDelete: () => {
+        void (async () => {
+          const confirmed = await openConfirm({
+            title: '이 한 줄을 삭제할까요?',
+            body: <>삭제하면 이 문장과 메모가 함께 사라져요. 되돌릴 수 없어요.</>,
+            confirmText: '삭제',
+          });
+          // TODO(highlight): 확인 시 Highlight 삭제 유스케이스 호출
+          if (confirmed) toast('한 줄을 삭제했어요');
+        })();
+      },
+    });
+  };
+
   return (
     <article className="quote-card">
       <div className="q-text">{markEmphasis(highlight.content, highlight.emphasis)}</div>
@@ -49,13 +80,18 @@ export function HighlightCard({ highlight, onMore }: HighlightCardProps) {
             · {highlight.book} · {highlight.page}
           </span>
         </div>
-        {onMore ? (
-          <div className="q-actions">
-            <Button variant="ghost" iconOnly size="sm" aria-label="더보기" onClick={onMore}>
-              <Icon name="more-horizontal" size={16} />
-            </Button>
-          </div>
-        ) : null}
+        <div className="q-actions">
+          <Button
+            variant="ghost"
+            iconOnly
+            size="sm"
+            aria-label="한 줄 메뉴 열기"
+            aria-haspopup="menu"
+            onClick={(e) => openMenu(e.currentTarget)}
+          >
+            <Icon name="more-horizontal" size={16} />
+          </Button>
+        </div>
       </div>
     </article>
   );
