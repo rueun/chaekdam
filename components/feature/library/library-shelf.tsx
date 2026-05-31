@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Chip } from '@/components/ui/chip';
 import { BookCard, type BookCardView } from '@/components/feature/library/book-card';
 import type { BookStatusKey } from '@/components/ui/status-badge';
+import { ROUTES } from '@/lib/router/routes';
 
 type FilterKey = 'all' | BookStatusKey;
 
@@ -39,7 +40,7 @@ export function LibraryShelf({ books }: { books: BookCardView[] }) {
         ) : (
           <div className="row-grid row-grid-5">
             {visible.map((book) => (
-              <BookCard key={book.id} book={book} />
+              <BookCard key={book.id} book={book} href={ROUTES.BOOKS.DETAIL(book.id)} />
             ))}
           </div>
         )}

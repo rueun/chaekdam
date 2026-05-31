@@ -1,10 +1,12 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { Chip } from '@/components/ui/chip';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { toast } from '@/components/ui/toast';
+import { ROUTES } from '@/lib/router/routes';
 
 export interface WishlistTileView {
   /** Book.id */
@@ -116,19 +118,25 @@ function WishTile({
 }) {
   return (
     <article className="group border-divider bg-bg-elevated hover:border-paper-300 hover:shadow-2 flex flex-col overflow-hidden rounded-lg border transition-all duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5">
-      <div
-        className="relative aspect-video"
+      <Link
+        href={ROUTES.BOOKS.DETAIL(book.id)}
+        aria-hidden
+        tabIndex={-1}
+        className="relative block aspect-video"
         style={{ background: book.coverColor ?? 'var(--ink-700)' }}
       >
         {/* '담아둠' 핀 */}
         <span className="text-talk-700 bg-paper-50/95 absolute top-3 left-3 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-[0.05em] uppercase backdrop-blur-[4px]">
           담아둠
         </span>
-      </div>
+      </Link>
       <div className="flex flex-1 flex-col gap-1 px-[18px] pt-4 pb-[18px]">
-        <div className="text-ink-900 font-serif text-[18px] leading-[1.3] font-semibold tracking-[-0.02em]">
+        <Link
+          href={ROUTES.BOOKS.DETAIL(book.id)}
+          className="text-ink-900 font-serif text-[18px] leading-[1.3] font-semibold tracking-[-0.02em] hover:underline"
+        >
           {book.title}
-        </div>
+        </Link>
         <div className="text-fg-2 mb-1.5 text-[13px]">{book.author}</div>
         {book.note ? (
           <p className="text-ink-700 my-1 line-clamp-2 font-serif text-[13px] leading-[1.55] italic">

@@ -133,7 +133,7 @@ export default function HomePage() {
       <SectionHeader title="읽는 중" moreHref={ROUTES.LIBRARY()} />
       <div className="row-grid row-grid-5">
         {READING_BOOKS.map((book) => (
-          <BookCard key={book.id} book={book} />
+          <BookCard key={book.id} book={book} href={ROUTES.BOOKS.DETAIL(book.id)} />
         ))}
       </div>
 

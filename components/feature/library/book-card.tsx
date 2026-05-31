@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
 import { StatusBadge, type BookStatusKey } from '@/components/ui/status-badge';
 
@@ -49,7 +50,9 @@ export function bookMetaLine(b: BookCardView): string {
 
 interface BookCardProps {
   book: BookCardView;
-  /** 지정 시 카드가 클릭/키보드로 열림 (Enter·Space) */
+  /** 지정 시 카드가 링크로 동작(책 상세 등) */
+  href?: string;
+  /** 지정 시 카드가 클릭/키보드로 열림 (Enter·Space). href 가 있으면 무시 */
   onOpen?: () => void;
   className?: string;
 }
@@ -60,7 +63,7 @@ interface BookCardProps {
  * 표지는 hover 시 살짝 떠오른다(`group-hover`). 레이아웃·타이포·색은 모두
  * 디자인 토큰(`var(--*)`)을 참조한다(raw hex 미사용).
  */
-export function BookCard({ book, onOpen, className }: BookCardProps) {
+export function BookCard({ book, href, onOpen, className }: BookCardProps) {
   const content = (
     <>
       {/* 표지 — 책등 효과 그림자, hover 시 부상 */}
@@ -98,6 +101,15 @@ export function BookCard({ book, onOpen, className }: BookCardProps) {
     'group flex flex-col gap-3 transition-transform duration-200 ease-[var(--ease-out)]',
     className,
   );
+
+  // 링크면 <Link> — prefetch·새 탭 열기·우클릭 메뉴가 기본 제공된다.
+  if (href) {
+    return (
+      <Link href={href} className={baseClass}>
+        {content}
+      </Link>
+    );
+  }
 
   // 클릭 가능하면 네이티브 <button> — 포커스·Enter/Space 키보드 동작이 기본 제공된다.
   if (onOpen) {
