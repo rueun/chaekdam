@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Chip } from '@/components/ui/chip';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { toast } from '@/components/ui/toast';
 
 export interface WishlistTileView {
   /** Book.id */
@@ -47,7 +48,17 @@ export function WishlistGrid({
     return arr; // recent = 원본(담은 순) 순서
   }, [items, sort]);
 
-  const remove = (id: string) => setItems((prev) => prev.filter((b) => b.id !== id));
+  // 데모: 둘 다 위시 목록에선 사라지지만 의미가 다르다(읽기 시작=READING 전이 / 빼기=삭제).
+  // 실연동 시 각각 startReading / removeFromWishlist 유스케이스로 교체. 구분은 토스트로 시연.
+  const takeOff = (id: string) => setItems((prev) => prev.filter((b) => b.id !== id));
+  const startReading = (book: WishlistTileView) => {
+    takeOff(book.id);
+    toast(`『${book.title}』 읽기 시작했어요`);
+  };
+  const removeFromWishlist = (book: WishlistTileView) => {
+    takeOff(book.id);
+    toast('위시리스트에서 뺐어요');
+  };
 
   if (items.length === 0) {
     return (
@@ -82,14 +93,27 @@ export function WishlistGrid({
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-5">
         {sorted.map((book) => (
-          <WishTile key={book.id} book={book} onRemove={() => remove(book.id)} />
+          <WishTile
+            key={book.id}
+            book={book}
+            onStartReading={() => startReading(book)}
+            onRemove={() => removeFromWishlist(book)}
+          />
         ))}
       </div>
     </>
   );
 }
 
-function WishTile({ book, onRemove }: { book: WishlistTileView; onRemove: () => void }) {
+function WishTile({
+  book,
+  onStartReading,
+  onRemove,
+}: {
+  book: WishlistTileView;
+  onStartReading: () => void;
+  onRemove: () => void;
+}) {
   return (
     <article className="group border-divider bg-bg-elevated hover:border-paper-300 hover:shadow-2 flex flex-col overflow-hidden rounded-lg border transition-all duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5">
       <div
@@ -97,7 +121,7 @@ function WishTile({ book, onRemove }: { book: WishlistTileView; onRemove: () => 
         style={{ background: book.coverColor ?? 'var(--ink-700)' }}
       >
         {/* '담아둠' 핀 */}
-        <span className="text-talk-700 absolute top-3 left-3 inline-flex items-center rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold tracking-[0.05em] uppercase backdrop-blur-[4px]">
+        <span className="text-talk-700 bg-paper-50/95 absolute top-3 left-3 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-[0.05em] uppercase backdrop-blur-[4px]">
           담아둠
         </span>
       </div>
@@ -114,9 +138,13 @@ function WishTile({ book, onRemove }: { book: WishlistTileView; onRemove: () => 
         <div className="text-fg-3 mt-auto pt-2.5 text-[11px] tracking-[0.02em]">
           {book.addedAt} 담음
         </div>
-        {/* 데모: 둘 다 위시리스트에서 제거(읽기 시작=READING 전이, 빼기=삭제). 실연동 시 분리. */}
         <div className="mt-3 flex items-center gap-2">
-          <Button variant="primary" size="sm" className="flex-1 justify-center" onClick={onRemove}>
+          <Button
+            variant="primary"
+            size="sm"
+            className="flex-1 justify-center"
+            onClick={onStartReading}
+          >
             <Icon name="book-open" size={16} />
             지금부터 읽기
           </Button>
