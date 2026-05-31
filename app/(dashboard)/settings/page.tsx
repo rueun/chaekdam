@@ -1,5 +1,11 @@
-import { ComingSoon } from '@/components/layout/coming-soon';
+import { TopBar } from '@/components/layout/top-bar';
+import { SettingsView } from '@/components/feature/settings/settings-view';
 
 export default function SettingsPage() {
-  return <ComingSoon title="설정" />;
+  return (
+    <>
+      <TopBar title="설정" subtitle="계정과 환경" showSearch={false} />
+      <SettingsView />
+    </>
+  );
 }

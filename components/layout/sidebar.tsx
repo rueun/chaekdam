@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
 import { ROUTES } from '@/lib/router/routes';
 import { Icon, type IconName } from '@/components/ui/icon';
+import { openProfileEdit } from '@/components/feature/profile/profile-edit-modal';
 
 interface NavItem {
   href: string;
@@ -62,19 +63,21 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <Link
-        href={ROUTES.SETTINGS()}
-        className="mt-auto flex w-full items-center gap-[10px] rounded-[10px] p-[8px_10px] text-left hover:bg-[var(--paper-200)]"
-        title="프로필"
+      <button
+        type="button"
+        onClick={openProfileEdit}
+        aria-label="프로필 수정"
+        className="hover:bg-paper-200 mt-auto flex w-full items-center gap-[10px] rounded-[10px] p-[8px_10px] text-left"
+        title="프로필 수정"
       >
-        <span className="flex size-8 items-center justify-center rounded-full bg-[var(--terra-100)] text-[12px] font-bold text-[var(--terra-700)]">
+        <span className="bg-leaf-100 text-leaf-700 flex size-8 items-center justify-center rounded-full text-[12px] font-bold">
           홍
         </span>
         <span className="flex-1">
-          <span className="block text-[13px] font-semibold text-[var(--ink-900)]">홍길동</span>
-          <span className="block text-[11px] text-[var(--fg-3)]">오늘 24분 읽음</span>
+          <span className="text-ink-900 block text-[13px] font-semibold">홍길동</span>
+          <span className="text-fg-3 block text-[11px]">오늘 24분 읽음</span>
         </span>
-      </Link>
+      </button>
     </aside>
   );
 }

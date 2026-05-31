@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useRef,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { cn } from '@/lib/utils/cn';
 
 const FOCUSABLE =
@@ -15,6 +21,14 @@ interface ModalShellProps {
   eyebrow?: string;
   /** 다이얼로그 박스 추가 클래스(너비·최소 높이 등) */
   className?: string;
+  /** 헤더(제목/닫기)를 숨김 — 확인창처럼 자체 레이아웃을 그릴 때. 제목은 aria-label 로만 사용 */
+  hideHeader?: boolean;
+  /** 세로 정렬 — 기본 top, center 는 작은 확인창용 */
+  align?: 'top' | 'center';
+  /** 위험 확인창은 alertdialog */
+  role?: 'dialog' | 'alertdialog';
+  /** 열릴 때 포커스할 요소(미지정 시 다이얼로그 컨테이너) */
+  initialFocusRef?: RefObject<HTMLElement | null>;
   children: ReactNode;
 }
 
@@ -29,6 +43,10 @@ export function ModalShell({
   title,
   eyebrow,
   className,
+  hideHeader = false,
+  align = 'top',
+  role = 'dialog',
+  initialFocusRef,
   children,
 }: ModalShellProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -43,8 +61,13 @@ export function ModalShell({
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (isOpen) dialogRef.current?.focus();
-  }, [isOpen]);
+    if (!isOpen) return;
+    const dialog = dialogRef.current;
+    const target = initialFocusRef?.current;
+    // 초기 포커스 요소가 다이얼로그 내부에 있을 때만 그곳으로(트랩 보호), 아니면 컨테이너로
+    if (target && dialog?.contains(target)) target.focus();
+    else dialog?.focus();
+  }, [isOpen, initialFocusRef]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -83,37 +106,43 @@ export function ModalShell({
 
   return (
     <div
-      className="bg-ink-900/40 fixed inset-0 z-50 flex justify-center overflow-y-auto p-4 sm:p-8"
+      className={cn(
+        'bg-ink-900/40 fixed inset-0 z-50 flex justify-center overflow-y-auto p-4 sm:p-8',
+        align === 'center' && 'items-center',
+      )}
       onClick={onClose}
     >
       <div
         ref={dialogRef}
-        role="dialog"
+        role={role}
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
         className={cn(
-          'bg-bg-elevated shadow-4 mt-[6vh] mb-8 h-fit w-[min(720px,100%)] rounded-xl p-6 outline-none',
+          'bg-bg-elevated shadow-4 mb-8 h-fit w-[min(720px,100%)] rounded-xl p-6 outline-none',
+          align === 'top' && 'mt-[6vh]',
           className,
         )}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={onDialogKeyDown}
       >
-        <header className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            {eyebrow ? (
-              <div className="text-fg-3 text-[11px] font-bold tracking-[0.1em] uppercase">
-                {eyebrow}
-              </div>
-            ) : null}
-            <h2 className="text-h3 text-ink-900 mt-1 font-serif font-semibold tracking-[-0.02em]">
-              {title}
-            </h2>
-          </div>
-          <Button variant="ghost" iconOnly aria-label="닫기" onClick={onClose}>
-            <Icon name="x" />
-          </Button>
-        </header>
+        {hideHeader ? null : (
+          <header className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              {eyebrow ? (
+                <div className="text-fg-3 text-[11px] font-bold tracking-[0.1em] uppercase">
+                  {eyebrow}
+                </div>
+              ) : null}
+              <h2 className="text-h3 text-ink-900 mt-1 font-serif font-semibold tracking-[-0.02em]">
+                {title}
+              </h2>
+            </div>
+            <Button variant="ghost" iconOnly aria-label="닫기" onClick={onClose}>
+              <Icon name="x" />
+            </Button>
+          </header>
+        )}
         {children}
       </div>
     </div>
