@@ -14,7 +14,9 @@ import {
   Lock,
   MessagesSquare,
   MoreHorizontal,
+  Pause,
   PenLine,
+  Play,
   Plus,
   Quote,
   ScanText,
@@ -22,6 +24,7 @@ import {
   SearchX,
   Settings,
   Sparkles,
+  Square,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -56,6 +59,9 @@ const ICON_MAP = {
   sparkles: Sparkles,
   'arrow-up': ArrowUp,
   'scan-text': ScanText,
+  play: Play,
+  pause: Pause,
+  square: Square,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICON_MAP;
