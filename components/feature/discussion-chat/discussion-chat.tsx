@@ -2,17 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils/cn';
-import { Icon, type IconName } from '@/components/ui/icon';
+import { Icon } from '@/components/ui/icon';
+import type { Persona } from '@/components/feature/persona/personas';
 
 const DUMMY_AI_DELAY_MS = 600;
 
-interface Persona {
-  name: string;
-  role: string;
-  icon: IconName;
-}
-
-interface Message {
+export interface Message {
   id: string;
   who: 'me' | 'ai';
   body: string;
@@ -62,7 +57,7 @@ export function DiscussionChat({ bookTitle, persona, initialMessages }: Discussi
   };
 
   return (
-    <div className="border-divider bg-bg-elevated flex min-h-[560px] max-w-3xl flex-col rounded-lg border">
+    <div className="border-divider bg-bg-elevated flex h-full min-h-[560px] flex-col rounded-lg border">
       {/* 헤더 — 페르소나 (생성 후 고정) */}
       <div className="border-divider flex items-center gap-3 border-b px-[18px] py-3.5">
         <span className="bg-leaf-50 text-accent flex size-9 shrink-0 items-center justify-center rounded-[10px]">

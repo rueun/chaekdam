@@ -1,6 +1,7 @@
 import { SessionTimer } from '@/components/feature/reader/session-timer';
 import { ReaderPane } from '@/components/feature/reader/reader-pane';
 import { DiscussionChat } from '@/components/feature/discussion-chat/discussion-chat';
+import { PERSONAS } from '@/components/feature/persona/personas';
 
 // 샘플 — 추후 '읽는 중' 책장 + ReadingSession 유스케이스로 대체
 const BOOK = { title: '일곱 해의 마지막', author: '김연수', coverColor: 'var(--terra-600)' };
@@ -31,7 +32,7 @@ export default function ReadingPage() {
         <ReaderPane bookTitle={BOOK.title} dateLabel="11월 18일" />
         <DiscussionChat
           bookTitle={BOOK.title}
-          persona={{ name: '비평가', role: '분석하는 토론자', icon: 'scan-text' }}
+          persona={PERSONAS.critic}
           initialMessages={[
             { id: 'r1', who: 'ai', body: '방금 그은 밑줄, 어떤 점이 마음에 닿았나요?' },
             {

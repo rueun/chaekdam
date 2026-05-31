@@ -165,7 +165,7 @@ export function Select({
           tabIndex={-1}
           aria-label={ariaLabel}
           aria-activedescendant={activeIndex >= 0 ? `${baseId}-opt-${activeIndex}` : undefined}
-          className="sel-menu absolute top-[calc(100%+6px)] left-0 z-50"
+          className="sel-menu absolute top-[calc(100%+6px)] right-0 left-0 z-50 w-full"
           onKeyDown={onListKeyDown}
         >
           {options.map((opt, i) => (
