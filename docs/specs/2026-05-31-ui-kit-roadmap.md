@@ -34,10 +34,16 @@
 | G1   | `Button`(primary/secondary/ghost/danger × md/sm × icon) · `Card`(plain/elevated) · `Progress` | ✅ 완료 |
 | G2   | `Badge`(new/ai/done) · `Chip`(default/soft/sm/active) · `Tag`                                 | ✅ 완료 |
 | G3   | `Input`(+error) · `Search`(+pill/clear) · `Select`                                            | ✅ 완료 |
-| G4   | `Checkbox` · `Radio` · `Toggle`(+lg) · `Segmented`                                            | ⬜      |
+| G4   | `Checkbox` · `Radio` · `Toggle`(+lg) · `Segmented`                                            | ✅ 완료 |
 | G5   | (후순위) `Stepper` · `Slider` · `DatePicker/Calendar` — MVP 미사용 시 보류                    | ⬜      |
 
 > Modal/Dialog 는 overlay-kit 과 묶이는 복합 요소 → 프리미티브가 아니라 화면 조립 단계에서 다룸.
+
+### 아이콘 시스템 (lucide-react) ✅
+
+- `components/ui/icon.tsx` — `<Icon name="..." />`(목업과 동일 API). `currentColor` 상속, 기본 18px.
+- 트리셰이킹 위해 **사용하는 아이콘만** `REGISTRY` 에 등록(필요 시 추가). 라벨 없으면 `aria-hidden`.
+- `Button` 의 `iconOnly` 는 정사각 SVG 아이콘 전제(`.btn-icon { line-height: 1 }`). 이모지 사용 금지(design-system.md).
 
 ## 각 그룹 작업 사이클
 
@@ -60,3 +66,4 @@
 - **쇼케이스 인터랙션 데모** — Chip 토글·BookCard onOpen 동작 시연은 별도 Client 컴포넌트로 분리.
 - **Select = 커스텀 드롭다운** — 네이티브 `<select>` 의 OS 드롭다운을 못 꾸며서 `.sel`(트리거) + `.sel-menu`(목록) 커스텀 listbox 로 전환(키보드·바깥클릭·포커스 복귀 포함). 폼 연동은 react-hook-form `Controller` 사용(네이티브 ref 직결 아님). 모바일 네이티브 피커는 미사용.
 - **SearchInput** — 네이티브 `type=search` 취소 버튼(`::-webkit-search-cancel-button`)을 제거하고 우리 `.clear` 버튼만 사용.
+- **BookCard Server/Client 분리(최적화)** — 현재 `onOpen` 없는 정적 카드도 `'use client'`. 정적 목록을 서버에서 다수 렌더할 때 `BookCardDisplay`(server) + 상호작용 래퍼로 분리 검토.

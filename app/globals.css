@@ -347,10 +347,12 @@ body {
     font-size: 12px;
     border-radius: 8px;
   }
-  /* 아이콘 전용(정사각) */
+  /* 아이콘 전용(정사각) — 정사각 SVG 아이콘이 들어온다고 가정. line-height:1 로
+     텍스트 글리프가 들어와도 세로로 부풀지 않게 한다. */
   .btn-icon {
     padding: 9px;
     border-radius: 10px;
+    line-height: 1;
   }
   .btn-icon.btn-sm {
     padding: 7px;
@@ -669,5 +671,204 @@ body {
     border-left: 1.6px solid var(--terra-500);
     border-bottom: 1.6px solid var(--terra-500);
     transform: rotate(-45deg) translateY(-2px);
+  }
+}
+
+/* =============================================================
+   디자인시스템 프리미티브 — G4: Checkbox / Radio / Toggle / Segmented
+   colors_and_type.css 원본을 토큰 기반으로 이식.
+   React 래퍼: components/ui/{checkbox,radio,toggle,segmented}.tsx
+   ============================================================= */
+@layer components {
+  /* 체크박스/라디오 + 라벨 래퍼 */
+  .opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: var(--font-sans);
+    font-size: var(--fs-body-sm);
+    color: var(--ink-800);
+    cursor: pointer;
+    user-select: none;
+  }
+  .opt:has(:disabled),
+  .opt.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* ---- Checkbox ---- */
+  .cbx {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    background: #fff;
+    border: 1.5px solid var(--paper-300);
+    display: inline-grid;
+    place-content: center;
+    transition:
+      background var(--dur-1) var(--ease-out),
+      border-color var(--dur-1) var(--ease-out);
+    cursor: pointer;
+    vertical-align: middle;
+    flex-shrink: 0;
+    margin: 0;
+  }
+  .cbx:hover:not(:disabled) {
+    border-color: var(--ink-500);
+  }
+  .cbx:checked,
+  .cbx:indeterminate {
+    background: var(--terra-500);
+    border-color: var(--terra-500);
+  }
+  .cbx:checked::after {
+    content: '';
+    width: 9px;
+    height: 5px;
+    border-left: 1.8px solid #fff;
+    border-bottom: 1.8px solid #fff;
+    transform: translateY(-1px) rotate(-45deg);
+  }
+  .cbx:indeterminate::after {
+    content: '';
+    width: 9px;
+    height: 1.8px;
+    background: #fff;
+    border-radius: 1px;
+  }
+  .cbx:focus-visible {
+    box-shadow: 0 0 0 3px var(--accent-ring);
+    outline: none;
+  }
+  .cbx:disabled {
+    cursor: not-allowed;
+  }
+
+  /* ---- Radio ---- */
+  .rdo {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1.5px solid var(--paper-300);
+    display: inline-grid;
+    place-content: center;
+    transition: border-color var(--dur-1) var(--ease-out);
+    cursor: pointer;
+    vertical-align: middle;
+    flex-shrink: 0;
+    margin: 0;
+  }
+  .rdo:hover:not(:disabled) {
+    border-color: var(--ink-500);
+  }
+  .rdo:checked {
+    border-color: var(--terra-500);
+  }
+  .rdo:checked::after {
+    content: '';
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--terra-500);
+  }
+  .rdo:focus-visible {
+    box-shadow: 0 0 0 3px var(--accent-ring);
+    outline: none;
+  }
+  .rdo:disabled {
+    cursor: not-allowed;
+  }
+
+  /* ---- Toggle / Switch ---- */
+  .toggle {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--paper-300);
+    position: relative;
+    cursor: pointer;
+    transition: background var(--dur-2) var(--ease-out);
+    vertical-align: middle;
+    flex-shrink: 0;
+    margin: 0;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(34, 42, 24, 0.18);
+    transition: transform var(--dur-2) var(--ease-out);
+  }
+  .toggle:checked {
+    background: var(--terra-500);
+  }
+  .toggle:checked::after {
+    transform: translateX(16px);
+  }
+  .toggle:focus-visible {
+    box-shadow: 0 0 0 3px var(--accent-ring);
+    outline: none;
+  }
+  .toggle:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .toggle.toggle-lg {
+    width: 51px;
+    height: 31px;
+  }
+  .toggle.toggle-lg::after {
+    width: 27px;
+    height: 27px;
+  }
+  .toggle.toggle-lg:checked::after {
+    transform: translateX(20px);
+  }
+
+  /* ---- Segmented control ---- */
+  .seg {
+    display: inline-flex;
+    padding: 3px;
+    background: var(--paper-200);
+    border-radius: 10px;
+    gap: 2px;
+  }
+  .seg .s {
+    padding: 7px 14px;
+    font-family: var(--font-sans);
+    font-size: var(--fs-caption);
+    font-weight: 500;
+    color: var(--ink-700);
+    border-radius: 8px;
+    cursor: pointer;
+    transition:
+      background var(--dur-1) var(--ease-out),
+      color var(--dur-1) var(--ease-out);
+    background: transparent;
+    border: 0;
+  }
+  .seg .s:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-ring);
+  }
+  .seg .s.is-on,
+  .seg .s[aria-checked='true'] {
+    background: #ffffff;
+    color: var(--ink-900);
+    font-weight: 600;
+    box-shadow: var(--shadow-1);
   }
 }
