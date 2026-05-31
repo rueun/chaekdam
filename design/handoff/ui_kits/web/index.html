@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=1280"/>
+  <title>책담 · Web UI Kit</title>
+  <link rel="stylesheet" href="../../colors_and_type.css"/>
+  <link rel="stylesheet" href="web.css"/>
+  <link rel="stylesheet" href="missing.css"/>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="pages-extra.jsx"></script>
+  <script type="text/babel" src="book-search.jsx"></script>
+  <script type="text/babel" src="auth.jsx"></script>
+  <script type="text/babel" src="missing.jsx"></script>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const params = new URLSearchParams(location.search);
+      const initial = params.get('screen') || 'home';
+      const startCapture = params.get('capture') === '1';
+      const startBookSearch = params.get('addbook') === '1';
+      const startSearch = params.get('search') === '1';
+      const startQmenu = params.get('qmenu') === '1';
+      const startNewChat = params.get('newchat') === '1';
+      const startProfile = params.get('profile') === '1';
+      const startConfirm = params.get('confirm') === '1';
+
+      const [tab, setTab] = useState(initial);
+      const [capture, setCapture] = useState(startCapture);
+      const [addBook, setAddBook] = useState(startBookSearch);
+      const [bookCtx, setBookCtx] = useState(null);
+
+      // New screens / modals
+      const [search, setSearch] = useState(startSearch);
+      const [qmenu, setQmenu] = useState(startQmenu ? { anchor: null } : null);
+      const [newChat, setNewChat] = useState(startNewChat);
+      const [profile, setProfile] = useState(startProfile);
+      const [confirm, setConfirm] = useState(startConfirm ? {
+        title: '모든 독서 기록을 삭제할까요?',
+        body: <>이번 해의 책 27권, 한 줄 312개, AI 토론 기록을 포함한 모든 데이터가 영구히 삭제돼요. <b>되돌릴 수 없어요.</b></>,
+        confirmText: '데이터 삭제',
+        requireType: '책담 삭제',
+      } : null);
+      const [toast, setToast] = useState('');
+
+      useEffect(() => { lucide.createIcons(); }, [tab, capture, addBook, search, qmenu, newChat, profile, confirm]);
+
+      // Demo screens (qmenu/confirm/profile) need a default anchor so
+      // they render usefully when deep-linked. Synthesize one once mounted.
+      useEffect(() => {
+        if (startQmenu) {
+          // Anchor under a fake top-right point so the menu is visible
+          setQmenu({ anchor: { getBoundingClientRect: () => ({ right: 360, bottom: 140 }) }, payload: {
+            t: '아주 천천히 책장을 넘기는 사람만이 어떤 문장이 자신의 것인지 알아본다.',
+            a: '김연수', b: '일곱 해의 마지막', p: 'p.42',
+          }});
+        }
+      }, []);
+
+      const openCapture = () => setCapture(true);
+      const openAddBook = () => setAddBook(true);
+      const openSearch = () => setSearch(true);
+      const openBook = (b) => { setBookCtx(b); setTab('book'); };
+      const openQmenu = (anchor, payload) => setQmenu({ anchor, payload });
+      const openNewChat = () => setNewChat(true);
+      const openProfile = () => setProfile(true);
+      const openConfirm = (cfg) => setConfirm(cfg);
+
+      // Switching to/from auth tabs
+      const handleSetTab = (next) => {
+        // Allow auth screens to navigate around
+        setTab(next);
+      };
+
+      // Auth screens render full-bleed without sidebar/main chrome
+      if (tab === 'login') {
+        return (
+          <div data-screen-label="web · login">
+            <PageLogin
+              onSwitch={() => setTab('signup')}
+              onForgot={() => setTab('forgot')}
+            />
+            <Footer/>
+          </div>
+        );
+      }
+      if (tab === 'signup') {
+        return (
+          <div data-screen-label="web · signup">
+            <PageSignup onSwitch={() => setTab('login')}/>
+            <Footer/>
+          </div>
+        );
+      }
+      if (tab === 'forgot') {
+        return (
+          <div data-screen-label="web · forgot">
+            <PageForgotPassword onBack={() => setTab('login')}/>
+            <Footer/>
+          </div>
+        );
+      }
+
+      const wirings = {
+        openCapture, openAddBook, openSearch, openBook,
+        openQmenu, openNewChat,
+        openProfile, openConfirm,
+        setTab: handleSetTab,
+        notify: setToast,
+      };
+
+      let page;
+      switch (tab) {
+        case 'library':  page = <PageLibrary {...wirings}/>; break;
+        case 'wish':     page = <PageWishlist {...wirings} empty={params.get('empty') === '1'}/>; break;
+        case 'reader':   page = <PageReader {...wirings} empty={params.get('empty') === '1'}/>; break;
+        case 'quotes':   page = <PageQuotes {...wirings}/>; break;
+        case 'talk':     page = <PageTalk {...wirings}/>; break;
+        case 'stats':    page = <PageStats/>; break;
+        case 'settings': page = <PageSettings {...wirings}/>; break;
+        case 'book':     page = <PageBook b={bookCtx} {...wirings}/>; break;
+        default:         page = <PageHome {...wirings}/>;
+      }
+      return (
+        <div className="app" data-screen-label={'web · ' + tab}>
+          <Sidebar tab={tab} setTab={setTab} onEditProfile={openProfile}/>
+          <main className="main">
+            <div onClickCapture={(e) => {
+              // Top-bar search field → global search
+              const searchEl = e.target.closest && e.target.closest('.top .search');
+              if (searchEl) {
+                e.stopPropagation();
+                e.preventDefault();
+                openSearch();
+              }
+            }}>{page}</div>
+          </main>
+          <CaptureDialog open={capture} onClose={() => setCapture(false)}/>
+          <BookSearchDialog open={addBook} onClose={() => setAddBook(false)}/>
+          <SearchDialog
+            open={search}
+            onClose={() => setSearch(false)}
+            onPickBook={openBook}
+            onOpenQuotes={() => setTab('quotes')}
+          />
+          <QuoteMenu
+            open={!!qmenu}
+            anchor={qmenu && qmenu.anchor}
+            onClose={() => setQmenu(null)}
+            onEdit={() => setToast('수정 모드를 열었어요')}
+            onPin={() => setToast('홈에 고정했어요')}
+            onDelete={() => openConfirm({
+              title: '이 한 줄을 삭제할까요?',
+              body: '삭제한 한 줄은 되돌릴 수 없어요. 보관함에 두고 싶다면 보관 기능을 사용해 보세요.',
+              confirmText: '한 줄 삭제',
+            })}
+          />
+          <NewChatDialog
+            open={newChat}
+            onClose={() => setNewChat(false)}
+            onStart={(b, style) => setToast(b.t + ' 토론을 시작했어요')}
+          />
+          <ProfileEditDialog open={profile} onClose={() => setProfile(false)}/>
+          <ConfirmDialog
+            open={!!confirm}
+            title={confirm && confirm.title}
+            body={confirm && confirm.body}
+            confirmText={confirm && confirm.confirmText}
+            requireType={confirm && confirm.requireType}
+            onClose={() => setConfirm(null)}
+            onConfirm={() => setToast('처리되었어요')}
+          />
+          <Toast text={toast} onDone={() => setToast('')}/>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>

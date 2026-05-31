@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>책담 · 전체 화면 캔버스</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #f0eee9; }
+  #root { height: 100%; }
+  /* iframe content lives in its own document; we only style the shell here. */
+  .ab-iframe {
+    width: 100%; height: 100%;
+    border: 0; display: block;
+    background: #FDFBF7;
+  }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+  const { useEffect } = React;
+
+  // Embed a UI kit page via iframe with deep-link params.
+  function KitFrame({ src }) {
+    return <iframe className="ab-iframe" src={src} loading="lazy"/>;
+  }
+
+  // --- Web screens (1440 × 900 design target) ---
+  const WEB = [
+    { id: 'web-login',    label: '00 · 로그인',         screen: 'login' },
+    { id: 'web-signup',   label: '00 · 회원가입',       screen: 'signup' },
+    { id: 'web-forgot',   label: '00 · 비밀번호 찾기',  screen: 'forgot' },
+    { id: 'web-home',     label: '01 · 홈',           screen: 'home' },
+    { id: 'web-library',  label: '02 · 내 서재',       screen: 'library' },
+    { id: 'web-wish',     label: '02b · 읽고 싶은',    screen: 'wish' },
+    { id: 'web-wish-empty', label: '02c · 읽고 싶은 (빈 상태)', screen: 'wish', extra: '&empty=1' },
+    { id: 'web-book',     label: '03 · 책 상세',       screen: 'book' },
+    { id: 'web-reader',   label: '04 · 읽는 중 + AI',  screen: 'reader' },
+    { id: 'web-reader-empty', label: '04b · 읽는 중 (빈 상태)', screen: 'reader', extra: '&empty=1' },
+    { id: 'web-quotes',   label: '05 · 밑줄 모음',     screen: 'quotes' },
+    { id: 'web-talk',     label: '06 · AI 독서토론',   screen: 'talk' },
+    { id: 'web-stats',    label: '07 · 독서 기록',     screen: 'stats' },
+    { id: 'web-settings', label: '08 · 설정',          screen: 'settings' },
+    { id: 'web-capture',  label: '10 · 한 줄 담기 (모달)', screen: 'home', extra: '&capture=1' },
+    { id: 'web-addbook',  label: '11 · 책 추가 (모달)', screen: 'library', extra: '&addbook=1' },
+    { id: 'web-search',   label: '12 · 전체 검색 (모달)', screen: 'home', extra: '&search=1' },
+    { id: 'web-qmenu',    label: '13 · 한 줄 메뉴 (팝오버)', screen: 'quotes', extra: '&qmenu=1' },
+    { id: 'web-newchat',  label: '14 · 새 대화 (모달)', screen: 'talk', extra: '&newchat=1' },
+    { id: 'web-profile',  label: '17 · 프로필 수정 (모달)', screen: 'settings', extra: '&profile=1' },
+    { id: 'web-confirm',  label: '18 · 삭제 확인 (모달)', screen: 'settings', extra: '&confirm=1' },
+  ];
+
+  // --- Mobile screens (402 × 874 — iOS device frame is included in the kit) ---
+  const MOBILE_W = 402 + 40;
+  const MOBILE_H = 874 + 40;
+  const MOBILE = [
+    { id: 'm-login',    label: '00 · 로그인',      screen: 'login' },
+    { id: 'm-signup',   label: '00 · 회원가입',    screen: 'signup' },
+    { id: 'm-forgot',   label: '00 · 비밀번호 찾기', screen: 'forgot' },
+    { id: 'm-home',     label: '01 · 홈',      screen: 'home' },
+    { id: 'm-library',  label: '02 · 내 서재',      screen: 'library' },
+    { id: 'm-book',     label: '03 · 책 상세',    screen: 'book' },
+    { id: 'm-reader',   label: '04 · 읽는 중',    screen: 'reader' },
+    { id: 'm-chat',     label: '05 · AI 토론',    screen: 'chat' },
+    { id: 'm-capture',  label: '06 · 한 줄 담기',  screen: 'capture' },
+    { id: 'm-search',   label: '07 · 검색',       screen: 'search' },
+    { id: 'm-addbook',  label: '08 · 책 추가',    screen: 'addbook' },
+    { id: 'm-profile',  label: '09 · 프로필',     screen: 'profile' },
+    { id: 'm-settings', label: '10 · 설정',       screen: 'settings' },
+    { id: 'm-stats',    label: '12 · 독서 기록',  screen: 'stats' },
+    { id: 'm-qdetail',  label: '13 · 한 줄 상세', screen: 'qdetail' },
+    { id: 'm-pedit',    label: '14 · 프로필 수정',  screen: 'pedit' },
+    { id: 'm-quotes',   label: '15 · 밑줄 모음',   screen: 'quotes' },
+    { id: 'm-wishlist', label: '16 · 읽고 싶은',   screen: 'wishlist' },
+  ];
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection
+          id="web"
+          title="Web UI Kit"
+          subtitle="데스크탑 · 1440px · 사이드바 내비게이션 + 메인 콘텐츠"
+        >
+          {WEB.map(s => (
+            <DCArtboard
+              key={s.id}
+              id={s.id}
+              label={s.label}
+              width={1440}
+              height={900}
+            >
+              <KitFrame src={`ui_kits/web/index.html?screen=${s.screen}${s.extra || ''}`}/>
+            </DCArtboard>
+          ))}
+        </DCSection>
+
+        <DCSection
+          id="mobile"
+          title="Mobile UI Kit"
+          subtitle="iOS · 402 × 874 (iPhone 16) · 탭바 + FAB"
+        >
+          {MOBILE.map(s => (
+            <DCArtboard
+              key={s.id}
+              id={s.id}
+              label={s.label}
+              width={MOBILE_W}
+              height={MOBILE_H}
+            >
+              <KitFrame src={`ui_kits/mobile/index.html?screen=${s.screen}${s.extra || ''}&embed=1`}/>
+            </DCArtboard>
+          ))}
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

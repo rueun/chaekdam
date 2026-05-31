@@ -1,0 +1,1678 @@
+/* ============================================================
+   책담 web UI kit — additional modals and screens
+   For: search results, share sheet, quote action menu, AI new-chat
+        modal, profile edit, danger confirm, forgot password.
+   ============================================================ */
+
+/* ============================================================
+   Reader session timer — the live "이번 세션 12:34" indicator
+   that runs while the reader is open. This is the source of all
+   '분' metrics in the product: time spent on the reader screen.
+   ============================================================ */
+.session-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 12px;
+  background: var(--paper-100);
+  border: 1px solid var(--terra-100);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--ink-800);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.session-timer .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--terra-500);
+  flex-shrink: 0;
+  animation: session-pulse 1.6s ease-in-out infinite;
+}
+.session-timer .lbl {
+  color: var(--fg-3);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.session-timer .val {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  color: var(--ink-900);
+  font-variant-numeric: tabular-nums;
+}
+@keyframes session-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.86);
+  }
+}
+
+/* Idle state — invites the user to start recording. Acts as a button. */
+.session-timer-idle {
+  background: var(--terra-50);
+  border-color: var(--terra-100);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background var(--dur-2) var(--ease-out);
+}
+.session-timer-idle:hover {
+  background: var(--terra-100);
+}
+.session-timer-idle .lbl {
+  color: var(--accent);
+  font-weight: 600;
+}
+.session-timer-idle .icon {
+  color: var(--accent);
+}
+
+/* Paused state — dot stops pulsing, value text dims. */
+.session-timer.is-paused .dot {
+  background: var(--paper-400);
+  animation: none;
+}
+.session-timer.is-paused .val,
+.session-timer.is-paused .lbl {
+  color: var(--fg-2);
+}
+
+/* Divider + control buttons inside the timer pill */
+.session-timer-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--divider-strong);
+  margin: 0 2px 0 6px;
+}
+.session-timer-btn {
+  background: transparent;
+  border: 0;
+  padding: 2px;
+  border-radius: 6px;
+  color: var(--fg-2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
+}
+.session-timer-btn:hover {
+  background: var(--paper-200);
+  color: var(--ink-900);
+}
+.session-timer-btn .icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* ============================================================
+   PageBook — chips row (status + format + tags), rating block
+   ============================================================ */
+.bookd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+  align-items: center;
+}
+.bookd-chips .status-badge {
+  font-size: 12px;
+  padding: 4px 11px 4px 10px;
+}
+.bookd-chips .chip-add {
+  background: transparent;
+  border: 1px dashed var(--divider-strong);
+  color: var(--fg-3);
+}
+.bookd-chips .chip-add:hover {
+  background: var(--paper-100);
+  color: var(--ink-700);
+}
+
+.bookd-rating {
+  margin: 18px 0 0;
+  padding: 16px 20px;
+  background: var(--paper-100);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px 16px;
+  align-items: center;
+}
+.bookd-rating .bookd-stars {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.bookd-rating .bookd-stars small {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--ink-800);
+  font-weight: 600;
+  letter-spacing: 0;
+  margin-left: 2px;
+}
+.bookd-rating .review {
+  grid-column: 1 / -1;
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink-800);
+  letter-spacing: -0.01em;
+  line-height: 1.6;
+  text-wrap: pretty;
+  padding-top: 10px;
+  border-top: 1px solid var(--divider);
+}
+.bookd-rating .lnk {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bookd-rating .lnk:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   PageBook — cover meta + AI 독서토론 list
+   The book detail page no longer shows large CTAs (이어 읽기/책장에 담기/공유).
+   This is a 기록 surface, not an ebook reader — so the side column
+   collapses to cover + a small meta line. Below, the body adds an
+   AI 독서토론 section: one row per discussion room, each locked to
+   a single 토론자 at creation time.
+   ============================================================ */
+.bookd-cover-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-2);
+  margin-top: 14px;
+  text-align: center;
+  justify-content: center;
+  letter-spacing: 0.01em;
+}
+.bookd-cover-meta span:nth-child(2) {
+  color: var(--paper-400);
+}
+
+.bookd-h-sub {
+  font-size: 13px;
+  color: var(--fg-2);
+  line-height: 1.6;
+  margin: -8px 0 14px;
+  max-width: 540px;
+}
+
+.bookd-talks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bookd-talk {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    background var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out);
+}
+.bookd-talk:hover {
+  border-color: var(--paper-400);
+  transform: translateY(-1px);
+}
+.bookd-talk.is-active {
+  border-color: var(--accent);
+  background: var(--terra-50);
+}
+.bookd-talk-ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--terra-50);
+  color: var(--accent);
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+}
+.bookd-talk.is-active .bookd-talk-ico {
+  background: var(--accent);
+  color: #ffffff;
+}
+.bookd-talk-ico .icon {
+  width: 16px;
+  height: 16px;
+}
+.bookd-talk-main {
+  flex: 1;
+  min-width: 0;
+}
+.bookd-talk-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.bookd-talk-persona {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.02em;
+}
+.bookd-talk-dot {
+  color: var(--paper-400);
+  font-size: 12px;
+}
+.bookd-talk-sub {
+  font-size: 13px;
+  color: var(--ink-700);
+  letter-spacing: -0.01em;
+}
+.bookd-talk-meta {
+  font-size: 11.5px;
+  color: var(--fg-3);
+  margin-top: 4px;
+  display: flex;
+  gap: 6px;
+}
+.bookd-talk-meta span:nth-child(2) {
+  color: var(--paper-400);
+}
+.bookd-talk-chev {
+  color: var(--fg-3);
+  flex-shrink: 0;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.bookd-talk:hover .bookd-talk-chev {
+  transform: translateX(2px);
+  color: var(--ink-700);
+}
+
+/* "New room" tile — dashed border, ghosted icon. */
+.bookd-talk-new {
+  background: transparent;
+  border-style: dashed;
+}
+.bookd-talk-new:hover {
+  background: var(--paper-100);
+  border-style: dashed;
+}
+.bookd-talk-ico-add {
+  background: var(--paper-100);
+  color: var(--fg-2);
+}
+.bookd-talk-new .bookd-talk-persona {
+  color: var(--ink-700);
+}
+
+/* ============================================================
+   PageBook — recent sessions list (replaces TOC, which we can't
+   honestly show since Naver Books doesn't return one).
+   ============================================================ */
+.bookd-sessions {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+  background: #fff;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+}
+.bookd-sessions li {
+  display: grid;
+  grid-template-columns: 1fr auto 1.2fr;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--divider);
+  font-size: 14px;
+}
+.bookd-sessions li:last-child {
+  border-bottom: 0;
+}
+.bookd-sessions .date {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.02em;
+}
+.bookd-sessions .dur {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--terra-700);
+  background: var(--terra-50);
+  border: 1px solid var(--terra-100);
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.bookd-sessions .note {
+  font-size: 12px;
+  color: var(--fg-2);
+  text-align: right;
+}
+
+/* ============================================================
+   BookCard meta row — status-badge + secondary meta line.
+   The status-badge component itself lives in colors_and_type.css.
+   ============================================================ */
+.book-status {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.book-status .status-badge {
+  flex-shrink: 0;
+}
+.book-status .meta-line {
+  font-size: 11px;
+  color: var(--fg-3);
+  font-family: ui-monospace, monospace;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Toast — small ack message
+   ============================================================ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: var(--ink-900);
+  color: #fdfbf7;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-3);
+  animation: toastIn 200ms var(--ease-out);
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ============================================================
+   Search dialog — global search across books, quotes, authors
+   ============================================================ */
+.modal.search-dialog {
+  width: min(820px, 100%);
+}
+
+.gs-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 0 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--divider);
+}
+.gs-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+.gs-input input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--ink-900);
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+.gs-input input::placeholder {
+  color: var(--paper-400);
+  font-weight: 400;
+}
+.gs-kbd {
+  padding: 3px 8px;
+  background: var(--paper-100);
+  border: 1px solid var(--divider);
+  border-radius: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.gs-scope {
+  display: flex;
+  gap: 6px;
+  padding: 14px 0 16px;
+  border-bottom: 1px solid var(--divider);
+}
+.gs-scope .chip {
+  font-size: 12px;
+}
+
+.gs-body {
+  max-height: 480px;
+  overflow: auto;
+  padding: 12px 0 4px;
+}
+.gs-section {
+  margin-bottom: 18px;
+}
+.gs-section:last-child {
+  margin-bottom: 0;
+}
+.gs-section-h {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+  text-transform: uppercase;
+  padding: 4px 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.gs-section-h .n {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-3);
+  letter-spacing: 0;
+}
+
+.gs-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 120ms var(--ease-out);
+}
+.gs-row:hover,
+.gs-row.is-focus {
+  background: var(--paper-100);
+}
+.gs-row .gs-ico {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--paper-100);
+  color: var(--ink-700);
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+}
+.gs-row .gs-ico.book {
+  width: 28px;
+  height: 40px;
+  border-radius: 3px;
+  padding: 4px;
+  font-family: var(--font-serif);
+  font-size: 8px;
+  font-weight: 600;
+  color: #fdfbf7;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: flex-end;
+  box-shadow:
+    inset -1px 0 0 rgba(0, 0, 0, 0.18),
+    0 1px 3px rgba(34, 42, 24, 0.1);
+}
+.gs-row .gs-tt {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gs-row .gs-tt mark {
+  background: var(--mark-100);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+.gs-row .gs-sub {
+  font-size: 12px;
+  color: var(--fg-2);
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.gs-row .gs-meta {
+  font-size: 11px;
+  color: var(--fg-3);
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
+}
+.gs-quote-text {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--ink-800);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: -0.01em;
+}
+.gs-quote-text mark {
+  background: var(--mark-100);
+  padding: 0 2px;
+  border-radius: 2px;
+  color: inherit;
+}
+
+.gs-empty {
+  padding: 36px 24px;
+  text-align: center;
+  color: var(--fg-2);
+}
+.gs-empty .t {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  color: var(--ink-900);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 8px 0 4px;
+}
+.gs-empty .s {
+  font-size: 13px;
+}
+
+.gs-recent {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gs-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--divider);
+  font-size: 12px;
+  color: var(--fg-3);
+}
+.gs-foot .hints {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.gs-foot .hint {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.gs-foot .kbd {
+  padding: 2px 6px;
+  background: var(--paper-100);
+  border: 1px solid var(--divider);
+  border-radius: 5px;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--ink-700);
+}
+
+/* ============================================================
+   Share dialog — quote / book share sheet
+   ============================================================ */
+.modal.share-dialog {
+  width: min(540px, 100%);
+}
+.share-preview {
+  background: var(--paper-100);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  padding: 24px 26px;
+  margin-bottom: 18px;
+}
+.share-preview.quote-style {
+  position: relative;
+}
+.share-preview.quote-style::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 26px;
+  bottom: 26px;
+  width: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.share-preview .pq {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--ink-800);
+  letter-spacing: -0.015em;
+}
+.share-preview .pq mark {
+  background: var(--mark-100);
+  padding: 0 2px;
+  border-radius: 2px;
+  color: inherit;
+}
+.share-preview .pm {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.share-preview .pm b {
+  color: var(--ink-700);
+  font-weight: 600;
+}
+
+.share-preview.book-style {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 16px;
+}
+.share-preview .pcover {
+  aspect-ratio: 2/3;
+  border-radius: 4px;
+  padding: 10px 8px;
+  color: #fdfbf7;
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: flex-end;
+  box-shadow:
+    inset -2px 0 0 rgba(0, 0, 0, 0.14),
+    0 2px 6px rgba(34, 42, 24, 0.12);
+}
+.share-preview .pinfo .tt {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.02em;
+}
+.share-preview .pinfo .ph {
+  font-size: 12px;
+  color: var(--fg-2);
+  margin-top: 4px;
+}
+.share-preview .pinfo .pl {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--divider);
+  font-size: 12px;
+  color: var(--fg-3);
+  font-family: ui-monospace, monospace;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.share-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.share-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  background: #fff;
+  border: 1px solid var(--divider-strong);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 160ms var(--ease-out);
+}
+.share-btn:hover {
+  border-color: var(--accent);
+  background: var(--terra-50);
+}
+.share-btn .ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+.share-btn .ico.kakao {
+  background: #fee500;
+  color: #1a1a1a;
+}
+.share-btn .ico.x {
+  background: #1a1a1a;
+}
+.share-btn .ico.thread {
+  background: linear-gradient(155deg, #6f4e7c, #3e2b47);
+}
+.share-btn .ico.copy {
+  background: var(--ink-700);
+}
+.share-btn .ico.image {
+  background: var(--terra-500);
+}
+.share-btn .ico.email {
+  background: var(--talk-400, #4f6b7b);
+}
+.share-btn .ico.embed {
+  background: var(--paper-300);
+  color: var(--ink-700);
+}
+.share-btn .ico.print {
+  background: var(--paper-400);
+  color: var(--ink-800);
+}
+.share-btn .lbl {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-800);
+  letter-spacing: -0.01em;
+}
+
+.share-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--paper-100);
+  border: 1px solid var(--divider);
+  border-radius: 10px;
+}
+.share-link input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--ink-700);
+}
+.share-link button {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--ink-900);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   Quote action popover (... menu on QuoteCard)
+   ============================================================ */
+.qmenu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.qmenu {
+  position: fixed;
+  z-index: 41;
+  width: 240px;
+  background: #fff;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  box-shadow: var(--shadow-3);
+  padding: 6px;
+  animation: notifIn 160ms var(--ease-out);
+}
+.qmenu-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ink-800);
+  cursor: pointer;
+  transition: background 100ms var(--ease-out);
+}
+.qmenu-row:hover {
+  background: var(--paper-100);
+}
+.qmenu-row.is-danger {
+  color: #c44a3f;
+}
+.qmenu-row.is-danger:hover {
+  background: rgba(196, 74, 63, 0.06);
+}
+.qmenu-row .icon {
+  color: var(--fg-2);
+}
+.qmenu-row.is-danger .icon {
+  color: #c44a3f;
+}
+.qmenu-row .kbd {
+  margin-left: auto;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--paper-100);
+  border: 1px solid var(--divider);
+  border-radius: 5px;
+  color: var(--fg-3);
+}
+.qmenu-sep {
+  height: 1px;
+  background: var(--divider);
+  margin: 5px 8px;
+}
+
+/* ============================================================
+   New AI chat dialog — book picker
+   ============================================================ */
+.modal.newchat-dialog {
+  width: min(640px, 100%);
+}
+.nc-intro {
+  font-size: 13px;
+  color: var(--fg-2);
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+.nc-section-h {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+  text-transform: uppercase;
+  margin: 16px 4px 8px;
+}
+.nc-book-list {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  max-height: 340px;
+  overflow: auto;
+}
+.nc-book {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--divider);
+  transition: background 120ms var(--ease-out);
+}
+.nc-book:last-child {
+  border-bottom: 0;
+}
+.nc-book:hover {
+  background: var(--paper-100);
+}
+.nc-book.is-active {
+  background: var(--terra-50);
+}
+.nc-book .cv {
+  width: 40px;
+  aspect-ratio: 2/3;
+  border-radius: 3px;
+  font-family: var(--font-serif);
+  font-size: 9px;
+  font-weight: 600;
+  color: #fdfbf7;
+  padding: 5px 4px;
+  display: flex;
+  align-items: flex-end;
+  line-height: 1.15;
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.18);
+}
+.nc-book .info .t {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.02em;
+}
+.nc-book .info .a {
+  font-size: 11px;
+  color: var(--fg-2);
+  margin-top: 2px;
+}
+.nc-book .pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--paper-100);
+  color: var(--ink-700);
+  white-space: nowrap;
+}
+.nc-book.is-active .pill {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* New-chat dialog · Persona picker
+   Replaces the old abstract "토론 스타일" tri-selector with a real
+   persona list. A small lock note above the list communicates that
+   the choice is final once the room is created — one room, one 토론자. */
+.nc-persona-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--clay-700);
+  background: var(--clay-50);
+  border: 1px solid var(--clay-100);
+  border-radius: 10px;
+  padding: 10px 12px;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+.nc-persona-note .icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.nc-persona-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.nc-persona {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1.5px solid var(--divider);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 160ms var(--ease-out);
+}
+.nc-persona:hover:not(.is-disabled) {
+  border-color: var(--paper-400);
+}
+.nc-persona.on {
+  border-color: var(--accent);
+  background: var(--terra-50);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.nc-persona.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  background: var(--paper-100);
+}
+.nc-persona-ic {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--terra-50);
+  color: var(--accent);
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+}
+.nc-persona.on .nc-persona-ic {
+  background: var(--accent);
+  color: #fff;
+}
+.nc-persona-ic .icon {
+  width: 16px;
+  height: 16px;
+}
+.nc-persona-meta {
+  min-width: 0;
+  flex: 1;
+}
+.nc-persona .tt {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.nc-persona .ss {
+  font-size: 11.5px;
+  color: var(--fg-2);
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+.nc-foot {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--divider);
+}
+
+/* ============================================================
+   Profile edit dialog
+   ============================================================ */
+.modal.profile-dialog {
+  width: min(560px, 100%);
+}
+.pe-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 0 18px;
+  border-bottom: 1px solid var(--divider);
+  margin-bottom: 18px;
+}
+.pe-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  background: var(--terra-100);
+  color: var(--terra-700);
+  display: grid;
+  place-content: center;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 28px;
+  position: relative;
+}
+.pe-avatar .edit {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--ink-900);
+  color: #fff;
+  display: grid;
+  place-content: center;
+  box-shadow: 0 0 0 3px var(--bg);
+  cursor: pointer;
+}
+.pe-avatar-help {
+  font-size: 12px;
+  color: var(--fg-2);
+  line-height: 1.6;
+}
+.pe-avatar-help b {
+  color: var(--ink-900);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+.pe-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.pe-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pe-fields label > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+.pe-textarea {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink-900);
+  background: #fff;
+  border: 1px solid var(--divider-strong);
+  border-radius: 10px;
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 80px;
+}
+.pe-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  outline: none;
+}
+.pe-foot {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+/* ============================================================
+   Confirm danger dialog
+   ============================================================ */
+.modal.confirm-dialog {
+  width: min(440px, 100%);
+}
+.confirm-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(196, 74, 63, 0.1);
+  color: #c44a3f;
+  display: grid;
+  place-content: center;
+  margin: 0 0 14px;
+}
+.confirm-body {
+  font-size: 14px;
+  color: var(--ink-700);
+  line-height: 1.65;
+  margin-bottom: 18px;
+}
+.confirm-body b {
+  color: var(--ink-900);
+}
+.confirm-input {
+  margin-top: 12px;
+}
+.confirm-input .help {
+  font-size: 12px;
+  color: var(--fg-3);
+  margin-bottom: 6px;
+}
+.confirm-input .help b {
+  font-family: ui-monospace, monospace;
+  color: var(--ink-900);
+  font-weight: 700;
+}
+.confirm-foot {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.confirm-foot .btn-danger {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+/* ============================================================
+   Forgot password — sub-screen of auth
+   ============================================================ */
+.auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-2);
+  font-weight: 500;
+  margin-bottom: 18px;
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+}
+.auth-back:hover {
+  color: var(--accent);
+}
+.fp-success {
+  padding: 14px 16px;
+  background: var(--sage-100);
+  border: 1px solid var(--sage-300, #bfcdb1);
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.fp-success .t {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sage-700);
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.fp-success .s {
+  font-size: 13px;
+  color: var(--ink-700);
+  line-height: 1.6;
+}
+.fp-success .s b {
+  color: var(--ink-900);
+}
+
+/* ============================================================
+   Wishlist — home rail card variant + full page grid + empty state.
+   The wishlist replaces the old "이 책 다음엔 어때요?" recommender,
+   surfacing books the user already saved. No algorithm — just
+   most-recently-added on top.
+   ============================================================ */
+
+/* Small button variant — used by wish-tile actions. */
+.btn.btn-sm {
+  padding: 7px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.btn.btn-icon.btn-sm,
+.wish-tile .btn-icon {
+  padding: 7px;
+}
+
+/* ---- Home rail card ---- */
+.wish-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.wish-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.wish-card-head h3 {
+  margin-bottom: 0;
+}
+.wish-more {
+  font-size: 12px;
+  color: var(--fg-2);
+  text-decoration: none;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.wish-more:hover {
+  color: var(--accent);
+}
+.wish-row .rec-info {
+  padding-right: 4px;
+}
+.wish-row-action {
+  padding: 6px !important;
+  border-radius: 8px;
+  color: var(--fg-2);
+  flex-shrink: 0;
+}
+.wish-row-action:hover {
+  background: var(--paper-100);
+  color: var(--accent);
+}
+.wish-card-foot {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--paper-300);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition:
+    background var(--dur-2) var(--ease-out),
+    color var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out);
+}
+.wish-card-foot:hover {
+  background: var(--paper-100);
+  color: var(--ink-900);
+  border-color: var(--paper-400);
+}
+
+/* ---- Empty state (shared between card + full page) ---- */
+.wish-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+.wish-empty-card {
+  padding: 20px 8px 6px;
+}
+.wish-empty-full {
+  margin: 60px auto;
+  max-width: 460px;
+  padding: 56px 32px;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid var(--divider);
+  border-radius: 20px;
+}
+.wish-empty-ico {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-content: center;
+  border-radius: 999px;
+  background: var(--paper-100);
+  color: var(--ink-500);
+  margin-bottom: 4px;
+}
+.wish-empty-ico.lg {
+  width: 72px;
+  height: 72px;
+}
+.wish-empty-ico.lg .icon {
+  width: 28px;
+  height: 28px;
+}
+.wish-empty-t {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.01em;
+}
+.wish-empty-full .wish-empty-t {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+.wish-empty-s {
+  font-size: 12px;
+  color: var(--fg-2);
+  line-height: 1.65;
+  max-width: 280px;
+}
+.wish-empty-full .wish-empty-s {
+  font-size: 14px;
+  max-width: 360px;
+}
+.wish-empty-cta {
+  margin-top: 12px;
+}
+
+/* ---- Full page grid ---- */
+.wish-filters {
+  margin-top: 24px;
+  margin-bottom: 20px;
+}
+.wish-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+.wish-tile {
+  background: #ffffff;
+  border: 1px solid var(--divider);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out);
+}
+.wish-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--paper-300);
+  box-shadow: var(--shadow-2);
+}
+.wish-cover {
+  aspect-ratio: 16 / 9;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+.wish-cover-pill {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #3f5e6b !important;
+  border-color: transparent !important;
+  backdrop-filter: blur(4px);
+}
+.wish-body {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.wish-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+.wish-author {
+  font-size: 13px;
+  color: var(--fg-2);
+  margin-bottom: 6px;
+}
+.wish-note {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-700);
+  line-height: 1.55;
+  margin: 4px 0 6px;
+  /* Keep notes from blowing out tile heights — clamp to 2 lines. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wish-meta {
+  font-size: 11px;
+  color: var(--fg-3);
+  letter-spacing: 0.02em;
+  margin-top: auto;
+  padding-top: 10px;
+}
+.wish-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.wish-action-start {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ============================================================
+   AI Persona picker (Settings · AI 독서토론)
+   Four toggle-able 토론자 cards: 소크라테스 / 비평가 / 작가 본인 / 책 동무.
+   Built as a radio group on native <input> so keyboard + screen-reader
+   semantics come for free; the <label> wraps the whole card so the
+   click target is the entire surface.
+   ============================================================ */
+.s-card-intro {
+  font-size: 13px;
+  color: var(--fg-2);
+  line-height: 1.6;
+  margin: -4px 0 16px;
+}
+.persona-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.persona-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 16px 14px;
+  background: #ffffff;
+  border: 2px solid var(--divider-strong);
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    background var(--dur-2) var(--ease-out);
+}
+.persona-card:hover {
+  border-color: var(--paper-400);
+}
+.persona-card.is-selected,
+.persona-card:has(.persona-radio:checked) {
+  border-color: var(--accent);
+  background: var(--terra-50);
+}
+/* Native radio hidden — the whole card is the affordance. */
+.persona-radio {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1.5px solid var(--paper-300);
+  cursor: pointer;
+  margin: 0;
+}
+.persona-radio:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 3.5px #fff;
+}
+.persona-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-right: 28px; /* leave space for the radio */
+}
+.persona-ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-content: center;
+  background: var(--terra-50);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.persona-card.is-selected .persona-ico,
+.persona-card:has(.persona-radio:checked) .persona-ico {
+  background: var(--accent);
+  color: #fff;
+}
+.persona-ico .icon {
+  width: 18px;
+  height: 18px;
+}
+.persona-id {
+  min-width: 0;
+  flex: 1;
+}
+.persona-name {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.persona-role {
+  font-size: 11px;
+  color: var(--fg-2);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+.persona-badge {
+  position: absolute;
+  top: 14px;
+  right: 40px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--clay-700);
+  background: var(--clay-100);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.persona-blurb {
+  font-size: 12.5px;
+  color: var(--fg-2);
+  line-height: 1.6;
+}
+.persona-preview {
+  position: relative;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-700);
+  line-height: 1.55;
+  background: var(--paper-100);
+  /* Transparent border in default state so the +1px on each side
+     when selected doesn't change the card's height (and, via grid
+     row stretch, the neighbouring card's height too). */
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 12px 10px 22px;
+  margin-top: auto;
+}
+.persona-preview-q {
+  position: absolute;
+  left: 9px;
+  top: 4px;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: var(--paper-400);
+  line-height: 1;
+}
+.persona-card.is-selected .persona-preview,
+.persona-card:has(.persona-radio:checked) .persona-preview {
+  background: #ffffff;
+  border: 1px solid var(--terra-100);
+}

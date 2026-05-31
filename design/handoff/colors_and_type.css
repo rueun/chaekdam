@@ -1,0 +1,1206 @@
+/* =============================================================
+   책담 (Chaekdam) — Design System
+   Colors & Typography Foundations
+   ============================================================= */
+
+/* ---- FONTS ----
+   Pretendard Variable (single file, axes 100–900) is loaded directly
+   from the project. The OTF families below are kept as a per-weight
+   fallback only — Variable hits first and the static @font-face rules
+   never resolve unless the woff2 fails to load. */
+@font-face {
+  font-family: 'Pretendard Variable';
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/PretendardVariable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/Pretendard-Thin.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/Pretendard-ExtraLight.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/Pretendard-Light.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/Pretendard-Regular.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/Pretendard-Medium.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/Pretendard-SemiBold.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/Pretendard-Bold.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/Pretendard-ExtraBold.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  src: url('fonts/Pretendard-Black.otf') format('opentype');
+}
+
+/* Serif companion for quotes & literary display.
+   Substitution flagged: no serif file was provided — pairing with
+   Google Fonts' Noto Serif KR which co-designs with Pretendard. */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ============================================================
+     COLOR — PALETTE (raw)
+     A paper-inspired palette anchored on a deep forest green. The
+     accent comes from old book spines and library bindings —
+     calm, gender- and age-neutral, and never corporate. Paper
+     neutrals are a soft warm cream, intentionally desaturated so
+     the green sits on the page like ink on aged stock.
+     ============================================================ */
+
+  /* Cream / paper neutrals — pulled toward bright off-white so the
+     page reads "fresh paper," not "aged manuscript." Just enough warmth
+     to harmonize with the forest accent without going dingy. */
+  --paper-50: #faf8f2; /* lightest cream — page background */
+  --paper-100: #f2efe6; /* card / surface */
+  --paper-200: #e6e1d2; /* divider, subtle fill */
+  --paper-300: #cbc4ae; /* heavier divider */
+  --paper-400: #9d9784; /* placeholder / disabled */
+  --paper-500: #6f6c62; /* secondary text on cream */
+
+  /* Ink — neutral near-blacks with a faint warmth. Kept off the green
+     family so body copy reads as real text, not a third accent. The
+     green appears only where it should: CTAs, the underline mark,
+     and the brand wordmark. */
+  --ink-900: #1a1a18; /* primary text */
+  --ink-800: #2a2a26; /* heading on dark */
+  --ink-700: #45433d; /* secondary heading */
+  --ink-600: #5e5c53; /* body secondary */
+  --ink-500: #82807a; /* tertiary */
+  --ink-300: #c3c1b9; /* dim */
+
+  /* Brand — Deep Forest Green (primary accent).
+     The name --terra-* is preserved for back-compat across the
+     codebase; the values themselves now represent the forest
+     green family. Use --leaf-* aliases in new code. */
+  --terra-50: #ebeedf;
+  --terra-100: #d5dac1;
+  --terra-200: #b0bca0;
+  --terra-300: #809a7e;
+  --terra-400: #557a65;
+  --terra-500: #3f6750; /* PRIMARY accent */
+  --terra-600: #2d5240;
+  --terra-700: #1f4030;
+
+  /* Aliases — prefer these in new code. */
+  --leaf-50: var(--terra-50);
+  --leaf-100: var(--terra-100);
+  --leaf-200: var(--terra-200);
+  --leaf-300: var(--terra-300);
+  --leaf-400: var(--terra-400);
+  --leaf-500: var(--terra-500);
+  --leaf-600: var(--terra-600);
+  --leaf-700: var(--terra-700);
+
+  /* Sage — secondary, "saved / recorded / completed" accent.
+     A lighter, dustier green so completed states read as a
+     different beat from the deep-forest primary CTA. */
+  --sage-50: #eff1e5;
+  --sage-100: #dde3cc;
+  --sage-300: #a8b98f;
+  --sage-500: #6e8b5e;
+  --sage-700: #4a6741;
+  --ember-100: var(--sage-100);
+  --ember-500: var(--sage-500);
+  --ember-700: var(--sage-700);
+
+  /* Clay — "completed / finished reading" accent.
+     A warm desaturated brown pulled from old leather book spines
+     and aged binding glue. Sits in a completely different colour
+     family from the forest/sage greens so 완독 reads as a distinct
+     state, not "slightly different reading." */
+  --clay-50: #faede2;
+  --clay-100: #f2dbca;
+  --clay-300: #d8a48a;
+  --clay-500: #a85f37;
+  --clay-700: #6e3d22;
+
+  /* Highlighter — chartreuse-leaning yellow that sits with the
+     forest greens instead of fighting them. */
+  --mark-100: #e8dc7f;
+  --mark-300: #dfcc4d;
+  --mark-500: #c7b22a;
+
+  /* Discussion (AI) — desaturated cool grey-blue. Kept distinct
+     from the green family so AI-attributed surfaces never read as
+     "another primary." */
+  --talk-100: #d7dee2;
+  --talk-500: #6b7e89;
+
+  /* Status semantics */
+  --success: var(--sage-500);
+  --warning: #d9963d;
+  --danger: #c44a3f;
+  --info: var(--talk-500);
+
+  /* ============================================================
+     COLOR — SEMANTIC TOKENS
+     Use these in app code, not the raw palette above.
+     ============================================================ */
+  --bg: var(--paper-50);
+  --bg-elevated: #ffffff;
+  --surface: var(--paper-100);
+  --surface-2: var(--paper-200);
+  --divider: var(--paper-200);
+  --divider-strong: var(--paper-300);
+
+  --fg: var(--ink-900);
+  --fg-1: var(--ink-900);
+  --fg-2: var(--ink-600);
+  --fg-3: var(--ink-500);
+  --fg-dim: var(--paper-500);
+  --fg-on-accent: #ffffff;
+
+  --accent: var(--terra-500);
+  --accent-hover: var(--terra-600);
+  --accent-press: var(--terra-700);
+  --accent-soft: var(--terra-50);
+  --accent-ring: rgba(63, 103, 80, 0.24);
+
+  --mark-bg: var(--mark-100);
+  --mark-fg: var(--ink-900);
+
+  /* ============================================================
+     TYPE — SCALE
+     Pretendard for UI/body; Noto Serif KR for literary display
+     (quotes, hero numbers, book titles in editorial contexts).
+     ============================================================ */
+  /* Type — Pretendard everywhere. The --font-serif slot is aliased to
+     the sans family so headings, quotes, and editorial numerals also
+     render in Pretendard (kept as a token name for back-compat with
+     code that references it). */
+  --font-sans:
+    'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Noto Sans KR', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: var(--font-sans);
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  /* Type sizes (rem assumes 16px root) */
+  --fs-display: 56px;
+  --fs-h1: 40px;
+  --fs-h2: 30px;
+  --fs-h3: 22px;
+  --fs-h4: 18px;
+  --fs-body: 16px;
+  --fs-body-sm: 14px;
+  --fs-caption: 13px;
+  --fs-micro: 11px;
+
+  /* Line heights — generous for Korean readability */
+  --lh-tight: 1.2;
+  --lh-snug: 1.35;
+  --lh-normal: 1.55;
+  --lh-loose: 1.75;
+
+  /* Letter spacing — Korean reads best slightly tight */
+  --ls-tight: -0.02em;
+  --ls-normal: -0.01em;
+  --ls-wide: 0.02em;
+
+  /* ============================================================
+     SHAPE / SHADOW / SPACING
+     ============================================================ */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* Soft, warm shadows — tinted with a warm dark olive so
+     elevation feels like ink on paper rather than cold glass. */
+  --shadow-1: 0 1px 2px rgba(34, 42, 24, 0.07);
+  --shadow-2: 0 2px 8px rgba(34, 42, 24, 0.09), 0 1px 2px rgba(34, 42, 24, 0.05);
+  --shadow-3: 0 8px 24px rgba(34, 42, 24, 0.11), 0 2px 6px rgba(34, 42, 24, 0.06);
+  --shadow-4: 0 18px 48px rgba(34, 42, 24, 0.15), 0 4px 12px rgba(34, 42, 24, 0.07);
+
+  /* Inset for pressed states */
+  --shadow-inset: inset 0 1px 2px rgba(34, 42, 24, 0.1);
+
+  /* Spacing scale (4px base) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+
+  /* Motion — slow & warm, no bounces */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --dur-4: 480ms;
+}
+
+/* ============================================================
+   SEMANTIC TYPE CLASSES
+   Use these directly: <h1 class="t-h1">…</h1>
+   ============================================================ */
+
+html,
+body {
+  font-family: var(--font-sans);
+  color: var(--fg);
+  background: var(--bg);
+  font-feature-settings: 'ss06', 'ss07'; /* Pretendard stylistic */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: var(--ls-normal);
+}
+
+.t-display {
+  font-family: var(--font-serif);
+  font-size: var(--fs-display);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+.t-h1 {
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+}
+.t-h2 {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+}
+.t-h3 {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-normal);
+}
+.t-h4 {
+  font-size: var(--fs-h4);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-normal);
+}
+.t-body {
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: var(--lh-normal);
+}
+.t-body-lg {
+  font-size: 17px;
+  font-weight: 400;
+  line-height: var(--lh-loose);
+}
+.t-body-sm {
+  font-size: var(--fs-body-sm);
+  font-weight: 400;
+  line-height: var(--lh-normal);
+}
+.t-caption {
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  line-height: var(--lh-snug);
+  color: var(--fg-2);
+}
+.t-micro {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+.t-quote {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: var(--lh-loose);
+  letter-spacing: var(--ls-tight);
+  color: var(--ink-800);
+}
+
+/* The brand mark — an actual underline drawn under selected text.
+   The line that starts a conversation — a quote worth talking about. */
+.mark-underline {
+  background-image: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 65%,
+    var(--terra-300) 65%,
+    var(--terra-300) 92%,
+    transparent 92%
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  padding: 0 2px;
+}
+.mark-highlight {
+  background: var(--mark-100);
+  padding: 0 4px;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ============================================================
+   CHIPS · BADGES · TAGS
+   ============================================================ */
+
+/* Filter / selection chip — round-pill button used in filter rows. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  background: #ffffff;
+  color: var(--ink-700);
+  border: 1px solid var(--divider-strong);
+  cursor: pointer;
+  transition:
+    background var(--dur-2) var(--ease-out),
+    color var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out);
+  white-space: nowrap;
+}
+.chip:hover {
+  background: var(--paper-100);
+}
+.chip.is-active,
+.chip[aria-pressed='true'] {
+  background: var(--terra-500);
+  color: #fff;
+  border-color: var(--terra-500);
+  font-weight: 600;
+}
+.chip.is-active:hover {
+  background: var(--terra-600);
+}
+.chip.chip-soft {
+  background: var(--terra-50);
+  color: var(--terra-700);
+  border-color: var(--terra-100);
+}
+.chip.chip-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Tag — looks like a chip but used inline within content (e.g. #소설). */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ink-700);
+  background: var(--paper-100);
+  border: 1px solid var(--paper-200);
+}
+
+/* Badge — small status pip; semantic variants. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.badge-new {
+  background: var(--mark-100);
+  color: #7a5b0f;
+}
+.badge-ai {
+  background: var(--talk-100);
+  color: #3f5e6b;
+}
+.badge-done {
+  background: var(--clay-100);
+  color: var(--clay-700);
+}
+
+/* ---- Status Badge ----
+   Book-status pill used in BookCard, PageBook, search results, etc.
+   Four states, four colour families — chosen so they read as
+   *different beats*, not subtle gradations of the same hue:
+
+     reading  → forest green   (active, in progress)
+     done     → warm clay      (completed — leather-bound, with ✓)
+     wish     → cool grey-blue (aspirational, future)
+     paused   → highlighter    (set aside, attention)
+
+   All four share the same shape, size, and weight so the only
+   variable a user reads is the colour + label. */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 8px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.45;
+  border: 1px solid transparent;
+}
+/* Leading dot — turned off for `done` (replaced by check glyph). */
+.status-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.status-badge.is-reading {
+  background: var(--terra-50);
+  color: var(--terra-700);
+  border-color: var(--terra-100);
+}
+.status-badge.is-done {
+  background: var(--clay-100);
+  color: var(--clay-700);
+  border-color: var(--clay-300);
+}
+/* Done uses a check instead of the dot — semantically more direct.
+   Drawn as an SVG mask (not a unicode "✓" glyph) so it sits dead-centre
+   via flex alignment; glyph metrics for ✓ vary wildly across fonts and
+   tend to drop the check below the optical centre of the pill. */
+.status-badge.is-done::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  background: currentColor;
+  opacity: 1;
+  border-radius: 0;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.4 6.3 L5 8.7 L9.6 3.6' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>")
+    no-repeat center / contain;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path d='M2.4 6.3 L5 8.7 L9.6 3.6' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>")
+    no-repeat center / contain;
+}
+.status-badge.sm.is-done::before {
+  width: 8px;
+  height: 8px;
+}
+.status-badge.is-wish {
+  background: var(--talk-100);
+  color: #3f5e6b;
+  border-color: rgba(63, 94, 107, 0.18);
+}
+.status-badge.is-paused {
+  background: var(--mark-100);
+  color: #7a5b0f;
+  border-color: rgba(122, 91, 15, 0.18);
+}
+
+/* Small variant — for tight rows or filter rails. */
+.status-badge.sm {
+  padding: 2px 8px 2px 7px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+.status-badge.sm::before {
+  width: 5px;
+  height: 5px;
+}
+
+/* Solid variant — heavier emphasis, used on selected/active cards. */
+.status-badge.solid.is-reading {
+  background: var(--terra-500);
+  color: #fdfbf7;
+  border-color: transparent;
+}
+.status-badge.solid.is-done {
+  background: var(--clay-500);
+  color: #ffffff;
+  border-color: transparent;
+}
+.status-badge.solid.is-wish {
+  background: #4f6b7b;
+  color: #ffffff;
+  border-color: transparent;
+}
+.status-badge.solid.is-paused {
+  background: var(--mark-500);
+  color: #1f1a15;
+  border-color: transparent;
+}
+.status-badge.solid::before {
+  opacity: 1;
+}
+.status-badge.solid.is-done::before {
+  color: inherit;
+}
+
+/* ============================================================
+   FORM COMPONENTS
+   Reusable selection + form controls.
+   Style native <input> elements where possible so accessibility
+   (focus, keyboard, screen reader semantics) comes for free.
+   ============================================================ */
+
+/* ---- Option row wrapper for checkbox/radio with a label ---- */
+.opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-sm);
+  color: var(--ink-800);
+  cursor: pointer;
+  user-select: none;
+}
+.opt:has(:disabled),
+.opt.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---- Checkbox ---- */
+.cbx {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: #fff;
+  border: 1.5px solid var(--paper-300);
+  display: inline-grid;
+  place-content: center;
+  transition:
+    background var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out);
+  cursor: pointer;
+  vertical-align: middle;
+  flex-shrink: 0;
+  margin: 0;
+}
+.cbx:hover:not(:disabled) {
+  border-color: var(--ink-500);
+}
+.cbx:checked,
+.cbx:indeterminate {
+  background: var(--terra-500);
+  border-color: var(--terra-500);
+}
+.cbx:checked::after {
+  content: '';
+  width: 9px;
+  height: 5px;
+  border-left: 1.8px solid #fff;
+  border-bottom: 1.8px solid #fff;
+  transform: translateY(-1px) rotate(-45deg);
+}
+.cbx:indeterminate::after {
+  content: '';
+  width: 9px;
+  height: 1.8px;
+  background: #fff;
+  border-radius: 1px;
+}
+.cbx:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  outline: none;
+}
+.cbx:disabled {
+  cursor: not-allowed;
+}
+
+/* ---- Radio ---- */
+.rdo {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1.5px solid var(--paper-300);
+  display: inline-grid;
+  place-content: center;
+  transition: border-color var(--dur-1) var(--ease-out);
+  cursor: pointer;
+  vertical-align: middle;
+  flex-shrink: 0;
+  margin: 0;
+}
+.rdo:hover:not(:disabled) {
+  border-color: var(--ink-500);
+}
+.rdo:checked {
+  border-color: var(--terra-500);
+}
+.rdo:checked::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--terra-500);
+}
+.rdo:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  outline: none;
+}
+.rdo:disabled {
+  cursor: not-allowed;
+}
+
+/* ---- Toggle / Switch ----
+   Built on <input type="checkbox" class="toggle">. */
+.toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--paper-300);
+  position: relative;
+  cursor: pointer;
+  transition: background var(--dur-2) var(--ease-out);
+  vertical-align: middle;
+  flex-shrink: 0;
+  margin: 0;
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(34, 42, 24, 0.18);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.toggle:checked {
+  background: var(--terra-500);
+}
+.toggle:checked::after {
+  transform: translateX(16px);
+}
+.toggle:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-ring);
+  outline: none;
+}
+.toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Toggle size variant for iOS-style mobile screens. */
+.toggle.toggle-lg {
+  width: 51px;
+  height: 31px;
+}
+.toggle.toggle-lg::after {
+  width: 27px;
+  height: 27px;
+}
+.toggle.toggle-lg:checked::after {
+  transform: translateX(20px);
+}
+
+/* Settings row — title/subtitle on the left, control on the right. */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.toggle-row:last-child {
+  border-bottom: 0;
+}
+.toggle-row .tt {
+  font-size: var(--fs-body-sm);
+  color: var(--ink-900);
+}
+.toggle-row .sub {
+  font-size: var(--fs-caption);
+  color: var(--fg-3);
+  margin-top: 2px;
+}
+
+/* ---- Select ----
+   Styles native <select class="sel">. Custom caret via background SVG. */
+.sel {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-sm);
+  font-weight: 500;
+  color: var(--ink-900);
+  min-width: 200px;
+  padding: 10px 36px 10px 14px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6' fill='none'><path d='M1 1l4 4 4-4' stroke='%23635D55' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 10px 6px;
+  border: 1px solid #d9c283;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-1) var(--ease-out);
+}
+.sel:hover:not(:disabled) {
+  border-color: var(--ink-500);
+}
+.sel:focus,
+.sel:focus-visible {
+  border-color: var(--terra-400);
+  box-shadow: 0 0 0 2px rgba(63, 103, 80, 0.14);
+  outline: none;
+}
+.sel:disabled {
+  background-color: var(--paper-100);
+  color: var(--fg-3);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+/* Open-state menu, when emulating a custom dropdown with JS. */
+.sel-menu {
+  background: #fff;
+  border: 1px solid var(--paper-300);
+  border-radius: 12px;
+  box-shadow: var(--shadow-3);
+  padding: 4px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-sm);
+  color: var(--ink-800);
+  min-width: 200px;
+}
+.sel-menu .item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+.sel-menu .item:hover,
+.sel-menu .item.is-hover {
+  background: var(--paper-100);
+}
+.sel-menu .item.is-selected {
+  color: var(--terra-700);
+  font-weight: 600;
+}
+.sel-menu .item.is-selected::after {
+  content: '';
+  width: 8px;
+  height: 4px;
+  border-left: 1.6px solid var(--terra-500);
+  border-bottom: 1.6px solid var(--terra-500);
+  transform: rotate(-45deg) translateY(-2px);
+}
+
+/* ---- Segmented control ----
+   Visual radio group. Wire up <input type="radio">s if you need state. */
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  background: var(--paper-200);
+  border-radius: 10px;
+  gap: 2px;
+}
+.seg .s {
+  padding: 7px 14px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  color: var(--ink-700);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
+  background: transparent;
+  border: 0;
+}
+.seg .s.is-on,
+.seg .s[aria-selected='true'] {
+  background: #ffffff;
+  color: var(--ink-900);
+  font-weight: 600;
+  box-shadow: var(--shadow-1);
+}
+
+/* ---- Text input (promoted from comp-inputs card) ---- */
+.input {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-sm);
+  color: var(--ink-900);
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid #d9c283;
+  background: #ffffff;
+  outline: none;
+  transition:
+    border-color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-1) var(--ease-out);
+}
+.input::placeholder {
+  color: var(--fg-3);
+}
+.input:hover:not(:disabled) {
+  border-color: var(--ink-500);
+}
+.input:focus,
+.input:focus-visible {
+  border-color: var(--terra-400);
+  box-shadow: 0 0 0 2px rgba(63, 103, 80, 0.14);
+}
+.input:disabled {
+  background: var(--paper-100);
+  color: var(--fg-3);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+.input.is-error {
+  border-color: #c44a3f;
+  border-width: 1.5px;
+  background: #fff5f2;
+  box-shadow: 0 0 0 3px rgba(196, 74, 63, 0.14);
+}
+
+/* ---- Search input ---- */
+.search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--paper-300);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'><circle cx='9' cy='9' r='6.25' stroke='%238A847B' stroke-width='1.5'/><path d='M14 14l3.5 3.5' stroke='%238A847B' stroke-width='1.5' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  background-size: 18px 18px;
+  position: relative;
+  transition:
+    border-color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-1) var(--ease-out);
+}
+.search:focus-within {
+  border-color: var(--terra-400);
+  box-shadow: 0 0 0 2px rgba(63, 103, 80, 0.14);
+}
+.search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-sm);
+  color: var(--ink-900);
+  padding: 0;
+}
+.search input::placeholder {
+  color: var(--fg-3);
+}
+.search .clear {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--paper-300);
+  color: #fff;
+  border: 0;
+  display: inline-grid;
+  place-content: center;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Pill-shaped search variant for top bars. */
+.search.search-pill {
+  border-radius: 999px;
+  padding-left: 38px;
+}
+
+/* ---- Stepper ----
+   Numeric stepper with − / value / + controls. */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--paper-300);
+  border-radius: 10px;
+  overflow: hidden;
+  font-family: var(--font-sans);
+}
+.stepper button {
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 0;
+  font-size: 18px;
+  color: var(--ink-800);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: background var(--dur-1) var(--ease-out);
+}
+.stepper button:hover {
+  background: var(--paper-100);
+}
+.stepper button:disabled {
+  color: var(--paper-400);
+  cursor: not-allowed;
+}
+.stepper .val {
+  min-width: 44px;
+  text-align: center;
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  color: var(--ink-900);
+  padding: 0 8px;
+}
+
+/* ---- Slider ----
+   Styles native <input type="range" class="slider">. */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+.slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--paper-300);
+  border-radius: 999px;
+}
+.slider::-moz-range-track {
+  height: 4px;
+  background: var(--paper-300);
+  border-radius: 999px;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1.5px solid var(--terra-500);
+  box-shadow: 0 1px 3px rgba(34, 42, 24, 0.18);
+  margin-top: -8px;
+  transition: transform var(--dur-1) var(--ease-out);
+}
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1.5px solid var(--terra-500);
+  box-shadow: 0 1px 3px rgba(34, 42, 24, 0.18);
+}
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.08);
+}
+.slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+/* Filled-track variant — set --val to current percent (0–100). */
+.slider.slider-filled::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to right,
+    var(--terra-500) 0%,
+    var(--terra-500) var(--val, 0%),
+    var(--paper-300) var(--val, 0%),
+    var(--paper-300) 100%
+  );
+}
+.slider.slider-filled::-moz-range-track {
+  background: linear-gradient(
+    to right,
+    var(--terra-500) 0%,
+    var(--terra-500) var(--val, 0%),
+    var(--paper-300) var(--val, 0%),
+    var(--paper-300) 100%
+  );
+}
+
+/* ---- Date picker ----
+   Styles for both the trigger button and the inline calendar. */
+.datebtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #d9c283;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-sm);
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease-out);
+}
+.datebtn:hover {
+  border-color: var(--ink-500);
+}
+.datebtn .ico {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--fg-2);
+}
+.datebtn.is-empty {
+  color: var(--fg-3);
+}
+
+.cal {
+  background: #fff;
+  border: 1px solid var(--paper-300);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+  padding: 14px;
+  font-family: var(--font-sans);
+  width: 280px;
+}
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.cal-head .ttl {
+  font-size: var(--fs-body-sm);
+  font-weight: 600;
+  color: var(--ink-900);
+}
+.cal-head .nav {
+  background: transparent;
+  border: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--ink-700);
+  display: grid;
+  place-content: center;
+}
+.cal-head .nav:hover {
+  background: var(--paper-100);
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-grid .dow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  text-align: center;
+  padding: 6px 0;
+}
+.cal-grid .d {
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  display: grid;
+  place-content: center;
+  font-size: var(--fs-caption);
+  color: var(--ink-800);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+.cal-grid .d:hover {
+  background: var(--paper-100);
+}
+.cal-grid .d.is-muted {
+  color: var(--paper-400);
+}
+.cal-grid .d.is-today {
+  color: var(--terra-600);
+  font-weight: 700;
+}
+.cal-grid .d.is-selected {
+  background: var(--terra-500);
+  color: #fff;
+  font-weight: 600;
+}
+.cal-grid .d.is-in-range {
+  background: var(--terra-50);
+  color: var(--terra-700);
+}

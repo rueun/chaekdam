@@ -9,3 +9,6 @@ test-results
 pnpm-lock.yaml
 *.gen.ts
 .vercel
+
+# 디자인 핸드오프(레퍼런스 목업) — 앱 소스가 아니므로 포매팅 대상에서 제외
+design/

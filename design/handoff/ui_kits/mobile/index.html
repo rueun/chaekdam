@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>책담 · 모바일 UI 키트</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+  <link rel="stylesheet" href="mobile.css">
+  <link rel="stylesheet" href="missing.css">
+<style>
+  html, body { background: #ECE4D2; margin: 0; min-height: 100vh; }
+  .page {
+    min-height: 100vh; padding: 40px 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 28px;
+    font-family: var(--font-sans); color: var(--ink-900);
+  }
+  .lead { text-align: center; max-width: 520px; }
+  .lead h1 { font-family: var(--font-serif); font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .lead p { color: var(--fg-2); font-size: 14px; margin: 0; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="lead">
+      <h1>책담 · Mobile</h1>
+      <p>탭바와 FAB로 5개 화면을 오갈 수 있는 클릭-스루 프로토타입.</p>
+    </div>
+    <div id="root"></div>
+  </div>
+  <style>
+    /* When embedded in the design canvas (?embed=1), hide chrome */
+    body.is-embed .page { padding: 0; gap: 0; min-height: auto; background: transparent; align-items: flex-start; }
+    body.is-embed .lead { display: none; }
+    body.is-embed { background: transparent !important; }
+  </style>
+  <script>
+    if (new URLSearchParams(location.search).get('embed') === '1') {
+      document.body.classList.add('is-embed');
+    }
+  </script>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="missing.jsx"></script>
+  <script type="text/babel" src="screens-extra.jsx"></script>
+  <script type="text/babel" src="list-screens.jsx"></script>
+  <script type="text/babel" src="book-search-screen.jsx"></script>
+  <script type="text/babel" src="auth-screens.jsx"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel">
+    const params = new URLSearchParams(location.search);
+    const initial = params.get('screen') || 'home';
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(
+      <IOSDevice width={402} height={874}>
+        <MobileApp initialTab={initial}/>
+      </IOSDevice>
+    );
+  </script>
+</body>
+</html>
