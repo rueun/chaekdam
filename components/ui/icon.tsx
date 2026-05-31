@@ -1,4 +1,5 @@
 import {
+  ArrowUp,
   Bookmark,
   BookmarkX,
   BookOpen,
@@ -10,14 +11,17 @@ import {
   Info,
   Library,
   LineChart,
+  Lock,
   MessagesSquare,
   MoreHorizontal,
   PenLine,
   Plus,
   Quote,
+  ScanText,
   Search,
   SearchX,
   Settings,
+  Sparkles,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -48,6 +52,10 @@ const ICON_MAP = {
   info: Info,
   'search-x': SearchX,
   'bookmark-x': BookmarkX,
+  lock: Lock,
+  sparkles: Sparkles,
+  'arrow-up': ArrowUp,
+  'scan-text': ScanText,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICON_MAP;
