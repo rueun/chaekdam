@@ -19,12 +19,14 @@ import {
   Play,
   Plus,
   Quote,
+  RefreshCw,
   ScanText,
   Search,
   SearchX,
   Settings,
   Sparkles,
   Square,
+  UploadCloud,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -62,6 +64,8 @@ const ICON_MAP = {
   play: Play,
   pause: Pause,
   square: Square,
+  'upload-cloud': UploadCloud,
+  'refresh-cw': RefreshCw,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICON_MAP;

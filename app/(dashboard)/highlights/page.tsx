@@ -1,8 +1,7 @@
-import Link from 'next/link';
 import { TopBar } from '@/components/layout/top-bar';
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
 import { Icon } from '@/components/ui/icon';
-import { ROUTES } from '@/lib/router/routes';
+import { CaptureTrigger } from '@/components/feature/capture/capture-trigger';
 
 // 샘플 한 줄 모음 — 추후 Highlight 조회 유스케이스로 대체
 const HIGHLIGHTS: HighlightView[] = [
@@ -61,9 +60,9 @@ export default function HighlightsPage() {
         title="밑줄 모음"
         subtitle={`${HIGHLIGHTS.length}개의 문장 · 이번 달 18개 추가`}
         action={
-          <Link href={ROUTES.NOTES.LIST()} className="btn btn-primary">
+          <CaptureTrigger className="btn btn-primary">
             <Icon name="pen-line" size={16} />한 줄 담기
-          </Link>
+          </CaptureTrigger>
         }
       />
 

@@ -20,9 +20,6 @@ export const ROUTES = {
     LIST: () => '/books' as const,
     DETAIL: (bookId: string) => `/books/${bookId}` as const,
   },
-  NOTES: {
-    LIST: () => '/notes' as const,
-  },
   DISCUSSIONS: {
     LIST: () => '/discussions' as const,
     DETAIL: (id: string) => `/discussions/${id}` as const,

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils/cn';
 import { Icon } from '@/components/ui/icon';
 import { ROUTES } from '@/lib/router/routes';
@@ -8,6 +9,8 @@ interface HeroProps {
   minutesToday?: number;
   /** 어제 대비 증감(분) */
   deltaMinutes?: number;
+  /** 캡처(한 줄 담기) 액션 슬롯 — 페이지에서 주입(feature 결합 회피, ADR-006) */
+  captureActions?: ReactNode;
 }
 
 /**
@@ -15,7 +18,7 @@ interface HeroProps {
  * 인용 카피는 추후 '오늘의 한 줄' 데이터로 대체 예정(현재는 샘플).
  * 스타일은 디자인시스템 CSS(`.hero`).
  */
-export function Hero({ minutesToday = 24, deltaMinutes = 6 }: HeroProps) {
+export function Hero({ minutesToday = 24, deltaMinutes = 6, captureActions }: HeroProps) {
   const deltaText = deltaMinutes === 0 ? '어제와 같아요' : `어제보다 ${Math.abs(deltaMinutes)}분`;
 
   return (
@@ -33,14 +36,7 @@ export function Hero({ minutesToday = 24, deltaMinutes = 6 }: HeroProps) {
             <Icon name="book-open" size={16} />
             이어 읽기
           </Link>
-          <Link href={ROUTES.NOTES.LIST()} className={cn('btn', 'btn-secondary')}>
-            <Icon name="camera" size={16} />
-            문구 촬영
-          </Link>
-          <Link href={ROUTES.NOTES.LIST()} className={cn('btn', 'btn-secondary')}>
-            <Icon name="image-up" size={16} />
-            이미지 업로드
-          </Link>
+          {captureActions}
         </div>
       </div>
       <div className="hero-stat">

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { TopBar } from '@/components/layout/top-bar';
 import { SectionHeader } from '@/components/layout/section-header';
 import { Icon } from '@/components/ui/icon';
@@ -8,6 +7,7 @@ import { BookCard, type BookCardView } from '@/components/feature/library/book-c
 import { WishlistCard, type WishlistBookView } from '@/components/feature/library/wishlist-card';
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
 import { BookSearchTrigger } from '@/components/feature/book-search/book-search-trigger';
+import { CaptureTrigger } from '@/components/feature/capture/capture-trigger';
 import { ROUTES } from '@/lib/router/routes';
 
 // 슬라이스 B 샘플 데이터 — 추후 유스케이스(읽는 중 책장 조회)로 대체
@@ -105,13 +105,28 @@ export default function HomePage() {
         title="안녕하세요, 길동님"
         subtitle="어제까지 12권 · 이번 달 3권 완독했어요"
         action={
-          <Link href={ROUTES.NOTES.LIST()} className="btn btn-primary">
+          <CaptureTrigger className="btn btn-primary">
             <Icon name="pen-line" size={16} />한 줄 담기
-          </Link>
+          </CaptureTrigger>
         }
       />
 
-      <Hero minutesToday={24} deltaMinutes={6} />
+      <Hero
+        minutesToday={24}
+        deltaMinutes={6}
+        captureActions={
+          <>
+            <CaptureTrigger className="btn btn-secondary">
+              <Icon name="camera" size={16} />
+              문구 촬영
+            </CaptureTrigger>
+            <CaptureTrigger className="btn btn-secondary">
+              <Icon name="image-up" size={16} />
+              이미지 업로드
+            </CaptureTrigger>
+          </>
+        }
+      />
 
       <ReadingLogPanel />
 

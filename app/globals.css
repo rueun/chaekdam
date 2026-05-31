@@ -24,6 +24,7 @@
   --color-accent-press: var(--accent-press);
   --color-accent-soft: var(--accent-soft);
   --color-mark-bg: var(--mark-bg);
+  --color-field-border: var(--field-border);
   --color-danger: var(--danger);
   --color-success: var(--success);
   --color-warning: var(--warning);
@@ -175,6 +176,7 @@
   --warning: #d9963d;
   --danger: #c44a3f;
   --danger-hover: #b23b30;
+  --field-border: #d9c283; /* 입력/선택 테두리(웜 골드) */
   --info: var(--talk-500);
 
   /* ---- 의미 토큰 (앱 코드에서 사용) ---- */
@@ -564,8 +566,7 @@ body {
 
 /* =============================================================
    디자인시스템 프리미티브 — G3: Input / Search / Select
-   colors_and_type.css 원본을 토큰 기반으로 이식.
-   (#d9c283 은 입력 테두리 전용 색으로 팔레트 토큰이 없어 원본값 유지)
+   colors_and_type.css 원본을 토큰 기반으로 이식. 입력 테두리는 --field-border 토큰.
    React 래퍼: components/ui/{input,search-input,select}.tsx
    ============================================================= */
 @layer components {
@@ -577,7 +578,7 @@ body {
     color: var(--ink-900);
     padding: 11px 14px;
     border-radius: 10px;
-    border: 1px solid #d9c283;
+    border: 1px solid var(--field-border);
     background: #ffffff;
     outline: none;
     transition:
@@ -685,7 +686,7 @@ body {
     background-repeat: no-repeat;
     background-position: right 14px center;
     background-size: 10px 6px;
-    border: 1px solid #d9c283;
+    border: 1px solid var(--field-border);
     cursor: pointer;
     text-align: left;
     transition:
