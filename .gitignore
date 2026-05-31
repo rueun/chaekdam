@@ -54,3 +54,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+# oh-my-claudecode 로컬 세션·상태
+/.omc
