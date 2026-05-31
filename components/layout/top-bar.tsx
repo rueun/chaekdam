@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { SearchInput } from '@/components/ui/search-input';
+import { SearchTrigger } from '@/components/feature/search/search-trigger';
 
 interface TopBarProps {
   title: string;
@@ -24,13 +24,7 @@ export function TopBar({ title, subtitle, action, showSearch = true }: TopBarPro
         </h1>
       </div>
       <div className="top-actions">
-        {showSearch ? (
-          <SearchInput
-            placeholder="책, 작가, 밑줄 검색"
-            containerClassName="w-72"
-            aria-label="검색"
-          />
-        ) : null}
+        {showSearch ? <SearchTrigger /> : null}
         {action}
       </div>
     </div>
