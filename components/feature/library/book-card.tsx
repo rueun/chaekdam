@@ -68,9 +68,9 @@ export function BookCard({ book, onOpen, className }: BookCardProps) {
         className={cn(
           'flex aspect-[2/3] items-end rounded-[6px] px-[14px] py-4',
           'text-[16px] leading-[1.25] font-semibold tracking-[-0.03em]',
-          'text-[var(--paper-50)] shadow-[var(--shadow-cover)]',
+          'text-paper-50 shadow-[var(--shadow-cover)]', // shadow-cover 는 @theme 외 커스텀
           'transition-all duration-[240ms] ease-[var(--ease-out)]',
-          'group-hover:-translate-y-0.5 group-hover:shadow-[var(--shadow-3)]',
+          'group-hover:shadow-3 group-hover:-translate-y-0.5',
         )}
         style={{ background: book.coverColor ?? 'var(--ink-700)' }}
       >
@@ -79,14 +79,14 @@ export function BookCard({ book, onOpen, className }: BookCardProps) {
 
       {/* 메타 — 제목 / 저자 / 상태 행 */}
       <div>
-        <div className="line-clamp-1 text-[15px] font-semibold tracking-[-0.02em] text-[var(--ink-900)]">
+        <div className="text-ink-900 line-clamp-1 text-[15px] font-semibold tracking-[-0.02em]">
           {book.title}
         </div>
-        <div className="mt-[3px] text-[12px] text-[var(--fg-2)]">{book.author}</div>
+        <div className="text-fg-2 mt-[3px] text-[12px]">{book.author}</div>
 
         <div className="mt-2 flex min-w-0 items-center gap-2">
           <StatusBadge status={book.status} size="sm" className="shrink-0" />
-          <span className="min-w-0 truncate font-mono text-[11px] tracking-[-0.01em] text-[var(--fg-3)]">
+          <span className="text-fg-3 min-w-0 truncate font-mono text-[11px] tracking-[-0.01em]">
             {bookMetaLine(book)}
           </span>
         </div>
