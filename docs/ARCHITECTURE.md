@@ -6,7 +6,7 @@
 
 ## 1. 개요
 
-**책담**은 Next.js + Supabase + Claude API 기반의 AI 독서 토론 웹 / 앱입니다. 사용자가 책의 인상 깊은 페이지를 사진 / 텍스트로 캡처하면, Claude가 그 내용을 기반으로 1:1 깊이 있는 토론을 진행합니다.
+**책담**은 Next.js + Supabase + Claude API 기반의 AI 독서 토론 웹 / 앱입니다. 사용자가 책의 인상 깊은 페이지를 사진 / 텍스트로 캡처해 "한 줄"로 담으면, 선택한 페르소나의 Claude가 그 내용을 기반으로 1:1 깊이 있는 토론을 진행합니다. 담은 한 줄과 독서 기록(책장 상태·세션·캘린더)은 본인의 독서 자산으로 누적됩니다. UI 는 단일 라이트(페이퍼) 테마 · 딥 포레스트 그린 단일 포인트색입니다.
 
 핵심 설계 목표:
 
@@ -92,7 +92,7 @@ export class CanReadDiscussionSpec {
 
 - `lib/domain/`, `lib/application/`, `lib/infrastructure/`: 수평 분리 유지 → 백엔드 분리 가능성 보존
 - `components/ui/`: 재사용 primitives (shadcn 등 디자인 시스템)
-- `components/feature/`: **기능별로 응집** (`book-search/`, `note-capture/`, `discussion-chat/`)
+- `components/feature/`: **기능별로 응집** (`book-search/`, `highlight-capture/`, `discussion-chat/`, `reading-log/`, `library/`, `share/`)
 
 **이유**: 도메인 로직은 백엔드 분리 가능성을 위해 수평 분리. UI는 단일 화면이 여러 도메인 데이터를 조합하고 기능 추가가 잦으므로 기능별 응집이 가독성·이동성에 유리.
 
@@ -140,16 +140,22 @@ chaekdam/
 │   ├── domain/                             # ⭐ 외부 의존 0
 │   │   ├── book/
 │   │   │   ├── book.ts                     # Entity
-│   │   │   └── author.ts                   # VO
-│   │   ├── reading-note/
-│   │   │   ├── reading-note.ts             # Entity
+│   │   │   ├── author.ts                   # VO (이름·생몰년·저작권 만료 여부)
+│   │   │   └── book-status.ts              # VO (READING | DONE | WISH | PAUSED)
+│   │   ├── highlight/                       # "한 줄" — 캡처한 구절
+│   │   │   ├── highlight.ts                # Entity
 │   │   │   └── note-source.ts              # VO (PHOTO | TEXT)
+│   │   ├── reading-log/                     # 독서 기록 (저널링 실현 — ADR-010/012)
+│   │   │   ├── reading-session.ts          # Entity ('분' = 리더 화면 체류 시간)
+│   │   │   └── reading-log.ts              # Entity (일자별 읽음·연속일·통계)
 │   │   ├── discussion/
-│   │   │   ├── discussion.ts               # Aggregate Root
+│   │   │   ├── discussion.ts               # Aggregate Root (책당 다중 방·페르소나 고정)
 │   │   │   ├── message.ts                  # Entity
 │   │   │   ├── role.ts                     # VO (USER | AI)
 │   │   │   └── specs/
 │   │   │       └── can-read-discussion.spec.ts
+│   │   ├── persona/
+│   │   │   └── persona.ts                  # Entity (4 아키타입, 작가 본인=사망 작가 한정)
 │   │   ├── user/
 │   │   │   └── user.ts
 │   │   ├── shared/
@@ -157,38 +163,51 @@ chaekdam/
 │   │   └── ports/                          # 인터페이스만
 │   │       ├── book-searcher.ts
 │   │       ├── book-repository.ts
-│   │       ├── reading-note-repository.ts
+│   │       ├── highlight-repository.ts
+│   │       ├── reading-log-repository.ts
 │   │       ├── discussion-repository.ts
+│   │       ├── persona-repository.ts
 │   │       ├── ai-discussion-partner.ts    # Claude 추상화
+│   │       ├── highlight-image-renderer.ts # "한 장 이미지로 만들기" (공유)
 │   │       ├── photo-storage.ts
 │   │       └── auth-session.ts
 │   │
 │   ├── application/                        # 유스케이스
 │   │   ├── search-books.use-case.ts
-│   │   ├── add-reading-note.use-case.ts
+│   │   ├── capture-highlight.use-case.ts
+│   │   ├── list-highlights.use-case.ts
+│   │   ├── set-book-status.use-case.ts     # 책장 이동 (읽는 중/완독/위시/쉬는 중)
+│   │   ├── log-reading-session.use-case.ts
 │   │   ├── start-discussion.use-case.ts
 │   │   └── continue-discussion.use-case.ts
 │   │
 │   └── infrastructure/                     # Adapter
 │       ├── supabase/
 │       │   ├── supabase-book-repository.ts
-│       │   ├── supabase-reading-note-repository.ts
+│       │   ├── supabase-highlight-repository.ts
+│       │   ├── supabase-reading-log-repository.ts
 │       │   ├── supabase-discussion-repository.ts
+│       │   ├── supabase-persona-repository.ts
 │       │   ├── supabase-photo-storage.ts
 │       │   ├── supabase-auth-session.ts
 │       │   └── types.gen.ts                # 자동 생성
 │       ├── claude/
 │       │   └── claude-ai-discussion-partner.ts
-│       ├── naver-books/                    # 또는 google-books/
+│       ├── naver-books/
 │       │   └── naver-book-searcher.ts
+│       ├── share/
+│       │   └── canvas-highlight-image-renderer.ts
 │       └── di-container.ts                 # 의존성 주입 조립
 │
 ├── components/                             # 재사용 UI 컴포넌트 (FSD 'feature' 슬라이싱 차용)
 │   ├── ui/                                 # 재사용 primitives (shadcn 등 디자인 시스템)
 │   └── feature/                            # 기능별 응집 컴포넌트
 │       ├── book-search/                    # 책 검색 UI 묶음
-│       ├── note-capture/                   # 사진 / 텍스트 노트 입력 UI
-│       └── discussion-chat/                # AI 토론 채팅 UI
+│       ├── highlight-capture/              # 사진 / 텍스트 한 줄 입력 UI
+│       ├── discussion-chat/                # AI 토론 채팅 UI
+│       ├── reading-log/                    # 캘린더·연속일·통계 UI
+│       ├── library/                        # 서재·책장 상태·위시리스트 UI
+│       └── share/                          # 한 줄 / 책 공유 시트
 │
 ├── supabase/                               # 마이그레이션·RLS
 │   ├── migrations/
@@ -205,55 +224,59 @@ chaekdam/
 
 ## 5. 도메인 모델
 
-> 기획 4가지 결정 완료 (자세한 결정 사항·근거: [`ADR.md`](./ADR.md) ADR-007 ~ ADR-010 참조).
+> 기획 결정 완료 (자세한 결정 사항·근거: [`ADR.md`](./ADR.md) ADR-007 ~ ADR-013 참조).
 >
-> 토론 모드 = **하이브리드** (책 메타 + 구절) / 사용자 수 = **1:1 (다중 확장 가능 구조)** / AI 페르소나 = **선택형 + 사망 작가** / 핵심 가치 = **정서·자기 표현(메인) + 회고·저널링(보조)**
+> 토론 모드 = **하이브리드** (책 메타 + 한 줄) / 사용자 수 = **1:1 (다중 확장 가능 구조)** / AI 페르소나 = **톤·관점 아키타입 4종** (작가 본인=사망 작가 한정) / 핵심 가치 = **정서·자기 표현(메인) + 저널링(보조)** — 저널링은 별도 회고 노트가 아니라 **한 줄 + 독서 기록**으로 실현 / 테마 = **단일 라이트(페이퍼)** / 공유 = **외부 내보내기만, 인앱 피드 제외**
 
 ### 핵심 엔티티
 
-| 이름          | 종류           | 책임                                                                             |
-| ------------- | -------------- | -------------------------------------------------------------------------------- |
-| `User`        | Entity         | 사용자 식별·기본 프로필                                                          |
-| `Participant` | Entity         | 토론 참가자 (User 또는 AI Persona 참조). **다중 사용자 확장 대비** (ADR-008)     |
-| `Book`        | Entity         | 책 메타데이터 (제목·저자·장르·간단 요약·저자 스타일) — 하이브리드 모드용         |
-| `Author`      | Entity         | 작가 정보 (이름·소개·생몰년·저작권 만료 여부)                                    |
-| `Persona`     | Entity         | AI 페르소나 (일반: 학구파/캐주얼/비평가, 작가: 사망 작가) — 시스템 프롬프트 보유 |
-| `ReadingNote` | Entity         | 인상 깊은 구절 (사진 또는 텍스트)                                                |
-| `NoteSource`  | VO             | `PHOTO` / `TEXT`                                                                 |
-| `Discussion`  | Aggregate Root | 책 + 노트 + 페르소나 + 참가자 묶음 토론 세션                                     |
-| `Message`     | Entity         | 토론 내 발화                                                                     |
-| `Role`        | VO             | `USER` / `AI`                                                                    |
-| `Reflection`  | Entity         | 토론 종료 후 본인 회고 노트 (저널링 — ADR-010)                                   |
+| 이름             | 종류           | 책임                                                                                                                    |
+| ---------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `User`           | Entity         | 사용자 식별·기본 프로필                                                                                                 |
+| `Participant`    | Entity         | 토론 참가자 (User 또는 AI Persona 참조). **다중 사용자 확장 대비** (ADR-008)                                            |
+| `Book`           | Entity         | 책 메타데이터 (제목·저자·장르·간단 요약·저자 스타일) — 하이브리드 모드용                                                |
+| `BookStatus`     | VO             | `READING` / `DONE` / `WISH` / `PAUSED` — 책장(shelf) 상태. 위시리스트 = `WISH`                                          |
+| `Author`         | Entity         | 작가 정보 (이름·소개·생몰년·저작권 만료 여부). **작가 본인 페르소나 활성 판정에 사용**                                  |
+| `Persona`        | Entity         | AI 페르소나 — 4 아키타입 (소크라테스/비평가/작가 본인/책 동무). 시스템 프롬프트 보유. 작가 본인은 사망 작가에 한해 활성 |
+| `Highlight`      | Entity         | "한 줄" — 캡처한 인상 깊은 구절 (사진 또는 텍스트). 저널링의 핵심 단위                                                  |
+| `NoteSource`     | VO             | `PHOTO` / `TEXT`                                                                                                        |
+| `ReadingSession` | Entity         | 한 번의 읽기 세션 — `분`(리더 화면 체류 시간)·페이지 범위. 책별 누적                                                    |
+| `ReadingLog`     | Entity         | 일자별 읽음 여부·연속일(streak)·장르/작가 통계 집계                                                                     |
+| `Discussion`     | Aggregate Root | 책 + 한 줄 + 페르소나 + 참가자 묶음 토론 방. 책당 여러 방, 생성 후 페르소나 고정                                        |
+| `Message`        | Entity         | 토론 내 발화                                                                                                            |
+| `Role`           | VO             | `USER` / `AI`                                                                                                           |
 
 ### Aggregate 경계
 
-- **`Discussion`**: 트랜잭션 단위. 메시지 추가·완료·재시작·참가자 추가가 한 Aggregate 내. Persona / Book / ReadingNote 는 ID 참조.
-- **`Reflection`**: 독립 Aggregate. Discussion 종료 후 사용자가 별도로 작성. Discussion ID 참조로만 연결.
-- **`ReadingNote`**: 독립 Aggregate. Discussion 은 Note ID 참조로만 연결.
-- **`Book`**: 외부 데이터 캐시. 단순.
+- **`Discussion`**: 트랜잭션 단위. 메시지 추가·완료·재시작·참가자 추가가 한 Aggregate 내. Persona / Book / Highlight 는 ID 참조. 한 책에 여러 Discussion(방), 생성 시 Persona 고정(불변).
+- **`Highlight`**: 독립 Aggregate. Discussion 은 Highlight ID 참조로만 연결. 저널링·밑줄 모음의 단위.
+- **`ReadingLog` / `ReadingSession`**: 독립 Aggregate. 책·사용자 ID 참조. 세션이 쌓여 로그·연속일·통계로 집계.
+- **`Book`**: 외부 데이터 캐시 + `BookStatus`(책장 상태). 단순.
 - **`Persona`**: 시스템에서 큐레이션 / 제공. 사용자가 만들지 않음.
 
 ### Port (도메인이 정의)
 
-| Port                    | 역할                                                 | 주요 Adapter                    |
-| ----------------------- | ---------------------------------------------------- | ------------------------------- |
-| `BookSearcher`          | 외부 API 에서 책 검색                                | `NaverBookSearcher`             |
-| `BookRepository`        | 책 메타데이터 캐시 저장·조회                         | `SupabaseBookRepository`        |
-| `ReadingNoteRepository` | 노트 저장·조회                                       | `SupabaseReadingNoteRepository` |
-| `DiscussionRepository`  | 토론·메시지·참가자 저장·조회                         | `SupabaseDiscussionRepository`  |
-| `ReflectionRepository`  | 회고 노트 저장·조회                                  | `SupabaseReflectionRepository`  |
-| `PersonaRepository`     | 페르소나 목록·시스템 프롬프트 조회 (큐레이션 데이터) | `SupabasePersonaRepository`     |
-| `AiDiscussionPartner`   | AI 응답 생성 (Persona 시스템 프롬프트 포함)          | `ClaudeAiDiscussionPartner`     |
-| `PhotoStorage`          | 사진 업로드·URL 발급                                 | `SupabasePhotoStorage`          |
-| `AuthSession`           | 현재 사용자 ID 조회                                  | `SupabaseAuthSession`           |
+| Port                     | 역할                                                 | 주요 Adapter                   |
+| ------------------------ | ---------------------------------------------------- | ------------------------------ |
+| `BookSearcher`           | 외부 API 에서 책 검색 (네이버 책)                    | `NaverBookSearcher`            |
+| `BookRepository`         | 책 메타·책장 상태(BookStatus) 저장·조회              | `SupabaseBookRepository`       |
+| `HighlightRepository`    | 한 줄 저장·조회·목록                                 | `SupabaseHighlightRepository`  |
+| `ReadingLogRepository`   | 세션·일자별 기록·연속일·통계 저장·조회               | `SupabaseReadingLogRepository` |
+| `DiscussionRepository`   | 토론·메시지·참가자 저장·조회                         | `SupabaseDiscussionRepository` |
+| `PersonaRepository`      | 페르소나 목록·시스템 프롬프트 조회 (큐레이션 데이터) | `SupabasePersonaRepository`    |
+| `AiDiscussionPartner`    | AI 응답 생성 (Persona 시스템 프롬프트 포함)          | `ClaudeAiDiscussionPartner`    |
+| `HighlightImageRenderer` | 한 줄을 한 장 이미지로 렌더 (공유용)                 | `CanvasHighlightImageRenderer` |
+| `PhotoStorage`           | 사진 업로드·URL 발급                                 | `SupabasePhotoStorage`         |
+| `AuthSession`            | 현재 사용자 ID 조회                                  | `SupabaseAuthSession`          |
 
 ### 도메인 이벤트 (후보)
 
-- `DiscussionStarted` — 토론 시작 시 (Persona·Book·Note 정보 포함)
+- `HighlightCaptured` — 한 줄 캡처 시
+- `DiscussionStarted` — 토론 시작 시 (Persona·Book·Highlight 정보 포함)
 - `MessageAdded` — 메시지 추가 시
-- `DiscussionCompleted` — 토론 종료 시 (회고 작성 유도 트리거)
-- `ReflectionWritten` — 회고 작성 완료 시 (재방문 통계·추천)
-- `ReadingNoteCaptured` — 노트 추가 시
+- `DiscussionCompleted` — 토론 종료 시
+- `ReadingSessionLogged` — 읽기 세션 종료 시 ('분'·페이지 누적 → 연속일·통계 갱신)
+- `BookStatusChanged` — 책장 이동 시 (위시 → 읽는 중, 읽는 중 → 완독 등)
 
 ---
 
@@ -278,12 +301,15 @@ B = 별도 백엔드 (예: NestJS) + Next.js 프론트
 
 ## 7. 기획 결정 사항 (확정)
 
-| 항목            | 결정                                                | 관련 ADR |
-| --------------- | --------------------------------------------------- | -------- |
-| **토론 모드**   | 하이브리드 (책 메타 + 사용자 구절)                  | ADR-007  |
-| **사용자 수**   | 1:1 (다중 사용자 확장 가능 구조 — Participant 분리) | ADR-008  |
-| **AI 페르소나** | 선택형 + 사망 작가 (생존 작가 영구 금지)            | ADR-009  |
-| **핵심 가치**   | 정서·자기 표현 (메인) + 회고·저널링 (보조)          | ADR-010  |
+| 항목            | 결정                                                                                 | 관련 ADR |
+| --------------- | ------------------------------------------------------------------------------------ | -------- |
+| **토론 모드**   | 하이브리드 (책 메타 + 사용자 한 줄)                                                  | ADR-007  |
+| **사용자 수**   | 1:1 (다중 사용자 확장 가능 구조 — Participant 분리)                                  | ADR-008  |
+| **AI 페르소나** | 톤·관점 아키타입 4종 (소크라테스/비평가/작가 본인/책 동무). 작가 본인=사망 작가 한정 | ADR-009  |
+| **핵심 가치**   | 정서·자기 표현 (메인) + 저널링 (보조) — 한 줄 + 독서 기록으로 실현                   | ADR-010  |
+| **테마·브랜드** | 단일 라이트(페이퍼) 테마 + 딥 포레스트 그린 단일 포인트 (다크 모드 제외)             | ADR-011  |
+| **독서 추적**   | 책장 상태·세션·독서 기록 도메인 (BookStatus·ReadingSession·ReadingLog)               | ADR-012  |
+| **공유**        | 외부 내보내기(링크·이미지·SNS) 포함, 인앱 소셜 피드 제외                             | ADR-013  |
 
 → 자세한 근거·트레이드오프: [`ADR.md`](./ADR.md). 제품 측면 정의: [`PRD.md`](./PRD.md).
 

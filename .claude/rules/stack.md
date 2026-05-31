@@ -6,6 +6,14 @@ type: feedback
 
 # 기술 스택 규칙 (chaekdam)
 
+## 스택
+
+- **Next.js (App Router)** — Presentation. 백엔드 로직은 Server Actions(얇은 래퍼) + 유스케이스.
+- **Supabase** — Auth · Postgres · Storage · RLS. 마이그레이션은 `supabase/migrations/`.
+- **Claude API** (`@anthropic-ai/sdk`) — `lib/infrastructure/claude/`에서만 호출. API 키는 서버 측에서만.
+- **네이버 책 API** — `lib/infrastructure/naver-books/`. 규격: `docs/naver-book-search-api.md`.
+- TypeScript strict. 패키지 매니저·린트·포맷은 레포 기존 설정을 따른다.
+
 ## App Router 구조 (계획)
 
 ```
@@ -250,3 +258,16 @@ const [page, setPage] = useQueryState('page', { defaultValue: 1, parse: Number }
 - main 브랜치 push 시 자동 배포
 - Preview 배포로 PR 검토
 - Edge Runtime 활용 가능 (단, Supabase·Claude SDK 호환 확인)
+
+## 환경 변수
+
+- 클라이언트 노출 금지 값(Claude·네이버 키, service role)은 서버 전용. `NEXT_PUBLIC_*`에 비밀 두지 않는다.
+- 키는 `.env.local`, 예시는 `.env.example`에 키 이름만.
+
+## 컨벤션
+
+- 파일명 kebab-case, 타입/클래스 PascalCase, 함수/변수 camelCase.
+- 디자인 토큰은 `colors_and_type.css`를 single source of truth로 삼아 레포 토큰 시스템(Tailwind/CSS 변수)에 매핑.
+  raw hex를 컴포넌트에 직접 쓰지 않는다 (`design-system.md`).
+- 한국어 카피가 기본. UI 키트의 문구를 그대로 따른다.
+- 모바일은 PWA 우선(ADR), 추후 Expo 확장 고려.

@@ -1,8 +1,17 @@
+# Rule: Testing
+
 ---
+
 name: 책담 — 테스트 규칙
 description: Vitest 단위, Playwright E2E, Supabase 로컬 환경 활용
 type: feedback
+
 ---
+
+## 원칙
+
+- **도메인 우선 테스트.** `lib/domain/`은 외부 의존이 0이므로(ADR-003) 순수 단위 테스트로 빠르게 검증한다.
+- 슬라이스를 끝낼 때마다 그 슬라이스의 도메인 규칙·유스케이스에 테스트를 남긴다 (테스트 없이 다음 슬라이스로 넘어가지 않는다).
 
 # 테스트 규칙 (chaekdam)
 
