@@ -1,6 +1,100 @@
 @import 'tailwindcss';
 
 /* =============================================================
+   Tailwind v4 @theme — 아래 :root 디자인 토큰을 유틸리티로 노출.
+   `inline` 이라 값은 var() 참조를 그대로 사용(단일 소스 유지).
+   예) bg-surface · text-ink-900 · text-fg-2 · border-divider
+       rounded-md · shadow-3 · font-serif · text-h2
+   ============================================================= */
+@theme inline {
+  /* 시맨틱 색 */
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-divider: var(--divider);
+  --color-divider-strong: var(--divider-strong);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-fg-dim: var(--fg-dim);
+  --color-fg-on-accent: var(--fg-on-accent);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-press: var(--accent-press);
+  --color-accent-soft: var(--accent-soft);
+  --color-mark-bg: var(--mark-bg);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
+  /* 팔레트 (raw) — 의미 토큰으로 부족할 때만 */
+  --color-paper-50: var(--paper-50);
+  --color-paper-100: var(--paper-100);
+  --color-paper-200: var(--paper-200);
+  --color-paper-300: var(--paper-300);
+  --color-paper-400: var(--paper-400);
+  --color-paper-500: var(--paper-500);
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-700: var(--ink-700);
+  --color-ink-600: var(--ink-600);
+  --color-ink-500: var(--ink-500);
+  --color-ink-300: var(--ink-300);
+  --color-leaf-50: var(--terra-50);
+  --color-leaf-100: var(--terra-100);
+  --color-leaf-200: var(--terra-200);
+  --color-leaf-300: var(--terra-300);
+  --color-leaf-400: var(--terra-400);
+  --color-leaf-500: var(--terra-500);
+  --color-leaf-600: var(--terra-600);
+  --color-leaf-700: var(--terra-700);
+  --color-sage-500: var(--sage-500);
+  --color-sage-700: var(--sage-700);
+  --color-clay-100: var(--clay-100);
+  --color-clay-500: var(--clay-500);
+  --color-clay-700: var(--clay-700);
+  --color-mark-100: var(--mark-100);
+  --color-talk-100: var(--talk-100);
+  --color-talk-500: var(--talk-500);
+
+  /* 타입 스케일 — text-h1 / text-body 등 (이름이 :root --fs-* 와 달라 안전) */
+  --text-display: var(--fs-display);
+  --text-h1: var(--fs-h1);
+  --text-h2: var(--fs-h2);
+  --text-h3: var(--fs-h3);
+  --text-h4: var(--fs-h4);
+  --text-body: var(--fs-body);
+  --text-body-sm: var(--fs-body-sm);
+  --text-caption: var(--fs-caption);
+  --text-micro: var(--fs-micro);
+}
+
+/* radius·shadow·font 는 Tailwind @theme 네임스페이스와 이름이 같아 inline 참조 시
+   자기참조(--radius-md: var(--radius-md))가 된다. 여기서 리터럴로 정의해 단일 소스로
+   삼고 :root var() 참조와 유틸(rounded-md·shadow-3·font-serif) 모두에 노출한다. */
+@theme {
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  --shadow-1: 0 1px 2px rgba(34, 42, 24, 0.07);
+  --shadow-2: 0 2px 8px rgba(34, 42, 24, 0.09), 0 1px 2px rgba(34, 42, 24, 0.05);
+  --shadow-3: 0 8px 24px rgba(34, 42, 24, 0.11), 0 2px 6px rgba(34, 42, 24, 0.06);
+  --shadow-4: 0 18px 48px rgba(34, 42, 24, 0.15), 0 4px 12px rgba(34, 42, 24, 0.07);
+
+  --font-sans:
+    'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Noto Sans KR', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: var(--font-sans);
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+
+/* =============================================================
    책담 디자인 토큰 — `design/handoff/colors_and_type.css` 가 원본.
    단일 라이트(페이퍼) 테마. 다크 모드 없음(ADR-011).
    컴포넌트는 raw hex 대신 아래 의미 토큰(var(--x))을 참조한다.
@@ -105,13 +199,7 @@
   --mark-bg: var(--mark-100);
   --mark-fg: var(--ink-900);
 
-  /* ---- 타입 ---- */
-  --font-sans:
-    'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
-    'Noto Sans KR', system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: var(--font-sans); /* Pretendard 별칭 (편집체 슬롯) */
-  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-
+  /* ---- 타입 (font-family 는 @theme 에 정의 — font-sans/serif/mono 유틸) ---- */
   --fs-display: 56px;
   --fs-h1: 40px;
   --fs-h2: 30px;
@@ -131,19 +219,8 @@
   --ls-normal: -0.01em;
   --ls-wide: 0.02em;
 
-  /* ---- 형태 / 그림자 / 모션 ---- */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-pill: 999px;
-
-  /* 따뜻한 올리브 틴트 그림자 (차가운 유리 느낌 금지) */
-  --shadow-1: 0 1px 2px rgba(34, 42, 24, 0.07);
-  --shadow-2: 0 2px 8px rgba(34, 42, 24, 0.09), 0 1px 2px rgba(34, 42, 24, 0.05);
-  --shadow-3: 0 8px 24px rgba(34, 42, 24, 0.11), 0 2px 6px rgba(34, 42, 24, 0.06);
-  --shadow-4: 0 18px 48px rgba(34, 42, 24, 0.15), 0 4px 12px rgba(34, 42, 24, 0.07);
+  /* ---- 형태 / 그림자 / 모션 (radius·shadow 스케일·font 는 @theme) ---- */
+  /* 스케일에 없는 커스텀 그림자만 :root 에 둔다 */
   --shadow-inset: inset 0 1px 2px rgba(34, 42, 24, 0.1);
   /* 책등(spine) 효과가 들어간 표지 전용 그림자 */
   --shadow-cover: 0 4px 12px rgba(34, 42, 24, 0.1), inset -2px 0 0 rgba(0, 0, 0, 0.14);
@@ -1145,5 +1222,189 @@ body {
     .row-grid.row-grid-5 {
       grid-template-columns: repeat(2, 1fr);
     }
+  }
+}
+
+/* =============================================================
+   홈 C — 2열 레이아웃 / 인용(밑줄) 카드 / 위시 레일 카드
+   web.css·missing.css 원본을 토큰 기반으로 이식.
+   ============================================================= */
+@layer components {
+  .col-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 28px;
+  }
+  @media (max-width: 960px) {
+    .col-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---- Quote(밑줄) 카드 ---- */
+  .quote-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--divider);
+    border-radius: 14px;
+    padding: 24px 28px 22px;
+    position: relative;
+    margin-bottom: 14px;
+  }
+  .quote-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 26px;
+    bottom: 26px;
+    width: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .q-text {
+    font-family: var(--font-serif);
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.7;
+    letter-spacing: -0.02em;
+    color: var(--ink-800);
+  }
+  .q-text mark {
+    background: var(--mark-100);
+    color: inherit;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  .q-meta {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .q-meta b {
+    color: var(--ink-700);
+    font-weight: 600;
+  }
+  .q-meta .author {
+    color: var(--fg-2);
+  }
+  .q-actions {
+    display: flex;
+    gap: 8px;
+    color: var(--fg-2);
+  }
+
+  /* ---- Rail 카드 (우측 레일) ---- */
+  .rail-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--divider);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+  }
+  .rail-card h3 {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    letter-spacing: -0.03em;
+    color: var(--ink-900);
+  }
+
+  /* ---- 레일 책 행 ---- */
+  .rec-row {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    align-items: center;
+  }
+  .rec-row + .rec-row {
+    border-top: 1px solid var(--divider);
+  }
+  .rec-cover {
+    width: 36px;
+    height: 52px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background: var(--ink-700);
+  }
+  .rec-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .rec-info .t {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-900);
+    letter-spacing: -0.02em;
+  }
+  .rec-info .a {
+    font-size: 11px;
+    color: var(--fg-2);
+    margin-top: 1px;
+  }
+
+  /* ---- 위시리스트 카드 ---- */
+  .wish-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .wish-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .wish-card-head h3 {
+    margin-bottom: 0;
+  }
+  .wish-more {
+    font-size: 12px;
+    color: var(--fg-2);
+    text-decoration: none;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .wish-more:hover {
+    color: var(--accent);
+  }
+  .wish-row .rec-info {
+    padding-right: 4px;
+  }
+  .wish-row-action {
+    padding: 6px !important;
+    border-radius: 8px;
+    color: var(--fg-2);
+    flex-shrink: 0;
+  }
+  .wish-row-action:hover {
+    background: var(--paper-100);
+    color: var(--accent);
+  }
+  .wish-card-foot {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px dashed var(--paper-300);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--fg-2);
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition:
+      background var(--dur-2) var(--ease-out),
+      color var(--dur-2) var(--ease-out),
+      border-color var(--dur-2) var(--ease-out);
+  }
+  .wish-card-foot:hover {
+    background: var(--paper-100);
+    color: var(--ink-900);
+    border-color: var(--paper-400);
   }
 }

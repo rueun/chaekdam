@@ -6,7 +6,7 @@ export function ComingSoon({ title }: { title: string }) {
   return (
     <>
       <TopBar title={title} showSearch={false} />
-      <Card className="flex min-h-40 items-center justify-center text-[14px] text-[var(--fg-2)]">
+      <Card className="text-body-sm text-fg-2 flex min-h-40 items-center justify-center">
         이 화면은 곧 준비됩니다.
       </Card>
     </>

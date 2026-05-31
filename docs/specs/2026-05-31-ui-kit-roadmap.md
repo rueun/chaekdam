@@ -10,16 +10,19 @@
 2. **방식** — 프리미티브 먼저(bottom-up). `components/ui` 를 토큰 기반으로 완성 후 화면 조립.
 3. **체크포인트** — **그룹 단위**로 멈춰 시각 확인 후 다음 그룹.
 
-## 스타일링 컨벤션 (방식 A — 확정)
+## 스타일링 컨벤션 (Tailwind 우선 + @theme · 하이브리드 — 확정)
 
-- 디자인 원본 CSS(`design/handoff/ui_kits/web/*.css`, `colors_and_type.css`)의 컴포넌트 클래스를
-  **`app/globals.css` 의 `@layer components` 에 토큰 기반으로 이식**한다.
-- `components/ui/*` 는 **타입드 래퍼** — variant/size 를 `cn()` + Record 맵으로 클래스 조합. 신규 의존성(cva 등) 없음.
-- 디자인시스템에 없는 프리미티브(예: 제네릭 `Card`)는 `design-system.md` 규칙으로 **합성**하고 주석에 명시.
-- 화면(`components/feature/*`)의 bespoke 레이아웃만 Tailwind 유틸 사용. 토큰은 `var(--x)` (raw hex 금지).
-- 토큰 원본은 `colors_and_type.css` → `globals.css :root`. 다크 모드 없음(ADR-011).
+> 초기엔 "CSS @layer components 이식"(방식 A)으로 시작했으나, 레포 컨벤션(유틸 우선)에 맞춰
+> **Tailwind 우선 + @theme 하이브리드**로 전환. 자세한 규칙은 `.claude/rules/design-system.md` 참조.
 
-> 이 컨벤션은 ADR 후보. 확정 시 `docs/ADR.md` 에 항목 추가.
+- **토큰을 Tailwind v4 `@theme inline`(`app/globals.css`)에 등록** → `bg-surface`·`text-ink-900`·`rounded-md`·`shadow-3`·`text-h2`·`font-serif` 유틸로 노출. `:root` 토큰을 참조하므로 단일 소스 유지(`colors_and_type.css` → `:root` → `@theme`).
+- **기본은 Tailwind 유틸리티.** raw hex 금지, 토큰 유틸 사용.
+- **`@layer components` CSS 는 예외만** — 의사요소(배지 점/체크, 체크박스·라디오·토글, 밑줄·인용 바)·네이티브 input 재스타일링·data-URI 배경(Select 캐럿·Search 아이콘).
+- `components/ui/*` 는 **타입드 래퍼**(variant/size 를 `cn()`+Record 맵). 신규 의존성(cva) 없음.
+- 기존 `@layer components` 레이아웃/구성 CSS(.app/.sidebar/.hero/.row-grid/카드 등)는 동작하면 유지, 손댈 때 유틸로 **점진 이전**.
+- 다크 모드 없음(ADR-011).
+
+> 이 스타일링 결정(@theme + 하이브리드)은 ADR 후보. 확정 시 `docs/ADR.md` 에 항목 추가.
 
 ## 확인 수단
 

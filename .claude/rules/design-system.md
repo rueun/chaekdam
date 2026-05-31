@@ -39,3 +39,17 @@
 
 - `components/ui/`의 primitive(Button/Card/Chip/Badge/Input/Toggle 등)를 토큰 기반으로 먼저 만들고,
   feature 컴포넌트가 이를 조합한다. 상태 배지(읽는 중/완독/읽고 싶은/쉬는 중) 색은 위 의미색을 따른다.
+
+## 스타일링 구현 방식 (Tailwind 우선 + @theme · 하이브리드)
+
+- **토큰은 Tailwind v4 `@theme`(`app/globals.css`)에 등록**해 유틸로 노출한다.
+  예) `bg-surface` `text-ink-900` `text-fg-2` `border-divider` `rounded-md` `shadow-3` `font-serif` `text-h2`.
+  - **색·타입 스케일**: 이름이 `:root` 토큰과 다르므로(`--color-bg`↔`--bg`, `--text-h1`↔`--fs-h1`) `@theme inline { --color-bg: var(--bg) }` 로 `:root` 를 참조 → 단일 소스.
+  - **radius·shadow·font**: 이름이 Tailwind 네임스페이스와 같아(`--radius-md` 등) inline 참조 시 자기참조가 된다. 이들은 `@theme { --radius-md: 12px }` 처럼 **리터럴로 직접 정의**(non-inline)하고 `:root` 에 중복 정의하지 않는다.
+- **기본은 Tailwind 유틸리티.** 컴포넌트 스타일은 유틸로 작성하고, raw hex 대신 위 토큰 유틸(또는 정 필요하면 `[var(--token)]`)을 쓴다.
+- **`@layer components` CSS 는 예외적으로만** — 유틸로는 지저분하거나 불가능한 경우에 한정:
+  - 의사요소: 배지 점/체크(SVG mask), 체크박스·라디오·토글 커스텀, 밑줄 `::after`, 인용 액센트 바 `::before`
+  - 네이티브 입력 재스타일링(`appearance: none`) + data-URI 배경 아이콘(Select 캐럿·Search 아이콘)
+  - 이때도 값은 토큰(`var(--*)`)으로. raw hex 는 디자인 원본에서 이식한 경우로 최소화.
+- **`@apply` 남용 금지.** 유틸 조합은 className 에서, 공통 패턴은 컴포넌트로 추출.
+- 기존 `@layer components` 로 만든 레이아웃/구성 CSS 는 동작하면 유지하되, 손댈 때 유틸로 점진 이전.
