@@ -1,6 +1,7 @@
 import { TopBar } from '@/components/layout/top-bar';
 import { SectionHeader } from '@/components/layout/section-header';
 import { Hero } from '@/components/feature/home/hero';
+import { ReadingLogPanel } from '@/components/feature/reading-log/reading-log';
 import { BookCard, type BookCardView } from '@/components/feature/library/book-card';
 import { WishlistCard, type WishlistBookView } from '@/components/feature/library/wishlist-card';
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
@@ -104,6 +105,8 @@ export default function HomePage() {
       />
 
       <Hero minutesToday={24} deltaMinutes={6} />
+
+      <ReadingLogPanel />
 
       <SectionHeader title="읽는 중" moreHref={ROUTES.LIBRARY()} />
       <div className="row-grid row-grid-5">

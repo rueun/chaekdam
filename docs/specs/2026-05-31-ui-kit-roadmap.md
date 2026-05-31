@@ -76,5 +76,5 @@
 - **모바일 반응형 셸** — `.app`(240px 고정 사이드바)이 모바일 미대응. 웹은 데스크톱 우선이고 모바일은 별도 키트(ADR)라 **전용 슬라이스**로(오프캔버스/하단 탭).
 - **a11y 패스** — TopBar h1/subtitle 분리, Hero `<section>`/통계 `<dl>` 랜드마크, Sidebar `기록` 그룹 `role="group"`, 프로필 링크 aria. 한 번에 정리.
 - **유비쿼터스 언어 정리(결정 필요)** — `HIGHLIGHTS`(밑줄 모음) vs `NOTES`(한 줄 담기) vs '한 줄'(Highlight), `WISHLIST` vs 도메인 `WISH`. 라우트 키/URL/UI 라벨/도메인 용어 4자 정합을 `docs/ARCHITECTURE.md`에 확정.
-- **홈 C 위젯** — ReadingLog(히트맵)·최근 밑줄(QuoteCard)·위시리스트 카드.
+- **홈 C 위젯** — ~~ReadingLog(히트맵)·최근 밑줄(HighlightCard)·위시리스트 카드~~ ✅ 완료(C1 밑줄·위시 / C2 ReadingLog).
 - **BookCard 클릭 이동** — 책 상세 라우트 연결 시 `href` 지원 추가.
