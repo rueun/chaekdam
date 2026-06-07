@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { SearchInput } from '@/components/ui/search-input';
 import { Select } from '@/components/ui/select';
+import { toast } from '@/components/ui/toast';
 import type { BookStatusKey } from '@/components/ui/status-badge';
+import { addBook } from '@/app/(dashboard)/library/actions';
 
 // 네이버 책 API 응답과 같은 모양의 더미. 실제 연동 시 이 배열만 API 결과로 교체.
 // 네이버 책 API 응답 기반 외부 검색 결과 뷰 타입. 도메인 Book 엔티티가 아니다
@@ -76,8 +78,10 @@ const SHELF_OPTIONS: { value: BookStatusKey; label: string }[] = [
   { value: 'wish', label: '읽고 싶은' },
   { value: 'done', label: '완독' },
 ];
-// 빠른 검색 칩 (ISBN 예시 포함)
-const SUGGESTED_QUERIES = ['김연수', '에세이', '9788932036779'];
+// 빠른 검색 칩
+const SUGGESTED_QUERIES = ['김연수', '에세이', '김애란'];
+// 책장 미선택 시 기본값
+const DEFAULT_SHELF: BookStatusKey = 'wish';
 
 type SearchState = 'idle' | 'loading' | 'results' | 'empty';
 
@@ -111,6 +115,28 @@ export function BookSearch() {
   const [state, setState] = useState<SearchState>('idle');
   const [shelf, setShelf] = useState<Record<string, BookStatusKey>>({});
   const [added, setAdded] = useState<Record<string, boolean>>({});
+  const [adding, setAdding] = useState<string | null>(null);
+
+  // 책장에 담기 — Server Action 호출(AddBookToShelf 유스케이스). 성공 시 행을 담김 상태로.
+  const handleAdd = (book: BookSearchResult) => {
+    if (added[book.isbn] || adding === book.isbn) return; // 중복 담기·중복 제출 방지
+    void (async () => {
+      setAdding(book.isbn);
+      const result = await addBook({
+        title: book.title,
+        author: book.author,
+        status: shelf[book.isbn] ?? DEFAULT_SHELF,
+        coverColor: book.coverColor,
+      });
+      setAdding(null);
+      if (result.ok) {
+        setAdded((p) => ({ ...p, [book.isbn]: true }));
+        toast('서재에 담았어요');
+      } else {
+        toast(result.error);
+      }
+    })();
+  };
 
   // 더미 디바운스 검색 — 실제 연동 시 백엔드 프록시 호출로 교체
   useEffect(() => {
@@ -202,10 +228,11 @@ export function BookSearch() {
                   key={book.isbn}
                   book={book}
                   query={query}
-                  shelf={shelf[book.isbn] ?? 'wish'}
+                  shelf={shelf[book.isbn] ?? DEFAULT_SHELF}
                   added={Boolean(added[book.isbn])}
+                  pending={adding === book.isbn}
                   onShelfChange={(v) => setShelf((p) => ({ ...p, [book.isbn]: v }))}
-                  onAdd={() => setAdded((p) => ({ ...p, [book.isbn]: true }))}
+                  onAdd={() => handleAdd(book)}
                 />
               ))}
             </ul>
@@ -250,6 +277,7 @@ function ResultRow({
   query,
   shelf,
   added,
+  pending,
   onShelfChange,
   onAdd,
 }: {
@@ -257,6 +285,7 @@ function ResultRow({
   query: string;
   shelf: BookStatusKey;
   added: boolean;
+  pending: boolean;
   onShelfChange: (value: BookStatusKey) => void;
   onAdd: () => void;
 }) {
@@ -305,11 +334,12 @@ function ResultRow({
               value={shelf}
               onChange={(v) => onShelfChange(v as BookStatusKey)}
               options={SHELF_OPTIONS}
+              disabled={pending}
               className="w-full"
             />
-            <Button variant="primary" onClick={onAdd} className="w-full">
+            <Button variant="primary" onClick={onAdd} disabled={pending} className="w-full">
               <Icon name="plus" size={16} />
-              담기
+              {pending ? '담는 중…' : '담기'}
             </Button>
           </>
         )}
