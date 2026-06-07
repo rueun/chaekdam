@@ -3,7 +3,11 @@ import { TopBar } from '@/components/layout/top-bar';
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
 import { Icon } from '@/components/ui/icon';
 import { CaptureTrigger } from '@/components/feature/capture/capture-trigger';
-import { createAuthSession, createListHighlightsUseCase } from '@/lib/infrastructure/di-container';
+import {
+  createAuthSession,
+  createListBooksUseCase,
+  createListHighlightsUseCase,
+} from '@/lib/infrastructure/di-container';
 import { ROUTES } from '@/lib/router/routes';
 
 // 최신 데이터 반영 — 캡처 후 revalidate 와 함께 항상 최신 목록을 보여준다.
@@ -23,16 +27,26 @@ export default async function HighlightsPage() {
   const userId = await (await createAuthSession()).getCurrentUserId();
   if (!userId) redirect(ROUTES.AUTH.LOGIN());
 
-  const useCase = await createListHighlightsUseCase();
-  const highlights = await useCase.execute();
+  const [listHighlights, listBooks] = await Promise.all([
+    createListHighlightsUseCase(),
+    createListBooksUseCase(),
+  ]);
+  const [highlights, books] = await Promise.all([listHighlights.execute(), listBooks.execute()]);
 
-  // 도메인 Highlight → 카드 뷰모델. 책 메타(저자/제목)는 books 테이블 도입 후 연결.
-  const views: HighlightView[] = highlights.map((h) => ({
-    id: h.id,
-    content: h.content,
-    page: h.page ?? undefined,
-    dateLabel: formatDateLabel(h.createdAt),
-  }));
+  // 한 줄을 책 메타(제목·저자)로 보강 — book_id 로 조회(여러 도메인 조합은 화면에서, ADR-006).
+  const bookById = new Map(books.map((b) => [b.id, b]));
+  const views: HighlightView[] = highlights.map((h) => {
+    const book = bookById.get(h.bookId);
+    const author = book?.author?.trim() ? book.author : undefined;
+    return {
+      id: h.id,
+      content: h.content,
+      author,
+      book: book?.title,
+      page: h.page ?? undefined,
+      dateLabel: formatDateLabel(h.createdAt),
+    };
+  });
 
   return (
     <>

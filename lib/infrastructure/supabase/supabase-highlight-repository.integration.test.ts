@@ -5,8 +5,10 @@ import type { Database } from './types.gen';
 import { createSupabaseAdminClient } from './admin-client';
 import { supabaseEnv } from './env';
 import { SupabaseHighlightRepository } from './supabase-highlight-repository';
+import { SupabaseBookRepository } from './supabase-book-repository';
 import { Highlight } from '@/lib/domain/highlight/highlight';
 import { NoteSource } from '@/lib/domain/highlight/note-source';
+import { Book } from '@/lib/domain/book/book';
 import { CaptureHighlightUseCase } from '@/lib/application/capture-highlight.use-case';
 
 // 로컬 Supabase(`supabase start`) 가 떠 있어야 실행되는 통합 테스트.
@@ -30,6 +32,10 @@ describe('SupabaseHighlightRepository (통합)', () => {
   let userBId: string;
   let repoA: SupabaseHighlightRepository;
   let repoB: SupabaseHighlightRepository;
+  // highlights.book_id 는 books FK 라 실제 책이 있어야 한다
+  let bookA1: string;
+  let bookA2: string;
+  let bookB1: string;
 
   beforeAll(async () => {
     // 사용자 생성 직후 즉시 id 를 보관 — 이후 단계가 실패해도 afterAll 이 정리할 수 있게.
@@ -41,8 +47,23 @@ describe('SupabaseHighlightRepository (통합)', () => {
     if (b.error) throw b.error;
     userBId = b.data.user.id;
 
-    repoA = new SupabaseHighlightRepository(await signInClient(emailA, password));
-    repoB = new SupabaseHighlightRepository(await signInClient(emailB, password));
+    const clientA = await signInClient(emailA, password);
+    const clientB = await signInClient(emailB, password);
+    repoA = new SupabaseHighlightRepository(clientA);
+    repoB = new SupabaseHighlightRepository(clientB);
+
+    // FK 충족용 실제 책 생성
+    const bookRepoA = new SupabaseBookRepository(clientA);
+    const bookRepoB = new SupabaseBookRepository(clientB);
+    const ba1 = Book.register({ title: 'A 책 1' });
+    const ba2 = Book.register({ title: 'A 책 2' });
+    const bb1 = Book.register({ title: 'B 책 1' });
+    await bookRepoA.save(ba1);
+    await bookRepoA.save(ba2);
+    await bookRepoB.save(bb1);
+    bookA1 = ba1.id;
+    bookA2 = ba2.id;
+    bookB1 = bb1.id;
   });
 
   afterAll(async () => {
@@ -52,8 +73,7 @@ describe('SupabaseHighlightRepository (통합)', () => {
   });
 
   it('한 줄을 저장하고 id 로 조회한다', async () => {
-    const bookId = crypto.randomUUID();
-    const highlight = Highlight.fromText(bookId, '통합 테스트 문장', 'p.7');
+    const highlight = Highlight.fromText(bookA1, '통합 테스트 문장', 'p.7');
 
     await repoA.save(highlight);
     const found = await repoA.findById(highlight.id);
@@ -61,14 +81,13 @@ describe('SupabaseHighlightRepository (통합)', () => {
     expect(found).not.toBeNull();
     expect(found!.id).toBe(highlight.id);
     expect(found!.content).toBe('통합 테스트 문장');
-    expect(found!.bookId).toBe(bookId);
+    expect(found!.bookId).toBe(bookA1);
     expect(found!.page).toBe('p.7');
     expect(found!.source).toBe('TEXT');
   });
 
   it('사진 한 줄도 photo_url 과 함께 왕복한다', async () => {
-    const bookId = crypto.randomUUID();
-    const highlight = Highlight.fromPhoto(bookId, 'https://x/y.jpg', '사진 추출 문장');
+    const highlight = Highlight.fromPhoto(bookA1, 'https://x/y.jpg', '사진 추출 문장');
 
     await repoA.save(highlight);
     const found = await repoA.findById(highlight.id);
@@ -78,12 +97,11 @@ describe('SupabaseHighlightRepository (통합)', () => {
   });
 
   it('책 id 로 그 책의 한 줄만 조회된다', async () => {
-    const bookId = crypto.randomUUID();
-    await repoA.save(Highlight.fromText(bookId, '첫 문장'));
-    await repoA.save(Highlight.fromText(bookId, '둘째 문장'));
-    await repoA.save(Highlight.fromText(crypto.randomUUID(), '다른 책 문장'));
+    await repoA.save(Highlight.fromText(bookA2, '첫 문장'));
+    await repoA.save(Highlight.fromText(bookA2, '둘째 문장'));
+    await repoA.save(Highlight.fromText(bookA1, '다른 책 문장'));
 
-    const list = await repoA.findByBookId(bookId);
+    const list = await repoA.findByBookId(bookA2);
     expect(list).toHaveLength(2);
     expect(list.map((h) => h.content)).toEqual(expect.arrayContaining(['첫 문장', '둘째 문장']));
   });
@@ -93,7 +111,7 @@ describe('SupabaseHighlightRepository (통합)', () => {
     const useCase = new CaptureHighlightUseCase(repoA);
     const { highlightId } = await useCase.execute({
       source: NoteSource.TEXT,
-      bookId: crypto.randomUUID(),
+      bookId: bookA1,
       content: '유스케이스로 담은 문장',
       page: 'p.3',
     });
@@ -107,8 +125,8 @@ describe('SupabaseHighlightRepository (통합)', () => {
   it('findAll — 본인 한 줄 목록만 돌려준다(RLS 범위)', async () => {
     const markerA = `A 마커 ${crypto.randomUUID()}`;
     const markerB = `B 마커 ${crypto.randomUUID()}`;
-    await repoA.save(Highlight.fromText(crypto.randomUUID(), markerA));
-    await repoB.save(Highlight.fromText(crypto.randomUUID(), markerB));
+    await repoA.save(Highlight.fromText(bookA1, markerA));
+    await repoB.save(Highlight.fromText(bookB1, markerB));
 
     const allA = await repoA.findAll();
     expect(allA.some((h) => h.content === markerA)).toBe(true);
@@ -120,12 +138,11 @@ describe('SupabaseHighlightRepository (통합)', () => {
   });
 
   it('RLS — 다른 사용자의 한 줄은 조회되지 않는다', async () => {
-    const bookId = crypto.randomUUID();
-    const secret = Highlight.fromText(bookId, 'A 만의 문장');
+    const secret = Highlight.fromText(bookA1, 'A 만의 문장');
     await repoA.save(secret);
 
     // B 권한으로는 A 의 한 줄이 보이지 않아야 한다
     expect(await repoB.findById(secret.id)).toBeNull();
-    expect(await repoB.findByBookId(bookId)).toHaveLength(0);
+    expect(await repoB.findByBookId(bookA1)).toHaveLength(0);
   });
 });
