@@ -8,15 +8,22 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { toast } from '@/components/ui/toast';
+import { captureHighlight } from '@/app/(dashboard)/highlights/actions';
 
 // TODO(capture): 이미지 선택 후 Claude vision 으로 구절 추출한 결과로 대체
 const SAMPLE_OCR = '아주 천천히 책장을 넘기는 사람만이 어떤 문장이 자신의 것인지 알아본다.';
-// TODO(capture): 사용자 책장 조회 유스케이스 결과로 대체
+// TODO(capture): 사용자 책장 조회 유스케이스 결과로 대체. value 는 Book.id(uuid) — books 테이블 도입 전이라 샘플 uuid.
 const BOOK_OPTIONS = [
-  { value: 'b1', label: '일곱 해의 마지막 · 김연수' },
-  { value: 'b2', label: '아주 사적인 독서 · 이현우' },
-  { value: 'b3', label: '바깥은 여름 · 김애란' },
+  { value: '11111111-1111-4111-8111-111111111111', label: '일곱 해의 마지막 · 김연수' },
+  { value: '22222222-2222-4222-8222-222222222222', label: '아주 사적인 독서 · 이현우' },
+  { value: '33333333-3333-4333-8333-333333333333', label: '바깥은 여름 · 김애란' },
 ];
+
+interface CaptureData {
+  bookId: string;
+  content: string;
+  page: string | null;
+}
 
 /** 한 줄 담기 모달을 띄운다. */
 export function openCapture() {
@@ -26,6 +33,7 @@ export function openCapture() {
 function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [pending, setPending] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
 
@@ -40,10 +48,19 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     setImageUrl(URL.createObjectURL(file));
   };
 
-  // TODO(capture): NoteSource.PHOTO/TEXT 분기 후 Highlight 캡처 유스케이스 호출로 교체
-  const saveHighlight = () => {
-    onClose();
-    toast('한 줄을 담았어요');
+  // 검토한 텍스트를 Highlight 로 저장(Server Action → 유스케이스). 사진 업로드는 후속.
+  const saveHighlight = (data: CaptureData) => {
+    void (async () => {
+      setPending(true);
+      const result = await captureHighlight(data);
+      setPending(false);
+      if (result.ok) {
+        onClose();
+        toast('한 줄을 담았어요');
+      } else {
+        toast(result.error);
+      }
+    })();
   };
 
   return (
@@ -60,6 +77,7 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
           onRetake={() => setImageUrl(null)}
           onSave={saveHighlight}
           onLater={onClose}
+          pending={pending}
         />
       ) : (
         <>
@@ -174,15 +192,29 @@ function CaptureReview({
   onRetake,
   onSave,
   onLater,
+  pending,
 }: {
   imageUrl: string;
   onRetake: () => void;
-  onSave: () => void;
+  onSave: (data: CaptureData) => void;
   onLater: () => void;
+  pending: boolean;
 }) {
   const ocrRef = useRef<HTMLTextAreaElement>(null);
+  const pageRef = useRef<HTMLInputElement>(null);
+  const [bookId, setBookId] = useState(BOOK_OPTIONS[0]!.value);
   // 리뷰 단계 진입 시 인식 문장으로 포커스 이동
   useEffect(() => ocrRef.current?.focus(), []);
+
+  const submit = () => {
+    const content = ocrRef.current?.value.trim() ?? '';
+    if (!content) {
+      toast('담을 문장을 입력해 주세요');
+      return;
+    }
+    const trimmedPage = pageRef.current?.value.trim() ?? '';
+    onSave({ bookId, content, page: trimmedPage.length > 0 ? trimmedPage : null });
+  };
 
   return (
     <div>
@@ -218,7 +250,8 @@ function CaptureReview({
             <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">책</span>
             <Select
               aria-label="책 선택"
-              defaultValue="b1"
+              value={bookId}
+              onChange={setBookId}
               options={BOOK_OPTIONS}
               className="w-full"
             />
@@ -227,7 +260,7 @@ function CaptureReview({
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
               <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">페이지</span>
-              <Input defaultValue="42" inputMode="numeric" aria-label="페이지" />
+              <Input ref={pageRef} placeholder="예: 42" inputMode="numeric" aria-label="페이지" />
             </label>
             <label className="block">
               <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">태그</span>
@@ -238,14 +271,15 @@ function CaptureReview({
       </div>
 
       <div className="mt-5 flex items-center justify-end gap-2">
-        <Button variant="ghost" onClick={onRetake}>
+        <Button variant="ghost" onClick={onRetake} disabled={pending}>
           다시 고르기
         </Button>
-        <Button variant="secondary" onClick={onLater}>
+        <Button variant="secondary" onClick={onLater} disabled={pending}>
           나중에 정리
         </Button>
-        <Button variant="primary" onClick={onSave}>
-          <Icon name="check" size={16} />한 줄 저장
+        <Button variant="primary" onClick={submit} disabled={pending}>
+          <Icon name="check" size={16} />
+          {pending ? '저장 중…' : '한 줄 저장'}
         </Button>
       </div>
     </div>

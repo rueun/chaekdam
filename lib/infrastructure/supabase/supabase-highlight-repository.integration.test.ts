@@ -6,6 +6,8 @@ import { createSupabaseAdminClient } from './admin-client';
 import { supabaseEnv } from './env';
 import { SupabaseHighlightRepository } from './supabase-highlight-repository';
 import { Highlight } from '@/lib/domain/highlight/highlight';
+import { NoteSource } from '@/lib/domain/highlight/note-source';
+import { CaptureHighlightUseCase } from '@/lib/application/capture-highlight.use-case';
 
 // 로컬 Supabase(`supabase start`) 가 떠 있어야 실행되는 통합 테스트.
 // 실제 RLS 정책까지 검증한다(Supabase 클라이언트 Mock 금지 — testing 규칙).
@@ -84,6 +86,22 @@ describe('SupabaseHighlightRepository (통합)', () => {
     const list = await repoA.findByBookId(bookId);
     expect(list).toHaveLength(2);
     expect(list.map((h) => h.content)).toEqual(expect.arrayContaining(['첫 문장', '둘째 문장']));
+  });
+
+  it('캡처 배선 경로 — CaptureHighlightUseCase 로 담으면 실제 저장된다', async () => {
+    // Server Action(captureHighlight)이 호출하는 경로: 유스케이스 → Supabase 어댑터 → DB
+    const useCase = new CaptureHighlightUseCase(repoA);
+    const { highlightId } = await useCase.execute({
+      source: NoteSource.TEXT,
+      bookId: crypto.randomUUID(),
+      content: '유스케이스로 담은 문장',
+      page: 'p.3',
+    });
+
+    const found = await repoA.findById(highlightId);
+    expect(found?.content).toBe('유스케이스로 담은 문장');
+    expect(found?.source).toBe('TEXT');
+    expect(found?.page).toBe('p.3');
   });
 
   it('RLS — 다른 사용자의 한 줄은 조회되지 않는다', async () => {
