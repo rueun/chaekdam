@@ -13,10 +13,14 @@ export interface HighlightView {
   content: string;
   /** content 안에서 강조할 부분(첫 일치만) */
   emphasis?: string;
-  author: string;
-  book: string;
+  /** 저자 (책 메타가 있을 때만 — books 테이블 도입 전 DB 한 줄엔 없음) */
+  author?: string;
+  /** 책 제목 (위와 동일) */
+  book?: string;
   /** 페이지 표기 (예: 'p.42') */
-  page: string;
+  page?: string;
+  /** 책 메타가 없을 때 보조 메타로 쓰는 날짜 라벨(예: '6월 7일') */
+  dateLabel?: string;
 }
 
 /** emphasis 가 있으면 content 의 해당 부분을 <mark> 로 감싼다 (없거나 공백뿐이면 원문). */
@@ -43,6 +47,9 @@ interface HighlightCardProps {
  * 스타일은 디자인시스템 CSS(`.quote-card`).
  */
 export function HighlightCard({ highlight }: HighlightCardProps) {
+  // 저자 뒤에 붙는 보조 메타 — 책 제목·페이지·날짜 중 있는 것만
+  const meta = [highlight.book, highlight.page, highlight.dateLabel].filter(Boolean).join(' · ');
+
   const openMenu = (anchor: HTMLElement) => {
     openQuoteMenu(anchor, {
       // TODO(highlight): 각 액션을 Highlight 유스케이스(수정·고정·이동·보관)로 교체
@@ -63,8 +70,8 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
             body: <>삭제하면 이 문장과 메모가 함께 사라져요. 되돌릴 수 없어요.</>,
             confirmText: '삭제',
           });
-          // TODO(highlight): 확인 시 Highlight 삭제 유스케이스 호출
-          if (confirmed) toast('한 줄을 삭제했어요');
+          // TODO(highlight): DeleteHighlight 유스케이스 연결. 그 전까진 실제 삭제 안 됨을 정직하게 안내.
+          if (confirmed) toast('삭제 기능은 곧 제공돼요');
         })();
       },
     });
@@ -75,10 +82,14 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
       <div className="q-text">{markEmphasis(highlight.content, highlight.emphasis)}</div>
       <div className="q-meta">
         <div>
-          <b>{highlight.author}</b>{' '}
-          <span className="author">
-            · {highlight.book} · {highlight.page}
-          </span>
+          {highlight.author ? <b>{highlight.author}</b> : null}
+          {meta ? (
+            highlight.author ? (
+              <span className="author"> · {meta}</span>
+            ) : (
+              <span className="text-fg-3">{meta}</span>
+            )
+          ) : null}
         </div>
         <div className="q-actions">
           <Button

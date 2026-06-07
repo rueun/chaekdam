@@ -19,6 +19,9 @@ class InMemoryHighlightRepository implements HighlightRepository {
   findByBookId(bookId: string): Promise<Highlight[]> {
     return Promise.resolve(this.saved.filter((h) => h.bookId === bookId));
   }
+  findAll(): Promise<Highlight[]> {
+    return Promise.resolve([...this.saved]);
+  }
 }
 
 describe('CaptureHighlightUseCase', () => {

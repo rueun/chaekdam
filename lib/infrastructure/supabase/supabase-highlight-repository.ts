@@ -7,6 +7,9 @@ import type { Database } from './types.gen';
 type HighlightRow = Database['public']['Tables']['highlights']['Row'];
 type DbNoteSource = Database['public']['Enums']['note_source'];
 
+/** findAll 방어적 상한 — 페이지네이션 도입 전 무한정 조회 방지 */
+const HIGHLIGHTS_LIST_LIMIT = 200;
+
 /**
  * HighlightRepository 의 Supabase 어댑터.
  * 주입된 클라이언트의 사용자 권한으로 실행되며, user_id 는 DB default(auth.uid())+RLS 로
@@ -44,6 +47,18 @@ export class SupabaseHighlightRepository implements HighlightRepository {
       .select('*')
       .eq('book_id', bookId)
       .order('created_at', { ascending: false });
+    if (error) throw new Error(`Failed to list highlights: ${error.message}`);
+    return (data ?? []).map(toDomain);
+  }
+
+  async findAll(): Promise<Highlight[]> {
+    // RLS 가 본인 행으로 한정한다 — 별도 user_id 필터 불필요.
+    // 방어적 상한(무한정 스캔 방지). 본격 페이지네이션은 후속 — Port 시그니처에 옵션 추가 예정.
+    const { data, error } = await this.client
+      .from('highlights')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(HIGHLIGHTS_LIST_LIMIT);
     if (error) throw new Error(`Failed to list highlights: ${error.message}`);
     return (data ?? []).map(toDomain);
   }

@@ -1,64 +1,44 @@
+import { redirect } from 'next/navigation';
 import { TopBar } from '@/components/layout/top-bar';
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
 import { Icon } from '@/components/ui/icon';
 import { CaptureTrigger } from '@/components/feature/capture/capture-trigger';
+import { createAuthSession, createListHighlightsUseCase } from '@/lib/infrastructure/di-container';
+import { ROUTES } from '@/lib/router/routes';
 
-// 샘플 한 줄 모음 — 추후 Highlight 조회 유스케이스로 대체
-const HIGHLIGHTS: HighlightView[] = [
-  {
-    id: 'h1',
-    content: '아주 천천히 책장을 넘기는 사람만이 어떤 문장이 자신의 것인지 알아본다.',
-    emphasis: '어떤 문장이 자신의 것인지',
-    author: '김연수',
-    book: '일곱 해의 마지막',
-    page: 'p.42',
-  },
-  {
-    id: 'h2',
-    content: '나는 책을 덮고서야 비로소 그 문장의 무게를 알았다. 읽는 동안에는 너무 가벼웠다.',
-    emphasis: '읽는 동안에는 너무 가벼웠다.',
-    author: '김애란',
-    book: '바깥은 여름',
-    page: 'p.94',
-  },
-  {
-    id: 'h3',
-    content: '기억은 우리가 떠나온 곳이 아니라, 우리가 끝내 돌아가지 못한 곳에 머문다.',
-    author: '최은영',
-    book: '쇼코의 미소',
-    page: 'p.61',
-  },
-  {
-    id: 'h4',
-    content: '여행은 떠나는 일이 아니라, 익숙한 것과 잠시 거리를 두는 연습이다.',
-    emphasis: '익숙한 것과 잠시 거리를 두는 연습',
-    author: '김영하',
-    book: '여행의 이유',
-    page: 'p.118',
-  },
-  {
-    id: 'h5',
-    content: '슬픔을 공부한다는 것은, 슬픔 앞에서 끝내 도망치지 않는 법을 배우는 것이다.',
-    author: '신형철',
-    book: '슬픔을 공부하는 슬픔',
-    page: 'p.7',
-  },
-  {
-    id: 'h6',
-    content: '말하지 못한 안부는 사라지지 않고, 다른 계절의 문장이 되어 돌아온다.',
-    emphasis: '다른 계절의 문장이 되어 돌아온다',
-    author: '이현우',
-    book: '아주 사적인 독서',
-    page: 'p.203',
-  },
-];
+// 최신 데이터 반영 — 캡처 후 revalidate 와 함께 항상 최신 목록을 보여준다.
+export const dynamic = 'force-dynamic';
 
-export default function HighlightsPage() {
+/** 날짜 → '6월 7일' 라벨(KST 고정 — 서버 TZ 영향 제거). */
+function formatDateLabel(date: Date): string {
+  return date.toLocaleDateString('ko-KR', {
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'Asia/Seoul',
+  });
+}
+
+export default async function HighlightsPage() {
+  // 진입점 인가 게이트(미들웨어·RLS 외 1차 방어). 미인증이면 로그인으로.
+  const userId = await (await createAuthSession()).getCurrentUserId();
+  if (!userId) redirect(ROUTES.AUTH.LOGIN());
+
+  const useCase = await createListHighlightsUseCase();
+  const highlights = await useCase.execute();
+
+  // 도메인 Highlight → 카드 뷰모델. 책 메타(저자/제목)는 books 테이블 도입 후 연결.
+  const views: HighlightView[] = highlights.map((h) => ({
+    id: h.id,
+    content: h.content,
+    page: h.page ?? undefined,
+    dateLabel: formatDateLabel(h.createdAt),
+  }));
+
   return (
     <>
       <TopBar
         title="밑줄 모음"
-        subtitle={`${HIGHLIGHTS.length}개의 문장 · 이번 달 18개 추가`}
+        subtitle={views.length > 0 ? `${views.length}개의 문장` : '담은 한 줄이 여기에 모여요'}
         action={
           <CaptureTrigger className="btn btn-primary">
             <Icon name="pen-line" size={16} />한 줄 담기
@@ -66,11 +46,31 @@ export default function HighlightsPage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-4 max-[860px]:grid-cols-1">
-        {HIGHLIGHTS.map((highlight) => (
-          <HighlightCard key={highlight.id} highlight={highlight} />
-        ))}
-      </div>
+      {views.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4 max-[860px]:grid-cols-1">
+          {views.map((view) => (
+            <HighlightCard key={view.id} highlight={view} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-2 py-20 text-center">
+          <span
+            className="bg-surface text-fg-3 grid size-16 place-content-center rounded-full"
+            aria-hidden
+          >
+            <Icon name="quote" size={28} />
+          </span>
+          <div className="text-ink-900 mt-2 font-serif text-[18px] font-semibold tracking-[-0.02em]">
+            아직 담은 한 줄이 없어요
+          </div>
+          <p className="text-body-sm text-fg-2 max-w-[420px] leading-[1.6]">
+            마음에 닿은 문장을 사진으로 찍거나 직접 입력해 담아보세요. 여기에 차곡차곡 모여요.
+          </p>
+          <CaptureTrigger className="btn btn-primary mt-2">
+            <Icon name="pen-line" size={16} />첫 한 줄 담기
+          </CaptureTrigger>
+        </div>
+      )}
     </>
   );
 }

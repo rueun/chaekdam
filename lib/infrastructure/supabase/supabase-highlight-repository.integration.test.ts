@@ -104,6 +104,21 @@ describe('SupabaseHighlightRepository (통합)', () => {
     expect(found?.page).toBe('p.3');
   });
 
+  it('findAll — 본인 한 줄 목록만 돌려준다(RLS 범위)', async () => {
+    const markerA = `A 마커 ${crypto.randomUUID()}`;
+    const markerB = `B 마커 ${crypto.randomUUID()}`;
+    await repoA.save(Highlight.fromText(crypto.randomUUID(), markerA));
+    await repoB.save(Highlight.fromText(crypto.randomUUID(), markerB));
+
+    const allA = await repoA.findAll();
+    expect(allA.some((h) => h.content === markerA)).toBe(true);
+    expect(allA.some((h) => h.content === markerB)).toBe(false); // A 는 B 것을 못 봄
+
+    const allB = await repoB.findAll();
+    expect(allB.some((h) => h.content === markerB)).toBe(true);
+    expect(allB.some((h) => h.content === markerA)).toBe(false); // B 는 A 것을 못 봄
+  });
+
   it('RLS — 다른 사용자의 한 줄은 조회되지 않는다', async () => {
     const bookId = crypto.randomUUID();
     const secret = Highlight.fromText(bookId, 'A 만의 문장');
