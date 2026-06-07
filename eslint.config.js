@@ -14,6 +14,8 @@ export default tseslint.config(
       'playwright-report/**',
       'test-results/**',
       'next-env.d.ts',
+      // 자동 생성 파일(예: Supabase DB 타입) — 린트 대상 아님
+      '**/*.gen.ts',
     ],
   },
   js.configs.recommended,
