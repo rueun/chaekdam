@@ -1,9 +1,13 @@
 import 'server-only';
 import { CaptureHighlightUseCase } from '@/lib/application/capture-highlight.use-case';
 import { ListHighlightsUseCase } from '@/lib/application/list-highlights.use-case';
+import { AddBookToShelfUseCase } from '@/lib/application/add-book-to-shelf.use-case';
+import { ListBooksUseCase } from '@/lib/application/list-books.use-case';
+import { SetBookStatusUseCase } from '@/lib/application/set-book-status.use-case';
 import type { AuthSession } from '@/lib/domain/ports/auth-session';
 import { createSupabaseServerClient } from './supabase/server-client';
 import { SupabaseHighlightRepository } from './supabase/supabase-highlight-repository';
+import { SupabaseBookRepository } from './supabase/supabase-book-repository';
 import { SupabaseAuthSession } from './supabase/supabase-auth-session';
 
 /**
@@ -18,6 +22,21 @@ export async function createCaptureHighlightUseCase(): Promise<CaptureHighlightU
 export async function createListHighlightsUseCase(): Promise<ListHighlightsUseCase> {
   const client = await createSupabaseServerClient();
   return new ListHighlightsUseCase(new SupabaseHighlightRepository(client));
+}
+
+export async function createAddBookToShelfUseCase(): Promise<AddBookToShelfUseCase> {
+  const client = await createSupabaseServerClient();
+  return new AddBookToShelfUseCase(new SupabaseBookRepository(client));
+}
+
+export async function createListBooksUseCase(): Promise<ListBooksUseCase> {
+  const client = await createSupabaseServerClient();
+  return new ListBooksUseCase(new SupabaseBookRepository(client));
+}
+
+export async function createSetBookStatusUseCase(): Promise<SetBookStatusUseCase> {
+  const client = await createSupabaseServerClient();
+  return new SetBookStatusUseCase(new SupabaseBookRepository(client));
 }
 
 /** 현재 요청의 인증 컨텍스트(진입점 인가 게이트용). */

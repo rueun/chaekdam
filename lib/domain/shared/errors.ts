@@ -44,3 +44,10 @@ export class BookTitleTooLongError extends DomainError {
     super(`Book title must be at most ${maxLength} characters`);
   }
 }
+
+/** 책을 찾을 수 없음 */
+export class BookNotFoundError extends DomainError {
+  constructor(bookId: string) {
+    super(`Book not found: ${bookId}`);
+  }
+}
