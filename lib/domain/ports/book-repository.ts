@@ -15,4 +15,6 @@ export interface BookRepository {
   findAll(): Promise<Book[]>;
   /** 특정 상태(읽는 중/완독/위시/쉬는 중)의 책을 최신순으로 조회한다. */
   findByStatus(status: BookStatus): Promise<Book[]>;
+  /** 책을 책장에서 제거한다(그 책에 딸린 한 줄도 함께 정리된다). */
+  remove(id: string): Promise<void>;
 }

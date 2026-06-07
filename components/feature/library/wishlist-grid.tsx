@@ -1,12 +1,16 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Chip } from '@/components/ui/chip';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/lib/router/routes';
+import {
+  startReading as startReadingAction,
+  removeFromWishlist as removeFromWishlistAction,
+} from '@/app/(dashboard)/wishlist/actions';
 
 export interface WishlistTileView {
   /** Book.id */
@@ -39,9 +43,12 @@ export function WishlistGrid({
   initialItems: WishlistTileView[];
   addBookSlot?: ReactNode;
 }) {
-  // 데모: 로컬 상태로 제거만 시연. 실데이터 연동 시 Server Action(상태 전이) + revalidate 로 교체.
   const [items, setItems] = useState(initialItems);
   const [sort, setSort] = useState<SortKey>('recent');
+  const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
+
+  const mountedRef = useRef(true);
+  useEffect(() => () => void (mountedRef.current = false), []);
 
   const sorted = useMemo(() => {
     const arr = items.slice();
@@ -50,17 +57,41 @@ export function WishlistGrid({
     return arr; // recent = 원본(담은 순) 순서
   }, [items, sort]);
 
-  // 데모: 둘 다 위시 목록에선 사라지지만 의미가 다르다(읽기 시작=READING 전이 / 빼기=삭제).
-  // 실연동 시 각각 startReading / removeFromWishlist 유스케이스로 교체. 구분은 토스트로 시연.
+  const setPending = (id: string, on: boolean) =>
+    setPendingIds((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
   const takeOff = (id: string) => setItems((prev) => prev.filter((b) => b.id !== id));
-  const startReading = (book: WishlistTileView) => {
-    takeOff(book.id);
-    toast(`『${book.title}』 읽기 시작했어요`);
+
+  // 지금부터 읽기 = WISH→READING 전이(서버), 빼기 = 책 삭제(서버). 성공 시 위시 목록에서 제거.
+  // 카드별 독립 pending(동시 작업 시 서로 간섭 없음). unmount 후 setState 는 가드.
+  const runOnBook = (
+    book: WishlistTileView,
+    action: (id: string) => Promise<{ ok: boolean; error?: string }>,
+    successMessage: string,
+  ) => {
+    void (async () => {
+      setPending(book.id, true);
+      const result = await action(book.id);
+      if (!mountedRef.current) return;
+      setPending(book.id, false);
+      if (result.ok) {
+        takeOff(book.id);
+        toast(successMessage);
+      } else {
+        toast(result.error ?? '처리에 실패했어요');
+      }
+    })();
   };
-  const removeFromWishlist = (book: WishlistTileView) => {
-    takeOff(book.id);
-    toast('위시리스트에서 뺐어요');
-  };
+
+  const startReading = (book: WishlistTileView) =>
+    runOnBook(book, startReadingAction, `『${book.title}』 읽기 시작했어요`);
+  const removeFromWishlist = (book: WishlistTileView) =>
+    runOnBook(book, removeFromWishlistAction, '위시리스트에서 뺐어요');
 
   if (items.length === 0) {
     return (
@@ -98,6 +129,7 @@ export function WishlistGrid({
           <WishTile
             key={book.id}
             book={book}
+            pending={pendingIds.has(book.id)}
             onStartReading={() => startReading(book)}
             onRemove={() => removeFromWishlist(book)}
           />
@@ -109,10 +141,12 @@ export function WishlistGrid({
 
 function WishTile({
   book,
+  pending,
   onStartReading,
   onRemove,
 }: {
   book: WishlistTileView;
+  pending: boolean;
   onStartReading: () => void;
   onRemove: () => void;
 }) {
@@ -152,6 +186,7 @@ function WishTile({
             size="sm"
             className="flex-1 justify-center"
             onClick={onStartReading}
+            disabled={pending}
           >
             <Icon name="book-open" size={16} />
             지금부터 읽기
@@ -162,6 +197,7 @@ function WishTile({
             size="sm"
             aria-label="위시리스트에서 빼기"
             onClick={onRemove}
+            disabled={pending}
           >
             <Icon name="bookmark-x" size={16} />
           </Button>

@@ -23,6 +23,10 @@ export class InMemoryBookRepository implements BookRepository {
   findByStatus(status: BookStatus): Promise<Book[]> {
     return Promise.resolve(this.sortedByRecent().filter((b) => b.status === status));
   }
+  remove(id: string): Promise<void> {
+    this.items.delete(id);
+    return Promise.resolve();
+  }
 
   /** Port 계약(최신순)을 Fake 도 충실히 재현 — 정렬 의존 버그를 테스트가 잡도록. */
   private sortedByRecent(): Book[] {
