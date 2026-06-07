@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils/cn';
 import { PersonaPicker } from '@/components/feature/persona/persona-picker';
 import type { PersonaKey } from '@/components/feature/persona/personas';
 import { openProfileEdit } from '@/components/feature/profile/profile-edit-modal';
+import { signOut } from '@/app/(auth)/actions';
 
 /**
  * 설정 화면 — 계정 · AI 독서토론(기본 페르소나) · 데이터(위험).
@@ -48,9 +49,14 @@ export function SettingsView() {
             <div className="text-ink-900 text-[14px] font-medium">홍길동</div>
             <div className="text-fg-3 mt-0.5 text-[12px]">reader@chaekdam.kr</div>
           </div>
-          <Button variant="secondary" onClick={openProfileEdit}>
-            프로필 수정
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            <Button variant="ghost" onClick={() => void signOut()}>
+              로그아웃
+            </Button>
+            <Button variant="secondary" onClick={openProfileEdit}>
+              프로필 수정
+            </Button>
+          </div>
         </SettingsRow>
       </SettingsCard>
 
