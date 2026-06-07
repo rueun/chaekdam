@@ -30,3 +30,17 @@ export class MissingPhotoUrlError extends DomainError {
     super('Photo highlight requires a photo URL');
   }
 }
+
+/** 책 제목이 비어 있음 */
+export class EmptyBookTitleError extends DomainError {
+  constructor() {
+    super('Book title must not be empty');
+  }
+}
+
+/** 책 제목이 허용 길이를 초과함 */
+export class BookTitleTooLongError extends DomainError {
+  constructor(maxLength: number) {
+    super(`Book title must be at most ${maxLength} characters`);
+  }
+}

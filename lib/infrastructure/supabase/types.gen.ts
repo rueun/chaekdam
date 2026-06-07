@@ -34,6 +34,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      books: {
+        Row: {
+          author: string
+          cover_color: string | null
+          created_at: string
+          id: string
+          status: Database["public"]["Enums"]["book_status"]
+          title: string
+          user_id: string
+        }
+        Insert: {
+          author?: string
+          cover_color?: string | null
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["book_status"]
+          title: string
+          user_id?: string
+        }
+        Update: {
+          author?: string
+          cover_color?: string | null
+          created_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["book_status"]
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       highlights: {
         Row: {
           book_id: string
@@ -75,6 +105,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      book_status: "READING" | "DONE" | "WISH" | "PAUSED"
       note_source: "PHOTO" | "TEXT"
     }
     CompositeTypes: {
@@ -206,6 +237,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      book_status: ["READING", "DONE", "WISH", "PAUSED"],
       note_source: ["PHOTO", "TEXT"],
     },
   },

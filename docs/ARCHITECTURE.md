@@ -139,9 +139,10 @@ chaekdam/
 ├── lib/
 │   ├── domain/                             # ⭐ 외부 의존 0
 │   │   ├── book/
-│   │   │   ├── book.ts                     # Entity
-│   │   │   ├── author.ts                   # VO (이름·생몰년·저작권 만료 여부)
+│   │   │   ├── book.ts                     # Entity (author 는 현재 string — 아래 참고)
 │   │   │   └── book-status.ts              # VO (READING | DONE | WISH | PAUSED)
+│   │   │   # author.ts(Author Entity: 생몰년·저작권 만료)는 페르소나 슬라이스에서 도입.
+│   │   │   # 그 전까지 Book.author 는 표시용 string.
 │   │   ├── highlight/                       # "한 줄" — 캡처한 구절
 │   │   │   ├── highlight.ts                # Entity
 │   │   │   └── note-source.ts              # VO (PHOTO | TEXT)
