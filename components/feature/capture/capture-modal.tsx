@@ -9,15 +9,10 @@ import { Select } from '@/components/ui/select';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { toast } from '@/components/ui/toast';
 import { captureHighlight } from '@/app/(dashboard)/highlights/actions';
+import { listMyBookOptions, type BookOption } from '@/app/(dashboard)/library/actions';
 
 // TODO(capture): 이미지 선택 후 Claude vision 으로 구절 추출한 결과로 대체
 const SAMPLE_OCR = '아주 천천히 책장을 넘기는 사람만이 어떤 문장이 자신의 것인지 알아본다.';
-// TODO(capture): 사용자 책장 조회 유스케이스 결과로 대체. value 는 Book.id(uuid) — books 테이블 도입 전이라 샘플 uuid.
-const BOOK_OPTIONS = [
-  { value: '11111111-1111-4111-8111-111111111111', label: '일곱 해의 마지막 · 김연수' },
-  { value: '22222222-2222-4222-8222-222222222222', label: '아주 사적인 독서 · 이현우' },
-  { value: '33333333-3333-4333-8333-333333333333', label: '바깥은 여름 · 김애란' },
-];
 
 interface CaptureData {
   bookId: string;
@@ -34,8 +29,30 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [pending, setPending] = useState(false);
+  const [books, setBooks] = useState<BookOption[]>([]);
+  const [booksLoading, setBooksLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
+  const mountedRef = useRef(true);
+  useEffect(() => () => void (mountedRef.current = false), []);
+
+  // 사용자 책장을 불러와 책 선택지로 사용
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const options = await listMyBookOptions();
+        if (active) setBooks(options);
+      } catch {
+        if (active) toast('책장을 불러오지 못했어요');
+      } finally {
+        if (active) setBooksLoading(false); // 실패해도 스피너 고착 방지
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // objectURL 누수 방지
   useEffect(() => {
@@ -53,6 +70,7 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     void (async () => {
       setPending(true);
       const result = await captureHighlight(data);
+      if (!mountedRef.current) return; // 저장 중 모달이 닫혔으면 setState 생략
       setPending(false);
       if (result.ok) {
         onClose();
@@ -74,6 +92,8 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       {imageUrl ? (
         <CaptureReview
           imageUrl={imageUrl}
+          books={books}
+          booksLoading={booksLoading}
           onRetake={() => setImageUrl(null)}
           onSave={saveHighlight}
           onLater={onClose}
@@ -189,12 +209,16 @@ function CapturePath({
 
 function CaptureReview({
   imageUrl,
+  books,
+  booksLoading,
   onRetake,
   onSave,
   onLater,
   pending,
 }: {
   imageUrl: string;
+  books: BookOption[];
+  booksLoading: boolean;
   onRetake: () => void;
   onSave: (data: CaptureData) => void;
   onLater: () => void;
@@ -202,11 +226,21 @@ function CaptureReview({
 }) {
   const ocrRef = useRef<HTMLTextAreaElement>(null);
   const pageRef = useRef<HTMLInputElement>(null);
-  const [bookId, setBookId] = useState(BOOK_OPTIONS[0]!.value);
+  const [bookId, setBookId] = useState('');
+  const noBooks = !booksLoading && books.length === 0;
+
   // 리뷰 단계 진입 시 인식 문장으로 포커스 이동
   useEffect(() => ocrRef.current?.focus(), []);
+  // 책장이 로드되면 첫 책을 기본 선택(이미 고른 값은 유지)
+  useEffect(() => {
+    setBookId((prev) => (prev ? prev : (books[0]?.id ?? '')));
+  }, [books]);
 
   const submit = () => {
+    if (!bookId) {
+      toast('담을 책을 먼저 선택해 주세요');
+      return;
+    }
     const content = ocrRef.current?.value.trim() ?? '';
     if (!content) {
       toast('담을 문장을 입력해 주세요');
@@ -220,8 +254,13 @@ function CaptureReview({
     <div>
       <div className="grid grid-cols-[200px_1fr] gap-4 max-[560px]:grid-cols-1">
         <div className="border-divider relative overflow-hidden rounded-[12px] border">
-          {/* 업로드한 blob 미리보기 — next/image 부적합이라 img 사용 */}
-          <img src={imageUrl} alt="담은 사진" className="h-full w-full object-cover" />
+          {/* 업로드한 blob 미리보기 — next/image 부적합이라 img 사용. 로드 실패 시 업로드로 복귀 */}
+          <img
+            src={imageUrl}
+            alt="담은 사진"
+            onError={onRetake}
+            className="h-full w-full object-cover"
+          />
           <Button
             variant="ghost"
             iconOnly
@@ -248,13 +287,22 @@ function CaptureReview({
 
           <label className="block">
             <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">책</span>
-            <Select
-              aria-label="책 선택"
-              value={bookId}
-              onChange={setBookId}
-              options={BOOK_OPTIONS}
-              className="w-full"
-            />
+            {noBooks ? (
+              <p className="border-field-border text-fg-2 rounded-[10px] border border-dashed px-3 py-2.5 text-[13px] leading-[1.5]">
+                담을 책이 없어요. 먼저 <b className="text-ink-900">책 추가</b>로 책장에 책을
+                담아주세요.
+              </p>
+            ) : (
+              <Select
+                aria-label="책 선택"
+                value={bookId}
+                onChange={setBookId}
+                options={books.map((b) => ({ value: b.id, label: b.label }))}
+                placeholder={booksLoading ? '책장 불러오는 중…' : '책 선택'}
+                disabled={booksLoading}
+                className="w-full"
+              />
+            )}
           </label>
 
           <div className="grid grid-cols-2 gap-3">
@@ -264,7 +312,8 @@ function CaptureReview({
             </label>
             <label className="block">
               <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">태그</span>
-              <Input placeholder="#소설 #문장수집" aria-label="태그" />
+              {/* TODO(highlight): 태그 도메인 도입 후 활성화 — 현재 미저장이라 비활성 */}
+              <Input placeholder="곧 제공돼요" aria-label="태그" disabled />
             </label>
           </div>
         </div>
@@ -277,7 +326,7 @@ function CaptureReview({
         <Button variant="secondary" onClick={onLater} disabled={pending}>
           나중에 정리
         </Button>
-        <Button variant="primary" onClick={submit} disabled={pending}>
+        <Button variant="primary" onClick={submit} disabled={pending || noBooks}>
           <Icon name="check" size={16} />
           {pending ? '저장 중…' : '한 줄 저장'}
         </Button>

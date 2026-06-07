@@ -1,7 +1,11 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createAddBookToShelfUseCase, createAuthSession } from '@/lib/infrastructure/di-container';
+import {
+  createAddBookToShelfUseCase,
+  createAuthSession,
+  createListBooksUseCase,
+} from '@/lib/infrastructure/di-container';
 import { addBookSchema, type AddBookInput } from '@/lib/application/book/schemas';
 import { toDomainBookStatus } from '@/components/feature/library/book-status-map';
 import { ROUTES } from '@/lib/router/routes';
@@ -35,4 +39,18 @@ export async function addBook(input: AddBookInput): Promise<AddBookResult> {
   } catch {
     return { ok: false, error: '담기에 실패했어요. 잠시 후 다시 시도해 주세요.' };
   }
+}
+
+export interface BookOption {
+  id: string;
+  /** '제목 · 저자' 표시 라벨 */
+  label: string;
+}
+
+/** 캡처 등에서 책을 고를 때 쓰는 현재 사용자의 책장 목록(최신순). */
+export async function listMyBookOptions(): Promise<BookOption[]> {
+  const userId = await (await createAuthSession()).getCurrentUserId();
+  if (!userId) return [];
+  const books = await (await createListBooksUseCase()).execute();
+  return books.map((b) => ({ id: b.id, label: b.author ? `${b.title} · ${b.author}` : b.title }));
 }
