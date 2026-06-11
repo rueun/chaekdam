@@ -51,3 +51,17 @@ export class BookNotFoundError extends DomainError {
     super(`Book not found: ${bookId}`);
   }
 }
+
+/** 독서 세션 시간(분)이 유효하지 않음 */
+export class InvalidSessionMinutesError extends DomainError {
+  constructor() {
+    super('Reading session minutes must be a positive number within a day');
+  }
+}
+
+/** 독서 세션 페이지 범위가 유효하지 않음 */
+export class InvalidPageRangeError extends DomainError {
+  constructor() {
+    super('Page range must have both start and end as non-negative integers with start <= end');
+  }
+}
