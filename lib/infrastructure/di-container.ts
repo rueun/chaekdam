@@ -7,11 +7,13 @@ import { SetBookStatusUseCase } from '@/lib/application/set-book-status.use-case
 import { RemoveBookFromShelfUseCase } from '@/lib/application/remove-book-from-shelf.use-case';
 import { LogReadingSessionUseCase } from '@/lib/application/log-reading-session.use-case';
 import { GetReadingLogUseCase } from '@/lib/application/get-reading-log.use-case';
+import { UpdateUserProfileUseCase } from '@/lib/application/update-user-profile.use-case';
 import type { AuthSession } from '@/lib/domain/ports/auth-session';
 import { createSupabaseServerClient } from './supabase/server-client';
 import { SupabaseHighlightRepository } from './supabase/supabase-highlight-repository';
 import { SupabaseBookRepository } from './supabase/supabase-book-repository';
 import { SupabaseReadingSessionRepository } from './supabase/supabase-reading-session-repository';
+import { SupabaseUserProfileRepository } from './supabase/supabase-user-profile-repository';
 import { SupabaseAuthSession } from './supabase/supabase-auth-session';
 
 /**
@@ -56,6 +58,11 @@ export async function createLogReadingSessionUseCase(): Promise<LogReadingSessio
 export async function createGetReadingLogUseCase(): Promise<GetReadingLogUseCase> {
   const client = await createSupabaseServerClient();
   return new GetReadingLogUseCase(new SupabaseReadingSessionRepository(client));
+}
+
+export async function createUpdateUserProfileUseCase(): Promise<UpdateUserProfileUseCase> {
+  const client = await createSupabaseServerClient();
+  return new UpdateUserProfileUseCase(new SupabaseUserProfileRepository(client));
 }
 
 /** 현재 요청의 인증 컨텍스트(진입점 인가 게이트용). */

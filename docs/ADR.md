@@ -143,4 +143,14 @@
 
 ---
 
+### ADR-014: 사용자 프로필은 Supabase auth user_metadata 에 보관 (별도 profiles 테이블 없음)
+
+**결정**: 사용자 프로필(이름·한 줄 소개)을 별도 `profiles` 테이블 없이 Supabase 인증의 `user_metadata` 에 저장한다. 이름은 이미 가입 시 `user_metadata.name` 에 적재되며, 소개(`bio`)도 같은 곳에 둔다. 도메인 `User` 엔티티는 Infrastructure 어댑터(`toUser`)가 인증 사용자에서 매핑한다. 읽기는 `AuthSession.getCurrentUser()`, 쓰기는 `UserProfileRepository.updateProfile()`(`auth.updateUser`)로 한다.
+
+**이유**: 현재 프로필 필드가 이름·소개 2개뿐이라 전용 테이블·트리거·RLS·마이그레이션은 과설계(YAGNI). 데이터가 이미 인증 컨텍스트에 있어 마이그레이션 0으로 실연동 가능. `auth.updateUser` 는 현재 세션 사용자에게만 적용돼 소유 범위가 자연히 보장된다.
+
+**트레이드오프**: `user_metadata` 는 비정형(JSON)이라 타입·제약은 어댑터/스키마(zod)에서만 보장된다. 아바타 이미지·팔로우·공개 프로필 등 리치 필드나 RLS 기반 조인이 필요해지면 `profiles` 테이블로 전환한다(도메인 `User`·Port 는 유지, 어댑터만 교체).
+
+---
+
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스)

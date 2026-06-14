@@ -1,6 +1,8 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { AuthSession } from '@/lib/domain/ports/auth-session';
+import type { User } from '@/lib/domain/user/user';
+import { toUser } from './user-mapper';
 import type { Database } from './types.gen';
 
 /**
@@ -15,5 +17,12 @@ export class SupabaseAuthSession implements AuthSession {
       data: { user },
     } = await this.client.auth.getUser();
     return user?.id ?? null;
+  }
+
+  async getCurrentUser(): Promise<User | null> {
+    const {
+      data: { user },
+    } = await this.client.auth.getUser();
+    return user ? toUser(user) : null;
   }
 }
