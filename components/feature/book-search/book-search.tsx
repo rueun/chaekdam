@@ -9,7 +9,13 @@ import { SearchInput } from '@/components/ui/search-input';
 import { Select } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
 import type { BookStatusKey } from '@/components/ui/status-badge';
-import { addBook, searchBooks, type BookSearchHit } from '@/app/(dashboard)/library/actions';
+import {
+  addBook,
+  searchBooks,
+  listOwnedBookKeys,
+  type BookSearchHit,
+} from '@/app/(dashboard)/library/actions';
+import { ownedBookKey } from '@/lib/book-key';
 
 // 새로 담을 때의 책장 선택. PAUSED(쉬는 중)는 초기 등록 경로에서 제외(읽다가 쉬는 상태라 진입 후 전이).
 const SHELF_OPTIONS: { value: BookStatusKey; label: string }[] = [
@@ -73,6 +79,8 @@ export function BookSearch() {
   const [shelf, setShelf] = useState<Record<string, BookStatusKey>>({});
   const [added, setAdded] = useState<Record<string, boolean>>({});
   const [adding, setAdding] = useState<string | null>(null);
+  // 이미 서재에 있는 책(제목+저자 키) — '담음' 표시용. ISBN 미저장이라 제목·저자로 매칭(ADR-016).
+  const [ownedKeys, setOwnedKeys] = useState<ReadonlySet<string>>(new Set());
 
   const mountedRef = useRef(true);
   // 디바운스+비동기라 늦게 도착한 이전 질의 응답을 버리기 위한 요청 번호.
@@ -84,6 +92,18 @@ export function BookSearch() {
       mountedRef.current = false;
     };
   }, []);
+
+  // 보유 책 키 로드 — 검색 결과 중 이미 서재에 있는 것을 '담음'으로 표시.
+  useEffect(() => {
+    void (async () => {
+      const keys = await listOwnedBookKeys();
+      if (mountedRef.current) setOwnedKeys(new Set(keys));
+    })();
+  }, []);
+
+  // 이미 서재에 있는지(이번 세션에 담은 것 + 기존 보유분).
+  const isOwned = (book: BookSearchHit) =>
+    Boolean(added[hitKey(book)]) || ownedKeys.has(ownedBookKey(book.title, book.author));
 
   // 책장에 담기 — Server Action 호출(AddBookToShelf 유스케이스). 성공 시 행을 담김 상태로.
   const handleAdd = (book: BookSearchHit) => {
@@ -101,6 +121,7 @@ export function BookSearch() {
       setAdding(null);
       if (result.ok) {
         setAdded((p) => ({ ...p, [key]: true }));
+        setOwnedKeys((prev) => new Set(prev).add(ownedBookKey(book.title, book.author)));
         toast('서재에 담았어요');
       } else {
         toast(result.error);
@@ -209,7 +230,7 @@ export function BookSearch() {
                     coverColor={coverColorFor(key)}
                     query={query}
                     shelf={shelf[key] ?? DEFAULT_SHELF}
-                    added={Boolean(added[key])}
+                    added={isOwned(book)}
                     pending={adding === key}
                     onShelfChange={(v) => setShelf((p) => ({ ...p, [key]: v }))}
                     onAdd={() => handleAdd(book)}

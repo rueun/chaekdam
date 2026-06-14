@@ -10,6 +10,7 @@ import {
 import { addBookSchema, type AddBookInput } from '@/lib/application/book/schemas';
 import type { BookSearchHit } from '@/lib/domain/ports/book-searcher';
 import { toDomainBookStatus } from '@/components/feature/library/book-status-map';
+import { ownedBookKey } from '@/lib/book-key';
 import { ROUTES } from '@/lib/router/routes';
 
 export type { AddBookInput };
@@ -71,6 +72,14 @@ export interface BookOption {
   id: string;
   /** '제목 · 저자' 표시 라벨 */
   label: string;
+}
+
+/** 현재 사용자가 이미 보유한 책의 키(제목+저자) 목록 — 검색 결과의 '이미 담음' 표시용. */
+export async function listOwnedBookKeys(): Promise<string[]> {
+  const userId = await (await createAuthSession()).getCurrentUserId();
+  if (!userId) return [];
+  const books = await (await createListBooksUseCase()).execute();
+  return books.map((b) => ownedBookKey(b.title, b.author));
 }
 
 /** 캡처 등에서 책을 고를 때 쓰는 현재 사용자의 책장 목록(최신순). */
