@@ -52,6 +52,8 @@ function NewChatModal({
   // 전송 중 외부 dismiss(overlay unmount) 시 setState 경합 방지.
   const mountedRef = useRef(true);
   useEffect(() => {
+    // Strict Mode 의 마운트 재실행에서도 true 로 복구되도록 setup 에서 설정.
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };

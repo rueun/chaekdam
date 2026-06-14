@@ -78,6 +78,8 @@ export function BookSearch() {
   // 디바운스+비동기라 늦게 도착한 이전 질의 응답을 버리기 위한 요청 번호.
   const reqIdRef = useRef(0);
   useEffect(() => {
+    // Strict Mode 의 마운트 재실행에서도 true 로 복구되도록 setup 에서 설정.
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };

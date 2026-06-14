@@ -48,7 +48,11 @@ export function WishlistGrid({
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
 
   const mountedRef = useRef(true);
-  useEffect(() => () => void (mountedRef.current = false), []);
+  useEffect(() => {
+    // Strict Mode 마운트 재실행에서도 true 로 복구.
+    mountedRef.current = true;
+    return () => void (mountedRef.current = false);
+  }, []);
 
   const sorted = useMemo(() => {
     const arr = items.slice();

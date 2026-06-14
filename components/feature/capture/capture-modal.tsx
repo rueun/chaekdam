@@ -34,7 +34,11 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const mountedRef = useRef(true);
-  useEffect(() => () => void (mountedRef.current = false), []);
+  useEffect(() => {
+    // Strict Mode 마운트 재실행에서도 true 로 복구.
+    mountedRef.current = true;
+    return () => void (mountedRef.current = false);
+  }, []);
 
   // 사용자 책장을 불러와 책 선택지로 사용
   useEffect(() => {
