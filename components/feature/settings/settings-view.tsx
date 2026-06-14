@@ -9,14 +9,15 @@ import { cn } from '@/lib/utils/cn';
 import { PersonaPicker } from '@/components/feature/persona/persona-picker';
 import type { PersonaKey } from '@/components/feature/persona/personas';
 import { openProfileEdit } from '@/components/feature/profile/profile-edit-modal';
+import type { CurrentUserView } from '@/components/feature/profile/user-view';
 import { signOut } from '@/app/(auth)/actions';
 
 /**
  * 설정 화면 — 계정 · AI 독서토론(기본 페르소나) · 데이터(위험).
  * INTERACTIONS.md C-설정: 프로필 수정 모달 / 기록 내보내기 토스트 / 데이터 삭제 확인 모달(타이핑).
  */
-export function SettingsView() {
-  // TODO(settings): 사용자 설정 조회·갱신 유스케이스로 대체
+export function SettingsView({ user }: { user: CurrentUserView }) {
+  // TODO(settings): 기본 페르소나는 사용자 설정 조회·갱신 유스케이스로 대체
   const [persona, setPersona] = useState<PersonaKey>('socrates');
 
   const exportData = () => toast('내보내기 파일을 준비하고 있어요');
@@ -43,17 +44,22 @@ export function SettingsView() {
       <SettingsCard title="계정">
         <SettingsRow>
           <div className="bg-leaf-100 text-leaf-700 grid size-11 shrink-0 place-content-center rounded-full font-serif text-[18px] font-bold">
-            홍
+            {user.initial}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-ink-900 text-[14px] font-medium">홍길동</div>
-            <div className="text-fg-3 mt-0.5 text-[12px]">reader@chaekdam.kr</div>
+            <div className="text-ink-900 truncate text-[14px] font-medium">{user.name}</div>
+            <div className="text-fg-3 mt-0.5 truncate text-[12px]">{user.email}</div>
           </div>
           <div className="flex shrink-0 gap-2">
             <Button variant="ghost" onClick={() => void signOut()}>
               로그아웃
             </Button>
-            <Button variant="secondary" onClick={openProfileEdit}>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                openProfileEdit({ name: user.name, bio: user.bio, initial: user.initial })
+              }
+            >
               프로필 수정
             </Button>
           </div>

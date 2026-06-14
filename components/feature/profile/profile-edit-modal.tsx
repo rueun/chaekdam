@@ -1,28 +1,64 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { overlay } from 'overlay-kit';
 import { ModalShell } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Icon } from '@/components/ui/icon';
 import { toast } from '@/components/ui/toast';
+import type { CurrentUserView } from '@/components/feature/profile/user-view';
+import { BIO_MAX } from '@/lib/application/user/schemas';
+import { updateProfile } from '@/app/(dashboard)/settings/actions';
 
-const BIO_MAX = 80;
+type ProfileInitial = Pick<CurrentUserView, 'name' | 'bio' | 'initial'>;
 
 /** 프로필 수정 모달을 띄운다. (사이드바 프로필 카드 · 설정 계정 카드 공용) */
-export function openProfileEdit() {
-  overlay.open(({ isOpen, unmount }) => <ProfileEditModal isOpen={isOpen} onClose={unmount} />);
+export function openProfileEdit(initial: ProfileInitial) {
+  overlay.open(({ isOpen, unmount }) => (
+    <ProfileEditModal isOpen={isOpen} onClose={unmount} initial={initial} />
+  ));
 }
 
-function ProfileEditModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const [name, setName] = useState('홍길동');
-  const [bio, setBio] = useState('3년차 UI/UX 디자이너 · 종이책 애호가');
+function ProfileEditModal({
+  isOpen,
+  onClose,
+  initial,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  initial: ProfileInitial;
+}) {
+  const [name, setName] = useState(initial.name);
+  const [bio, setBio] = useState(initial.bio ?? '');
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
 
-  // TODO(profile): 프로필 갱신 유스케이스 호출로 교체
-  const save = () => {
-    onClose();
-    toast('프로필을 저장했어요');
+  // 저장 진행 중 외부 dismiss(overlay unmount) 시 setState 경합 방지.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    setErrors({});
+    const result = await updateProfile({ name, bio });
+    if (!mountedRef.current) return;
+
+    if (result.ok) {
+      onClose();
+      toast('프로필을 저장했어요');
+      return;
+    }
+    setSaving(false);
+    if (result.fieldErrors) {
+      setErrors(result.fieldErrors);
+      return;
+    }
+    toast(result.error ?? '프로필 저장에 실패했어요');
   };
 
   return (
@@ -35,8 +71,11 @@ function ProfileEditModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
     >
       <div className="border-divider mb-5 flex items-center gap-3.5 border-b pb-5">
         <div className="bg-leaf-100 text-leaf-700 relative grid size-16 shrink-0 place-content-center rounded-full font-serif text-[26px] font-bold">
-          홍
-          <span className="bg-accent absolute right-0 bottom-0 grid size-6 place-content-center rounded-full text-white ring-2 ring-[var(--bg-elevated)]">
+          {initial.initial}
+          <span
+            aria-hidden
+            className="bg-accent absolute right-0 bottom-0 grid size-6 place-content-center rounded-full text-white ring-2 ring-[var(--bg-elevated)]"
+          >
             <Icon name="pen-line" size={12} />
           </span>
         </div>
@@ -50,6 +89,9 @@ function ProfileEditModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg-3 text-[12px] font-semibold">이름</span>
           <Input value={name} onChange={(e) => setName(e.target.value)} aria-label="이름" />
+          {errors.name?.[0] ? (
+            <span className="text-danger text-[12px]">{errors.name[0]}</span>
+          ) : null}
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="text-fg-3 text-[12px] font-semibold">한 줄 소개</span>
@@ -64,16 +106,19 @@ function ProfileEditModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           <span className="text-fg-3 text-right font-mono text-[11px]">
             {bio.length}/{BIO_MAX}
           </span>
+          {errors.bio?.[0] ? (
+            <span className="text-danger text-[12px]">{errors.bio[0]}</span>
+          ) : null}
         </label>
       </div>
 
       <div className="mt-5 flex items-center justify-end gap-2">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose} disabled={saving}>
           취소
         </Button>
-        <Button variant="primary" onClick={save}>
+        <Button variant="primary" onClick={() => void save()} disabled={saving}>
           <Icon name="check" size={16} />
-          변경 저장
+          {saving ? '저장 중…' : '변경 저장'}
         </Button>
       </div>
     </ModalShell>

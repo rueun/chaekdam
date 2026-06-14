@@ -37,8 +37,8 @@ function formatDateLabel(date: Date): string {
 }
 
 export default async function HomePage() {
-  const userId = await (await createAuthSession()).getCurrentUserId();
-  if (!userId) redirect(ROUTES.AUTH.LOGIN());
+  const currentUser = await (await createAuthSession()).getCurrentUser();
+  if (!currentUser) redirect(ROUTES.AUTH.LOGIN());
 
   const [listBooks, listHighlights, getReadingLog] = await Promise.all([
     createListBooksUseCase(),
@@ -95,9 +95,8 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* TODO(profile): 사용자 프로필 연동 후 이름 포함 인사말로 교체 */}
       <TopBar
-        title="안녕하세요"
+        title={`${currentUser.name}님, 안녕하세요`}
         subtitle="오늘도 한 줄 담아볼까요"
         action={
           <CaptureTrigger className="btn btn-primary">
