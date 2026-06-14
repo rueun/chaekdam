@@ -8,13 +8,18 @@ import { RemoveBookFromShelfUseCase } from '@/lib/application/remove-book-from-s
 import { LogReadingSessionUseCase } from '@/lib/application/log-reading-session.use-case';
 import { GetReadingLogUseCase } from '@/lib/application/get-reading-log.use-case';
 import { UpdateUserProfileUseCase } from '@/lib/application/update-user-profile.use-case';
+import { StartDiscussionUseCase } from '@/lib/application/start-discussion.use-case';
+import { ContinueDiscussionUseCase } from '@/lib/application/continue-discussion.use-case';
 import type { AuthSession } from '@/lib/domain/ports/auth-session';
 import { createSupabaseServerClient } from './supabase/server-client';
 import { SupabaseHighlightRepository } from './supabase/supabase-highlight-repository';
 import { SupabaseBookRepository } from './supabase/supabase-book-repository';
 import { SupabaseReadingSessionRepository } from './supabase/supabase-reading-session-repository';
 import { SupabaseUserProfileRepository } from './supabase/supabase-user-profile-repository';
+import { SupabaseDiscussionRepository } from './supabase/supabase-discussion-repository';
 import { SupabaseAuthSession } from './supabase/supabase-auth-session';
+import { ClaudeAiDiscussionPartner } from './claude/claude-ai-discussion-partner';
+import { anthropicApiKey } from './claude/env';
 
 /**
  * 의존성 조립 — 유스케이스/포트에 Infra Adapter 를 주입하는 유일한 지점.
@@ -63,6 +68,26 @@ export async function createGetReadingLogUseCase(): Promise<GetReadingLogUseCase
 export async function createUpdateUserProfileUseCase(): Promise<UpdateUserProfileUseCase> {
   const client = await createSupabaseServerClient();
   return new UpdateUserProfileUseCase(new SupabaseUserProfileRepository(client));
+}
+
+export async function createStartDiscussionUseCase(): Promise<StartDiscussionUseCase> {
+  const client = await createSupabaseServerClient();
+  return new StartDiscussionUseCase(
+    new SupabaseDiscussionRepository(client),
+    new ClaudeAiDiscussionPartner(anthropicApiKey()),
+    new SupabaseBookRepository(client),
+    new SupabaseHighlightRepository(client),
+  );
+}
+
+export async function createContinueDiscussionUseCase(): Promise<ContinueDiscussionUseCase> {
+  const client = await createSupabaseServerClient();
+  return new ContinueDiscussionUseCase(
+    new SupabaseDiscussionRepository(client),
+    new ClaudeAiDiscussionPartner(anthropicApiKey()),
+    new SupabaseBookRepository(client),
+    new SupabaseHighlightRepository(client),
+  );
 }
 
 /** 현재 요청의 인증 컨텍스트(진입점 인가 게이트용). */
