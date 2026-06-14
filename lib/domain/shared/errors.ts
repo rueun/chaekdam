@@ -65,3 +65,31 @@ export class InvalidPageRangeError extends DomainError {
     super('Page range must have both start and end as non-negative integers with start <= end');
   }
 }
+
+/** 토론 메시지 본문이 비어 있음 */
+export class EmptyMessageContentError extends DomainError {
+  constructor() {
+    super('Message content must not be empty');
+  }
+}
+
+/** 토론 메시지 본문이 허용 길이를 초과함 */
+export class MessageContentTooLongError extends DomainError {
+  constructor(max: number) {
+    super(`Message content must be at most ${max} characters`);
+  }
+}
+
+/** 선택할 수 없는(보류·비활성) 페르소나로 토론을 시작하려 함 */
+export class PersonaNotAvailableError extends DomainError {
+  constructor(personaKey: string) {
+    super(`Persona is not available for discussion: ${personaKey}`);
+  }
+}
+
+/** 토론을 찾을 수 없음 */
+export class DiscussionNotFoundError extends DomainError {
+  constructor(discussionId: string) {
+    super(`Discussion not found: ${discussionId}`);
+  }
+}
