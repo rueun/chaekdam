@@ -34,6 +34,7 @@ export async function addBook(input: AddBookInput): Promise<AddBookResult> {
       author: parsed.data.author,
       status: toDomainBookStatus(parsed.data.status),
       coverColor: parsed.data.coverColor ?? null,
+      coverImageUrl: parsed.data.coverImageUrl ?? null,
     });
 
     revalidatePath(ROUTES.LIBRARY());

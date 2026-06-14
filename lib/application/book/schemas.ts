@@ -14,6 +14,17 @@ export const addBookSchema = z.object({
     .regex(/^(var\(--[a-z0-9-]+\)|#[0-9a-fA-F]{3,8})$/, '표지 색 형식이 올바르지 않아요')
     .nullable()
     .optional(),
+  // 도서 API 썸네일 URL. http(s) 만 허용해 임의 문자열·data URI 유입 차단.
+  coverImageUrl: z
+    .string()
+    .url()
+    .max(2048)
+    .refine(
+      (u) => u.startsWith('http://') || u.startsWith('https://'),
+      '이미지 URL 형식이 올바르지 않아요',
+    )
+    .nullable()
+    .optional(),
 });
 
 export type AddBookInput = z.infer<typeof addBookSchema>;

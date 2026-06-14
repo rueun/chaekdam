@@ -19,6 +19,8 @@ export class Book {
     readonly status: BookStatus,
     /** 표지 색(디자인 토큰 CSS color). 없으면 null */
     readonly coverColor: string | null,
+    /** 표지 이미지 URL(도서 API 썸네일). 없으면 null → 색 스파인으로 폴백 */
+    readonly coverImageUrl: string | null,
     readonly createdAt: Date,
   ) {
     Object.freeze(this);
@@ -30,6 +32,7 @@ export class Book {
     author?: string;
     status?: BookStatus;
     coverColor?: string | null;
+    coverImageUrl?: string | null;
   }): Book {
     return new Book(
       generateId(),
@@ -38,6 +41,7 @@ export class Book {
       props.author?.trim() ?? '',
       props.status ?? BookStatus.WISH,
       props.coverColor ?? null,
+      props.coverImageUrl ?? null,
       new Date(),
     );
   }
@@ -53,6 +57,7 @@ export class Book {
     author: string;
     status: BookStatus;
     coverColor: string | null;
+    coverImageUrl: string | null;
     createdAt: Date;
   }): Book {
     return new Book(
@@ -61,6 +66,7 @@ export class Book {
       props.author,
       props.status,
       props.coverColor,
+      props.coverImageUrl,
       props.createdAt,
     );
   }
@@ -68,7 +74,15 @@ export class Book {
   /** 책장 상태를 바꾼 새 책을 반환한다(읽는 중/완독/위시/쉬는 중 이동). */
   withStatus(status: BookStatus): Book {
     if (status === this.status) return this;
-    return new Book(this.id, this.title, this.author, status, this.coverColor, this.createdAt);
+    return new Book(
+      this.id,
+      this.title,
+      this.author,
+      status,
+      this.coverColor,
+      this.coverImageUrl,
+      this.createdAt,
+    );
   }
 }
 

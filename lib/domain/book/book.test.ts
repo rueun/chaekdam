@@ -57,6 +57,7 @@ describe('Book', () => {
       author: '헤르만 헤세',
       status: BookStatus.DONE,
       coverColor: 'var(--clay-500)',
+      coverImageUrl: 'https://img/demian.jpg',
       createdAt: new Date('2026-05-20T00:00:00Z'),
     };
 
@@ -66,6 +67,7 @@ describe('Book', () => {
       expect(book.title).toBe('데미안');
       expect(book.status).toBe(BookStatus.DONE);
       expect(book.coverColor).toBe('var(--clay-500)');
+      expect(book.coverImageUrl).toBe('https://img/demian.jpg');
       expect(book.createdAt).toBe(props.createdAt);
     });
 

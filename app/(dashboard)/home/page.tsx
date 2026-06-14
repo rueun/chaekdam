@@ -65,6 +65,7 @@ export default async function HomePage() {
       author: b.author,
       status: toBookStatusKey(b.status),
       coverColor: b.coverColor ?? undefined,
+      coverImageUrl: b.coverImageUrl ?? undefined,
     }));
 
   const wishItems: WishlistBookView[] = books
@@ -75,6 +76,7 @@ export default async function HomePage() {
       title: b.title,
       author: b.author,
       coverColor: b.coverColor ?? undefined,
+      coverImageUrl: b.coverImageUrl ?? undefined,
       addedAt: formatDateLabel(b.createdAt),
     }));
 

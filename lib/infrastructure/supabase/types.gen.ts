@@ -38,6 +38,7 @@ export type Database = {
         Row: {
           author: string
           cover_color: string | null
+          cover_image_url: string | null
           created_at: string
           id: string
           status: Database["public"]["Enums"]["book_status"]
@@ -47,6 +48,7 @@ export type Database = {
         Insert: {
           author?: string
           cover_color?: string | null
+          cover_image_url?: string | null
           created_at?: string
           id?: string
           status?: Database["public"]["Enums"]["book_status"]
@@ -56,6 +58,7 @@ export type Database = {
         Update: {
           author?: string
           cover_color?: string | null
+          cover_image_url?: string | null
           created_at?: string
           id?: string
           status?: Database["public"]["Enums"]["book_status"]

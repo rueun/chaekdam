@@ -29,6 +29,7 @@ export class SupabaseBookRepository implements BookRepository {
         author: book.author,
         status: book.status,
         cover_color: book.coverColor,
+        cover_image_url: book.coverImageUrl,
       },
       { onConflict: 'id' },
     );
@@ -77,6 +78,7 @@ function toDomain(row: BookRow): Book {
     author: row.author,
     status: toBookStatus(row.status),
     coverColor: row.cover_color,
+    coverImageUrl: row.cover_image_url,
     createdAt: new Date(row.created_at),
   });
 }

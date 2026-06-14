@@ -63,6 +63,7 @@ function toBookDetailView(detail: BookDetailResult): BookDetailView {
     title: book.title,
     author: author ?? '',
     coverColor: book.coverColor ?? 'var(--leaf-500)',
+    coverImageUrl: book.coverImageUrl ?? undefined,
     status: toBookStatusKey(book.status),
     addedAt: formatDateLabel(book.createdAt),
     quotesCount: highlights.length,

@@ -22,6 +22,7 @@ export default async function LibraryPage() {
     author: b.author,
     status: toBookStatusKey(b.status),
     coverColor: b.coverColor ?? undefined,
+    coverImageUrl: b.coverImageUrl ?? undefined,
   }));
 
   return (

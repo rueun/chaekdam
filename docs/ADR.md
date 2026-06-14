@@ -171,6 +171,8 @@
 
 **트레이드오프**: 색 스파인은 책 식별성이 실사보다 낮다(후속에 표지 이미지 옵션 검토 가능). ISBN 미저장으로 같은 책 중복 담기가 가능(후속에 ISBN 기반 dedup 도입 시 Book 확장). Port·유스케이스는 그대로라 검색 제공자(Google Books 등) 교체는 어댑터만 바꾸면 된다.
 
+**갱신(2026-06-14)**: 위 (2)·(3)의 "색 스파인·표지 미저장"을 뒤집어 **실제 표지 썸네일**을 도입했다. `books.cover_image_url` 컬럼 추가 + `Book.coverImageUrl`, 검색 시 담으면 썸네일 URL 저장, 검색 결과·서재·위시·홈·책 상세에서 `BookCover` 가 이미지를 보여주고 **없거나 로딩 실패 시 색 스파인으로 폴백**한다. 외부 호스트는 `next.config` `images.remotePatterns`(`*.pstatic.net`)로 제한. ISBN 기반 dedup 은 여전히 미도입(제목+저자 매칭 유지).
+
 ---
 
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스), [`specs/`](./specs/) (기능별 상세 설계)

@@ -6,6 +6,7 @@ import { Icon } from '@/components/ui/icon';
 import { StatusBadge, type BookStatusKey } from '@/components/ui/status-badge';
 import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/lib/router/routes';
+import { BookCover } from '@/components/ui/book-cover';
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
 import { PERSONAS, type PersonaKey } from '@/components/feature/persona/personas';
 import { openNewChat, type NewChatBook } from '@/components/feature/discussion-chat/new-chat-modal';
@@ -36,6 +37,8 @@ export interface BookDetailView {
   /** 장르 라벨 등(도메인 미보유 — 없으면 생략) */
   eyebrow?: string;
   coverColor: string;
+  /** 표지 이미지 URL(도서 API 썸네일). 있으면 색 대신 실제 표지 */
+  coverImageUrl?: string;
   status: BookStatusKey;
   /** 종이책/전자책 등(도메인 미보유 — 없으면 생략) */
   format?: string;
@@ -97,12 +100,14 @@ export function BookDetail({ book }: { book: BookDetailView }) {
     <div className="grid items-start gap-11 max-[860px]:grid-cols-1 min-[861px]:grid-cols-[260px_1fr]">
       {/* 왼쪽 — 표지 + 메타 */}
       <div className="flex flex-col gap-2.5">
-        <div
+        <BookCover
+          title={book.title}
+          coverColor={book.coverColor}
+          coverImageUrl={book.coverImageUrl}
+          sizes="(max-width: 860px) 60vw, 260px"
           className="flex aspect-[2/3] items-end rounded-[10px] px-[18px] py-5 font-serif text-[22px] leading-[1.25] font-semibold tracking-[-0.02em] text-[#FDFBF7] shadow-[var(--shadow-3),inset_-4px_0_0_rgba(0,0,0,0.12)]"
-          style={{ background: book.coverColor }}
-        >
-          {book.title}
-        </div>
+          fallback={book.title}
+        />
         <div className="text-fg-2 flex flex-wrap items-center justify-center gap-1.5 text-[12px]">
           {book.format ? (
             <>

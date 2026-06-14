@@ -8,6 +8,8 @@ export interface AddBookToShelfCommand {
   /** 담을 책장(기본 WISH — 읽고 싶은) */
   status?: BookStatus;
   coverColor?: string | null;
+  /** 표지 이미지 URL(도서 API 썸네일) */
+  coverImageUrl?: string | null;
 }
 
 export interface AddBookToShelfResult {

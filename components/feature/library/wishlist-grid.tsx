@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Chip } from '@/components/ui/chip';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { BookCover } from '@/components/ui/book-cover';
 import { toast } from '@/components/ui/toast';
 import { ROUTES } from '@/lib/router/routes';
 import {
@@ -19,6 +20,8 @@ export interface WishlistTileView {
   author: string;
   /** 표지 색 — CSS color */
   coverColor?: string;
+  /** 표지 이미지 URL(도서 API 썸네일) */
+  coverImageUrl?: string;
   /** 담은 날짜 */
   addedAt: string;
   /** 담은 이유 메모 */
@@ -156,17 +159,19 @@ function WishTile({
 }) {
   return (
     <article className="group border-divider bg-bg-elevated hover:border-paper-300 hover:shadow-2 flex flex-col overflow-hidden rounded-lg border transition-all duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5">
-      <Link
-        href={ROUTES.BOOKS.DETAIL(book.id)}
-        aria-hidden
-        tabIndex={-1}
-        className="relative block aspect-video"
-        style={{ background: book.coverColor ?? 'var(--ink-700)' }}
-      >
-        {/* '담아둠' 핀 */}
-        <span className="text-talk-700 bg-paper-50/95 absolute top-3 left-3 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-[0.05em] uppercase backdrop-blur-[4px]">
-          담아둠
-        </span>
+      <Link href={ROUTES.BOOKS.DETAIL(book.id)} aria-hidden tabIndex={-1} className="block">
+        <BookCover
+          title={book.title}
+          coverColor={book.coverColor}
+          coverImageUrl={book.coverImageUrl}
+          sizes="(max-width: 768px) 100vw, 320px"
+          className="aspect-video"
+          overlay={
+            <span className="text-talk-700 bg-paper-50/95 absolute top-3 left-3 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tracking-[0.05em] uppercase backdrop-blur-[4px]">
+              담아둠
+            </span>
+          }
+        />
       </Link>
       <div className="flex flex-1 flex-col gap-1 px-[18px] pt-4 pb-[18px]">
         <Link

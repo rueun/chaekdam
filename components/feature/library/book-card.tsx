@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
 import { StatusBadge, type BookStatusKey } from '@/components/ui/status-badge';
+import { BookCover } from '@/components/ui/book-cover';
 
 /**
  * BookCard 표시용 뷰모델.
@@ -18,6 +19,8 @@ export interface BookCardView {
   status: BookStatusKey;
   /** 표지(책등) 배경색 — CSS color. 미지정 시 잉크 톤 기본값 */
   coverColor?: string;
+  /** 표지 이미지 URL(도서 API 썸네일). 있으면 색 대신 실제 표지 */
+  coverImageUrl?: string;
   /** done — 평점(★) */
   rating?: number;
   /** done — 완독일 */
@@ -66,8 +69,12 @@ interface BookCardProps {
 export function BookCard({ book, href, onOpen, className }: BookCardProps) {
   const content = (
     <>
-      {/* 표지 — 책등 효과 그림자, hover 시 부상 */}
-      <div
+      {/* 표지 — 썸네일 있으면 실제 표지, 없으면 색 책등. hover 시 부상 */}
+      <BookCover
+        title={book.title}
+        coverColor={book.coverColor}
+        coverImageUrl={book.coverImageUrl}
+        sizes="(max-width: 768px) 40vw, 200px"
         className={cn(
           'flex aspect-[2/3] items-end rounded-[6px] px-[14px] py-4',
           'text-[16px] leading-[1.25] font-semibold tracking-[-0.03em]',
@@ -75,10 +82,8 @@ export function BookCard({ book, href, onOpen, className }: BookCardProps) {
           'transition-all duration-[240ms] ease-[var(--ease-out)]',
           'group-hover:shadow-3 group-hover:-translate-y-0.5',
         )}
-        style={{ background: book.coverColor ?? 'var(--ink-700)' }}
-      >
-        {book.title}
-      </div>
+        fallback={book.title}
+      />
 
       {/* 메타 — 제목 / 저자 / 상태 행 */}
       <div>

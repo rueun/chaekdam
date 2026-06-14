@@ -28,6 +28,7 @@ export default async function WishlistPage() {
     title: b.title,
     author: b.author,
     coverColor: b.coverColor ?? undefined,
+    coverImageUrl: b.coverImageUrl ?? undefined,
     addedAt: formatDateLabel(b.createdAt),
   }));
 

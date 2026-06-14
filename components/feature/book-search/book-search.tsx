@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { SearchInput } from '@/components/ui/search-input';
 import { Select } from '@/components/ui/select';
+import { BookCover } from '@/components/ui/book-cover';
 import { toast } from '@/components/ui/toast';
 import type { BookStatusKey } from '@/components/ui/status-badge';
 import {
@@ -116,6 +117,7 @@ export function BookSearch() {
         author: book.author,
         status: shelf[key] ?? DEFAULT_SHELF,
         coverColor: coverColorFor(key),
+        coverImageUrl: book.imageUrl || undefined, // 썸네일 있으면 저장(없으면 색 스파인)
       });
       if (!mountedRef.current) return;
       setAdding(null);
@@ -300,13 +302,15 @@ function ResultRow({
         added ? 'bg-[var(--sage-100)]' : 'bg-bg-elevated',
       )}
     >
-      {/* 표지 */}
-      <div
+      {/* 표지 — 썸네일 있으면 실제 표지, 없으면 색 스파인 */}
+      <BookCover
+        title={book.title}
+        coverColor={coverColor}
+        coverImageUrl={book.imageUrl || null}
+        sizes="64px"
         className="text-paper-50 flex aspect-[2/3] w-16 items-end rounded-[4px] px-1.5 py-2 font-serif text-[11px] leading-[1.15] font-semibold tracking-[-0.02em] shadow-[var(--shadow-cover)]"
-        style={{ background: coverColor }}
-      >
-        {book.title.slice(0, 4)}
-      </div>
+        fallback={book.title.slice(0, 4)}
+      />
 
       {/* 정보 */}
       <div className="min-w-0">

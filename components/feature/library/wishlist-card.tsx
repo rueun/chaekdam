@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from '@/components/ui/icon';
+import { BookCover } from '@/components/ui/book-cover';
 import { ROUTES } from '@/lib/router/routes';
 
 export interface WishlistBookView {
@@ -10,6 +11,8 @@ export interface WishlistBookView {
   author: string;
   /** 표지 색 — CSS color. 미지정 시 잉크 톤 */
   coverColor?: string;
+  /** 표지 이미지 URL(도서 API 썸네일) */
+  coverImageUrl?: string;
   /** 담은 날짜 (예: '5월 11일') */
   addedAt: string;
 }
@@ -43,9 +46,12 @@ export function WishlistCard({
       ) : (
         items.map((item) => (
           <div className="rec-row wish-row" key={item.id}>
-            <div
+            <BookCover
+              title={item.title}
+              coverColor={item.coverColor}
+              coverImageUrl={item.coverImageUrl}
+              sizes="48px"
               className="rec-cover"
-              style={{ background: item.coverColor ?? 'var(--ink-700)' }}
             />
             <div className="rec-info">
               <div className="t">{item.title}</div>
