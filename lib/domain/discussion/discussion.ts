@@ -3,6 +3,9 @@ import { PersonaNotAvailableError } from '@/lib/domain/shared/errors';
 import { Persona, type PersonaKey } from '@/lib/domain/persona/persona';
 import { Message } from './message';
 
+/** 토론 방 제목 최대 길이 */
+export const DISCUSSION_TITLE_MAX_LENGTH = 40;
+
 /**
  * 토론(Discussion) — Aggregate Root. 책+페르소나로 고정된 대화 방이며,
  * 한 줄(seedHighlightId)은 첫 턴을 여는 선택 시드다(ADR-015). 책당 여러 방을 둘 수 있다.
@@ -91,6 +94,15 @@ export class Discussion {
       [...props.messages],
       props.createdAt,
     );
+  }
+
+  /** 시드 한 줄에서 방 제목을 짧게 만든다(없으면 null). 표현이 아니라 도메인 규칙. */
+  static titleFromSeed(seedContent: string | null): string | null {
+    const trimmed = seedContent?.trim();
+    if (!trimmed) return null;
+    return trimmed.length > DISCUSSION_TITLE_MAX_LENGTH
+      ? `${trimmed.slice(0, DISCUSSION_TITLE_MAX_LENGTH)}…`
+      : trimmed;
   }
 
   /** 발화 수(턴). */

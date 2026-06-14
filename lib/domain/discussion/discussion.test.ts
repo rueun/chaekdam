@@ -81,6 +81,31 @@ describe('Discussion', () => {
     });
   });
 
+  describe('titleFromSeed', () => {
+    it('시드가 없으면 null', () => {
+      expect(Discussion.titleFromSeed(null)).toBeNull();
+      expect(Discussion.titleFromSeed('   ')).toBeNull();
+    });
+
+    it('짧은 시드는 그대로', () => {
+      expect(Discussion.titleFromSeed('새는 알에서 나오려고 투쟁한다')).toBe(
+        '새는 알에서 나오려고 투쟁한다',
+      );
+    });
+
+    it('40자를 넘으면 잘라 말줄임표를 붙인다', () => {
+      const long = 'ㄱ'.repeat(50);
+      const title = Discussion.titleFromSeed(long)!;
+      expect(title).toHaveLength(41); // 40자 + …
+      expect(title.endsWith('…')).toBe(true);
+    });
+
+    it('정확히 40자는 그대로(경계)', () => {
+      const exact = 'ㄴ'.repeat(40);
+      expect(Discussion.titleFromSeed(exact)).toBe(exact);
+    });
+  });
+
   it('방과 메시지 배열은 동결되어 있다', () => {
     const d = Discussion.start({ bookId: 'b1', personaKey: 'socrates' }).addAiMessage('여는 말');
     expect(Object.isFrozen(d)).toBe(true);
