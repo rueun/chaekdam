@@ -335,7 +335,7 @@ function ResultRow({
         {added ? (
           <div className="text-sage-700 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-[13px] font-semibold">
             <Icon name="check" size={16} />
-            서재에 담겼어요
+            이미 담은 책이에요
           </div>
         ) : (
           <>
