@@ -6,9 +6,6 @@ import { PERSONAS } from '@/components/feature/persona/personas';
 // 샘플 — 추후 '읽는 중' 책장 + ReadingSession 유스케이스로 대체
 const BOOK = { title: '일곱 해의 마지막', author: '김연수', coverColor: 'var(--terra-600)' };
 
-/** 리더 미리보기 채팅은 아직 비활성 — 전송 무동작(리더 슬라이스에서 연동). */
-const NOOP_SEND = (): void => undefined;
-
 export default function ReadingPage() {
   return (
     <>
@@ -33,12 +30,10 @@ export default function ReadingPage() {
 
       <div className="grid grid-cols-[1fr_380px] gap-7 max-[1100px]:grid-cols-1">
         <ReaderPane bookTitle={BOOK.title} dateLabel="11월 18일" />
-        {/* TODO(reader): 리더 슬라이스에서 실제 토론방과 연동(현재는 정적 미리보기). */}
+        {/* TODO(reader): 리더 슬라이스에서 실제 토론방과 연동. onSend 미전달 → 읽기 전용 미리보기. */}
         <DiscussionChat
           bookTitle={BOOK.title}
           persona={PERSONAS.critic}
-          sending={false}
-          onSend={NOOP_SEND}
           messages={[
             { id: 'r1', who: 'ai', body: '방금 그은 밑줄, 어떤 점이 마음에 닿았나요?' },
             {

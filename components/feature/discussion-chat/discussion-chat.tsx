@@ -11,23 +11,26 @@ interface DiscussionChatProps {
   persona: Persona;
   messages: MessageView[];
   /** 응답 대기 중(입력 잠금 + 타이핑 표시) */
-  sending: boolean;
-  onSend: (content: string) => void;
+  sending?: boolean;
+  /** 전송 핸들러. 없으면 읽기 전용(미리보기) — Server Component 에서 함수 전달 불가하므로 선택적. */
+  onSend?: (content: string) => void;
 }
 
 /**
  * AI 독서토론 채팅 — 페르소나 헤더 + 메시지 + 입력.
  * 메시지는 상위(workspace)가 관리하는 controlled 컴포넌트. 전송은 Server Action 으로 위임.
+ * onSend 가 없으면 입력이 비활성화된 읽기 전용 미리보기로 동작한다.
  */
 export function DiscussionChat({
   bookTitle,
   persona,
   messages,
-  sending,
+  sending = false,
   onSend,
 }: DiscussionChatProps) {
   const [text, setText] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
+  const readOnly = !onSend;
 
   // 새 메시지·대기 상태 변화 시 최신 위치로 스크롤
   useEffect(() => {
@@ -36,7 +39,7 @@ export function DiscussionChat({
 
   const send = () => {
     const body = text.trim();
-    if (!body || sending) return;
+    if (!body || sending || !onSend) return;
     onSend(body);
     setText('');
   };
@@ -126,7 +129,7 @@ export function DiscussionChat({
             // IME 조합 중 Enter 는 무시(한글 입력 중복 전송 방지)
             if (e.key === 'Enter' && !e.nativeEvent.isComposing) send();
           }}
-          disabled={sending}
+          disabled={sending || readOnly}
           placeholder={sending ? '응답을 기다리는 중…' : '생각을 적어보세요…'}
           aria-label="메시지 입력"
           className="border-divider-strong bg-bg text-ink-900 focus:border-accent flex-1 rounded-full border px-3.5 py-2.5 text-[13px] outline-none focus:shadow-[0_0_0_3px_var(--accent-ring)] disabled:opacity-60"
@@ -134,7 +137,7 @@ export function DiscussionChat({
         <button
           type="button"
           onClick={send}
-          disabled={sending}
+          disabled={sending || readOnly}
           aria-label="보내기"
           className="bg-accent flex size-9 shrink-0 items-center justify-center rounded-full text-white disabled:opacity-60"
         >
