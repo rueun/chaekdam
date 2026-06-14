@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { overlay } from 'overlay-kit';
 import { cn } from '@/lib/utils/cn';
 import { ModalShell } from '@/components/ui/modal';
@@ -23,7 +23,8 @@ interface NewChatOptions {
   books: NewChatBook[];
   /** 기본 토론자(설정 기본값) */
   defaultPersona?: PersonaKey;
-  onStart: (book: NewChatBook, persona: PersonaKey) => void;
+  /** 방 생성(+첫 AI 응답). 성공 시 모달을 닫고, 실패 시 에러를 표시한다. */
+  onStart: (book: NewChatBook, persona: PersonaKey) => Promise<{ ok: boolean; error?: string }>;
 }
 
 /** 새 대화(토론방) 생성 모달을 띄운다 — 책 선택 + 토론자 선택. */
@@ -45,6 +46,16 @@ function NewChatModal({
   const { books, defaultPersona = 'socrates', onStart } = options;
   const [bookId, setBookId] = useState(books[0]?.id ?? '');
   const [persona, setPersona] = useState<PersonaKey>(defaultPersona);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // 전송 중 외부 dismiss(overlay unmount) 시 setState 경합 방지.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const selectedBook = books.find((b) => b.id === bookId) ?? books[0];
 
@@ -58,10 +69,18 @@ function NewChatModal({
     if (isPersonaDisabled(persona, book)) setPersona('socrates');
   };
 
-  const start = () => {
-    if (!selectedBook) return;
-    onStart(selectedBook, persona);
-    onClose();
+  const start = async () => {
+    if (!selectedBook || starting) return;
+    setStarting(true);
+    setError(null);
+    const result = await onStart(selectedBook, persona);
+    if (!mountedRef.current) return;
+    if (result.ok) {
+      onClose();
+      return;
+    }
+    setError(result.error ?? '토론을 시작하지 못했어요.');
+    setStarting(false);
   };
 
   return (
@@ -177,13 +196,19 @@ function NewChatModal({
         })}
       </div>
 
+      {error ? (
+        <p className="text-danger bg-clay-50 border-clay-100 mt-3 rounded-[10px] border px-3 py-2 text-[12px]">
+          {error}
+        </p>
+      ) : null}
+
       <div className="border-divider mt-[18px] flex justify-end gap-2 border-t pt-4">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="ghost" onClick={onClose} disabled={starting}>
           취소
         </Button>
-        <Button variant="primary" onClick={start}>
+        <Button variant="primary" onClick={() => void start()} disabled={starting}>
           <Icon name="sparkles" size={16} />
-          대화 시작
+          {starting ? '시작 중…' : '대화 시작'}
         </Button>
       </div>
     </ModalShell>

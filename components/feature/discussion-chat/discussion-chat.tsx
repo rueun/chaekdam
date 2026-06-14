@@ -4,56 +4,41 @@ import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils/cn';
 import { Icon } from '@/components/ui/icon';
 import type { Persona } from '@/components/feature/persona/personas';
-
-const DUMMY_AI_DELAY_MS = 600;
-
-export interface Message {
-  id: string;
-  who: 'me' | 'ai';
-  body: string;
-}
+import type { MessageView } from './discussion-view';
 
 interface DiscussionChatProps {
   bookTitle: string;
   persona: Persona;
-  initialMessages: Message[];
+  messages: MessageView[];
+  /** 응답 대기 중(입력 잠금 + 타이핑 표시) */
+  sending: boolean;
+  onSend: (content: string) => void;
 }
 
 /**
  * AI 독서토론 채팅 — 페르소나 헤더 + 메시지 + 입력.
- * (백엔드 연결 전 더미 응답. 실연동 시 AiDiscussionPartner Port + 스트리밍으로 교체.)
+ * 메시지는 상위(workspace)가 관리하는 controlled 컴포넌트. 전송은 Server Action 으로 위임.
  */
-export function DiscussionChat({ bookTitle, persona, initialMessages }: DiscussionChatProps) {
+export function DiscussionChat({
+  bookTitle,
+  persona,
+  messages,
+  sending,
+  onSend,
+}: DiscussionChatProps) {
   const [text, setText] = useState('');
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // 새 메시지 시 최신 위치로 스크롤
+  // 새 메시지·대기 상태 변화 시 최신 위치로 스크롤
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages]);
-
-  // 언마운트 시 대기 중인 더미 응답 타이머 정리
-  useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
+  }, [messages, sending]);
 
   const send = () => {
     const body = text.trim();
-    if (!body) return;
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), who: 'me', body }]);
+    if (!body || sending) return;
+    onSend(body);
     setText('');
-    // 더미 AI 응답 — 실연동 시 AiDiscussionPartner Port(스트리밍) 호출로 교체
-    const timer = setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          who: 'ai',
-          body: '그 마음을 한 문장으로 적어둔다면 어떻게 표현해 보고 싶으세요?',
-        },
-      ]);
-    }, DUMMY_AI_DELAY_MS);
-    timersRef.current.push(timer);
   };
 
   return (
@@ -89,13 +74,6 @@ export function DiscussionChat({ bookTitle, persona, initialMessages }: Discussi
         aria-live="polite"
         className="flex flex-1 flex-col gap-2.5 overflow-auto p-5"
       >
-        <div className="border-leaf-100 bg-leaf-50 text-leaf-700 mb-3 flex items-start gap-2.5 rounded-md border px-3.5 py-3 text-[13px]">
-          <Icon name="sparkles" size={14} className="mt-0.5" />
-          <div>
-            방금 밑줄 그은 문장으로 <b className="font-bold">대화를 시작해 볼까요?</b>
-          </div>
-        </div>
-
         {messages.map((m) => {
           const isMe = m.who === 'me';
           return (
@@ -124,6 +102,18 @@ export function DiscussionChat({ bookTitle, persona, initialMessages }: Discussi
             </div>
           );
         })}
+
+        {sending ? (
+          <div className="flex max-w-[92%] gap-2.5">
+            <span className="bg-talk-100 text-talk-700 flex size-[26px] shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
+              AI
+            </span>
+            <div className="bg-surface text-fg-3 rounded-[14px] rounded-tl-[4px] px-3.5 py-2.5 text-[14px]">
+              <span className="sr-only">응답을 작성하고 있어요</span>
+              <span aria-hidden>· · ·</span>
+            </div>
+          </div>
+        ) : null}
         <div ref={bottomRef} aria-hidden />
       </div>
 
@@ -136,15 +126,17 @@ export function DiscussionChat({ bookTitle, persona, initialMessages }: Discussi
             // IME 조합 중 Enter 는 무시(한글 입력 중복 전송 방지)
             if (e.key === 'Enter' && !e.nativeEvent.isComposing) send();
           }}
-          placeholder="생각을 적어보세요…"
+          disabled={sending}
+          placeholder={sending ? '응답을 기다리는 중…' : '생각을 적어보세요…'}
           aria-label="메시지 입력"
-          className="border-divider-strong bg-bg text-ink-900 focus:border-accent flex-1 rounded-full border px-3.5 py-2.5 text-[13px] outline-none focus:shadow-[0_0_0_3px_var(--accent-ring)]"
+          className="border-divider-strong bg-bg text-ink-900 focus:border-accent flex-1 rounded-full border px-3.5 py-2.5 text-[13px] outline-none focus:shadow-[0_0_0_3px_var(--accent-ring)] disabled:opacity-60"
         />
         <button
           type="button"
           onClick={send}
+          disabled={sending}
           aria-label="보내기"
-          className="bg-accent flex size-9 shrink-0 items-center justify-center rounded-full text-white"
+          className="bg-accent flex size-9 shrink-0 items-center justify-center rounded-full text-white disabled:opacity-60"
         >
           <Icon name="arrow-up" size={16} />
         </button>

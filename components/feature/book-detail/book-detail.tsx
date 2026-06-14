@@ -9,6 +9,7 @@ import { ROUTES } from '@/lib/router/routes';
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
 import { PERSONAS, type PersonaKey } from '@/components/feature/persona/personas';
 import { openNewChat, type NewChatBook } from '@/components/feature/discussion-chat/new-chat-modal';
+import { startDiscussion } from '@/app/(dashboard)/discussions/actions';
 
 export interface BookDetailRoom {
   id: string;
@@ -79,9 +80,10 @@ export function BookDetail({ book }: { book: BookDetailView }) {
   const startNewChat = () => {
     openNewChat({
       books: [newChatBook],
-      onStart: () => {
-        // TODO(book-detail): StartDiscussionUseCase 연동 후 새 방으로 이동
-        router.push(ROUTES.DISCUSSIONS.LIST());
+      onStart: async (b, persona) => {
+        const result = await startDiscussion({ bookId: b.id, personaKey: persona });
+        if (result.ok) router.push(ROUTES.DISCUSSIONS.LIST());
+        return result.ok ? { ok: true } : { ok: false, error: result.error };
       },
     });
   };
