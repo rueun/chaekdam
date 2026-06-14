@@ -7,6 +7,7 @@ const PUBLIC_PATHS = new Set<string>([
   ROUTES.AUTH.LOGIN(),
   ROUTES.AUTH.SIGNUP(),
   ROUTES.AUTH.CALLBACK(),
+  ROUTES.AUTH.POPUP_COMPLETE(),
   '/ui-kit',
 ]);
 

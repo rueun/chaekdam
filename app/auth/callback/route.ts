@@ -13,23 +13,25 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const code = searchParams.get('code');
   const oauthError = searchParams.get('error');
 
+  // 팝업/탭 공통 마무리 페이지로 보낸다(팝업이면 닫고 부모에 알림, 아니면 목적지로 이동).
+  const done = (ok: boolean) =>
+    NextResponse.redirect(`${siteUrl()}${ROUTES.AUTH.POPUP_COMPLETE()}${ok ? '' : '?error=oauth'}`);
+
   if (oauthError) {
     // 사용자가 동의를 거부한 경우 등 — 사유는 로그로만(사용자에겐 일반 메시지).
     console.error('OAuth callback: provider returned error', oauthError);
-    return NextResponse.redirect(`${siteUrl()}${ROUTES.AUTH.LOGIN()}?error=oauth`);
+    return done(false);
   }
 
   if (code) {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${siteUrl()}${ROUTES.DASHBOARD()}`);
-    }
+    if (!error) return done(true);
     console.error('OAuth callback: failed to exchange code', {
       status: error.status,
       message: error.message,
     });
   }
 
-  return NextResponse.redirect(`${siteUrl()}${ROUTES.AUTH.LOGIN()}?error=oauth`);
+  return done(false);
 }

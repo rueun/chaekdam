@@ -9,6 +9,8 @@ export const ROUTES = {
     SIGNUP: () => '/signup' as const,
     /** OAuth 콜백(Supabase → 앱). 비로그인 접근 허용 경로. */
     CALLBACK: () => '/auth/callback' as const,
+    /** OAuth 완료 처리(팝업 닫기/탭 이동). 비로그인 접근 허용 경로. */
+    POPUP_COMPLETE: () => '/auth/popup-complete' as const,
   },
   // 대시보드(인증 후) 화면
   DASHBOARD: () => '/home' as const,

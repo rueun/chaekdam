@@ -71,11 +71,12 @@ export async function signOut(): Promise<void> {
 }
 
 /**
- * Google 로그인 시작 — Supabase OAuth(PKCE) URL 로 리다이렉트한다.
- * Google 인증 후 Supabase 가 {siteUrl}/auth/callback 으로 code 와 함께 돌려보낸다.
- * redirectTo 는 설정값(siteUrl)으로 고정하고 Supabase allowlist 로 한 번 더 제한한다.
+ * Google 로그인 시작 — Supabase OAuth(PKCE) URL 을 반환한다(리다이렉트는 클라이언트가 결정).
+ * 클라이언트는 이 URL 을 팝업으로 열고(차단 시 현재 탭), Google 인증 후 Supabase 가
+ * {siteUrl}/auth/callback 으로 code 와 함께 돌려보낸다. redirectTo 는 설정값으로 고정(allowlist 제한).
+ * PKCE code-verifier 쿠키는 이 호출에서 설정돼(같은 도메인) 콜백이 읽는다.
  */
-export async function signInWithGoogle(): Promise<{ error: string } | void> {
+export async function signInWithGoogle(): Promise<{ url: string } | { error: string }> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -84,5 +85,5 @@ export async function signInWithGoogle(): Promise<{ error: string } | void> {
   if (error || !data.url) {
     return { error: '구글 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.' };
   }
-  redirect(data.url);
+  return { url: data.url };
 }

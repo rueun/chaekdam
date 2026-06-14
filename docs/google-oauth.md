@@ -42,8 +42,12 @@ config.toml 이 아니라 **대시보드**에서 설정: Authentication → Prov
 
 ## 3. 확인
 
-`supabase start` 후 `/login` 의 "Google로 로그인" 클릭 → Google 동의 → `/home` 진입.
+`supabase start` 후 `/login` 의 "Google로 로그인" 클릭 → **팝업 창**에서 Google 동의 →
+팝업이 닫히며 원래 화면이 `/home` 으로 전환된다(팝업 차단 시 현재 탭에서 진행).
 실패 시 `/login?error=oauth` 로 돌아온다(서버 로그에 원인 출력).
+
+흐름: 버튼 → 팝업 open → `signInWithGoogle`(URL 반환) → 팝업이 Google → Supabase →
+`/auth/callback`(code→세션) → `/auth/popup-complete`(부모에 알림 후 닫기) → 부모가 `/home`.
 
 ## 참고
 
