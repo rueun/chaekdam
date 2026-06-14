@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils/cn';
 import { Icon } from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
@@ -9,68 +9,7 @@ import { SearchInput } from '@/components/ui/search-input';
 import { Select } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
 import type { BookStatusKey } from '@/components/ui/status-badge';
-import { addBook } from '@/app/(dashboard)/library/actions';
-
-// 네이버 책 API 응답과 같은 모양의 더미. 실제 연동 시 이 배열만 API 결과로 교체.
-// 네이버 책 API 응답 기반 외부 검색 결과 뷰 타입. 도메인 Book 엔티티가 아니다
-// (year=pubdate 파생, coverColor=표시 전용). 실제 연동 시 Infra 어댑터에서 매핑.
-interface BookSearchResult {
-  isbn: string;
-  title: string;
-  author: string;
-  publisher: string;
-  year: string;
-  description: string;
-  coverColor: string;
-}
-
-const MOCK_BOOKS: BookSearchResult[] = [
-  {
-    isbn: '9788932036779',
-    title: '일곱 해의 마지막',
-    author: '김연수',
-    publisher: '문학과지성사',
-    year: '2020',
-    description: '시인 백석을 모티프로 한 김연수의 장편소설. 한 시인의 침묵과 한 사람의 기다림.',
-    coverColor: 'var(--terra-600)',
-  },
-  {
-    isbn: '9791191114836',
-    title: '작별인사',
-    author: '김영하',
-    publisher: '복복서가',
-    year: '2022',
-    description: '기계와 인간의 경계가 흐릿해진 가까운 미래, 한 소년의 마지막 인사.',
-    coverColor: 'var(--sage-700)',
-  },
-  {
-    isbn: '9788954647014',
-    title: '바깥은 여름',
-    author: '김애란',
-    publisher: '문학동네',
-    year: '2017',
-    description: '상실과 회복, 그리고 그 사이에 머무는 풍경들.',
-    coverColor: 'var(--talk-500)',
-  },
-  {
-    isbn: '9788954641340',
-    title: '쇼코의 미소',
-    author: '최은영',
-    publisher: '문학동네',
-    year: '2016',
-    description: '평범한 인물들이 서로에게 닿고 떠나는 짧은 이야기들.',
-    coverColor: 'var(--clay-500)',
-  },
-  {
-    isbn: '9788954656016',
-    title: '여행의 이유',
-    author: '김영하',
-    publisher: '문학동네',
-    year: '2019',
-    description: '여행하지 못하는 시기에 더 자주 펼쳐 보는 여행 에세이.',
-    coverColor: 'var(--clay-700)',
-  },
-];
+import { addBook, searchBooks, type BookSearchHit } from '@/app/(dashboard)/library/actions';
 
 // 새로 담을 때의 책장 선택. PAUSED(쉬는 중)는 초기 등록 경로에서 제외(읽다가 쉬는 상태라 진입 후 전이).
 const SHELF_OPTIONS: { value: BookStatusKey; label: string }[] = [
@@ -82,8 +21,26 @@ const SHELF_OPTIONS: { value: BookStatusKey; label: string }[] = [
 const SUGGESTED_QUERIES = ['김연수', '에세이', '김애란'];
 // 책장 미선택 시 기본값
 const DEFAULT_SHELF: BookStatusKey = 'wish';
+const SEARCH_DEBOUNCE_MS = 380;
 
-type SearchState = 'idle' | 'loading' | 'results' | 'empty';
+// 표지는 실사 썸네일 대신 페이퍼 색 스파인으로 표시(디자인 시스템). ISBN/제목 해시로 색을 고정한다.
+const COVER_PALETTE = [
+  'var(--terra-600)',
+  'var(--sage-700)',
+  'var(--talk-500)',
+  'var(--clay-500)',
+  'var(--clay-700)',
+  'var(--leaf-500)',
+];
+function coverColorFor(key: string): string {
+  let hash = 0;
+  for (let i = 0; i < key.length; i += 1) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  return COVER_PALETTE[hash % COVER_PALETTE.length] ?? COVER_PALETTE[0]!;
+}
+/** 결과 행을 구분하는 키(ISBN 우선, 없으면 제목+저자로 충돌 완화). */
+const hitKey = (book: BookSearchHit): string => book.isbn || `${book.title}__${book.author}`;
+
+type SearchState = 'idle' | 'loading' | 'results' | 'empty' | 'error';
 
 /** 제목에서 검색어와 일치하는 부분(대소문자 무시)을 <mark> 로 강조한다. */
 function highlightMatch(title: string, query: string): ReactNode {
@@ -111,26 +68,37 @@ function highlightMatch(title: string, query: string): ReactNode {
 
 export function BookSearch() {
   const [query, setQuery] = useState('');
-  const [items, setItems] = useState<BookSearchResult[]>([]);
+  const [items, setItems] = useState<BookSearchHit[]>([]);
   const [state, setState] = useState<SearchState>('idle');
   const [shelf, setShelf] = useState<Record<string, BookStatusKey>>({});
   const [added, setAdded] = useState<Record<string, boolean>>({});
   const [adding, setAdding] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  // 디바운스+비동기라 늦게 도착한 이전 질의 응답을 버리기 위한 요청 번호.
+  const reqIdRef = useRef(0);
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // 책장에 담기 — Server Action 호출(AddBookToShelf 유스케이스). 성공 시 행을 담김 상태로.
-  const handleAdd = (book: BookSearchResult) => {
-    if (added[book.isbn] || adding === book.isbn) return; // 중복 담기·중복 제출 방지
+  const handleAdd = (book: BookSearchHit) => {
+    const key = hitKey(book);
+    if (added[key] || adding === key) return; // 중복 담기·중복 제출 방지
     void (async () => {
-      setAdding(book.isbn);
+      setAdding(key);
       const result = await addBook({
         title: book.title,
         author: book.author,
-        status: shelf[book.isbn] ?? DEFAULT_SHELF,
-        coverColor: book.coverColor,
+        status: shelf[key] ?? DEFAULT_SHELF,
+        coverColor: coverColorFor(key),
       });
+      if (!mountedRef.current) return;
       setAdding(null);
       if (result.ok) {
-        setAdded((p) => ({ ...p, [book.isbn]: true }));
+        setAdded((p) => ({ ...p, [key]: true }));
         toast('서재에 담았어요');
       } else {
         toast(result.error);
@@ -138,26 +106,29 @@ export function BookSearch() {
     })();
   };
 
-  // 더미 디바운스 검색 — 실제 연동 시 백엔드 프록시 호출로 교체
+  // 디바운스 검색 — searchBooks Server Action(NaverBookSearcher) 호출. 늦은 응답은 폐기.
   useEffect(() => {
-    if (!query.trim()) {
+    const q = query.trim();
+    if (!q) {
       setItems([]);
       setState('idle');
       return;
     }
     setState('loading');
+    const reqId = (reqIdRef.current += 1);
     const timer = setTimeout(() => {
-      const needle = query.trim().toLowerCase();
-      const hits = MOCK_BOOKS.filter(
-        (b) =>
-          b.title.toLowerCase().includes(needle) ||
-          b.author.toLowerCase().includes(needle) ||
-          b.publisher.toLowerCase().includes(needle) ||
-          b.isbn.includes(needle),
-      );
-      setItems(hits);
-      setState(hits.length > 0 ? 'results' : 'empty');
-    }, 380);
+      void (async () => {
+        const result = await searchBooks(q);
+        if (!mountedRef.current || reqId !== reqIdRef.current) return; // 최신 질의만 반영
+        if (!result.ok) {
+          setItems([]);
+          setState('error');
+          return;
+        }
+        setItems(result.results);
+        setState(result.results.length > 0 ? 'results' : 'empty');
+      })();
+    }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -217,24 +188,32 @@ export function BookSearch() {
           />
         ) : null}
 
+        {state === 'error' ? (
+          <EmptyState icon="search-x" title="검색에 실패했어요" sub="잠시 후 다시 시도해 주세요" />
+        ) : null}
+
         {state === 'results' ? (
           <>
             <div className="text-body-sm text-fg-2 mb-1">
               검색 결과 <b className="text-ink-900 font-serif font-bold">{items.length}</b>권
             </div>
             <ul className="m-0 list-none p-0">
-              {items.map((book) => (
-                <ResultRow
-                  key={book.isbn}
-                  book={book}
-                  query={query}
-                  shelf={shelf[book.isbn] ?? DEFAULT_SHELF}
-                  added={Boolean(added[book.isbn])}
-                  pending={adding === book.isbn}
-                  onShelfChange={(v) => setShelf((p) => ({ ...p, [book.isbn]: v }))}
-                  onAdd={() => handleAdd(book)}
-                />
-              ))}
+              {items.map((book, i) => {
+                const key = hitKey(book);
+                return (
+                  <ResultRow
+                    key={`${key}-${i}`}
+                    book={book}
+                    coverColor={coverColorFor(key)}
+                    query={query}
+                    shelf={shelf[key] ?? DEFAULT_SHELF}
+                    added={Boolean(added[key])}
+                    pending={adding === key}
+                    onShelfChange={(v) => setShelf((p) => ({ ...p, [key]: v }))}
+                    onAdd={() => handleAdd(book)}
+                  />
+                );
+              })}
             </ul>
           </>
         ) : null}
@@ -274,6 +253,7 @@ function EmptyState({
 
 function ResultRow({
   book,
+  coverColor,
   query,
   shelf,
   added,
@@ -281,7 +261,8 @@ function ResultRow({
   onShelfChange,
   onAdd,
 }: {
-  book: BookSearchResult;
+  book: BookSearchHit;
+  coverColor: string;
   query: string;
   shelf: BookStatusKey;
   added: boolean;
@@ -299,7 +280,7 @@ function ResultRow({
       {/* 표지 */}
       <div
         className="text-paper-50 flex aspect-[2/3] w-16 items-end rounded-[4px] px-1.5 py-2 font-serif text-[11px] leading-[1.15] font-semibold tracking-[-0.02em] shadow-[var(--shadow-cover)]"
-        style={{ background: book.coverColor }}
+        style={{ background: coverColor }}
       >
         {book.title.slice(0, 4)}
       </div>
@@ -310,14 +291,16 @@ function ResultRow({
           {highlightMatch(book.title, query)}
         </div>
         <div className="text-fg-2 mb-1.5 flex flex-wrap gap-1 text-[12px]">
-          <b className="text-ink-800 font-semibold">{book.author}</b>
-          <span>· {book.publisher}</span>
-          <span>· {book.year}</span>
+          {book.author ? <b className="text-ink-800 font-semibold">{book.author}</b> : null}
+          {book.publisher ? <span>· {book.publisher}</span> : null}
+          {book.publishedYear ? <span>· {book.publishedYear}</span> : null}
         </div>
-        <p className="text-caption text-ink-700 mb-1.5 line-clamp-2 leading-[1.55]">
-          {book.description}
-        </p>
-        <div className="text-fg-3 font-mono text-[10px]">ISBN {book.isbn}</div>
+        {book.description ? (
+          <p className="text-caption text-ink-700 mb-1.5 line-clamp-2 leading-[1.55]">
+            {book.description}
+          </p>
+        ) : null}
+        {book.isbn ? <div className="text-fg-3 font-mono text-[10px]">ISBN {book.isbn}</div> : null}
       </div>
 
       {/* 액션 */}

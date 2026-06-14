@@ -5,8 +5,10 @@ import {
   createAddBookToShelfUseCase,
   createAuthSession,
   createListBooksUseCase,
+  createSearchBooksUseCase,
 } from '@/lib/infrastructure/di-container';
 import { addBookSchema, type AddBookInput } from '@/lib/application/book/schemas';
+import type { BookSearchHit } from '@/lib/domain/ports/book-searcher';
 import { toDomainBookStatus } from '@/components/feature/library/book-status-map';
 import { ROUTES } from '@/lib/router/routes';
 
@@ -38,6 +40,30 @@ export async function addBook(input: AddBookInput): Promise<AddBookResult> {
     return { ok: true, bookId };
   } catch {
     return { ok: false, error: '담기에 실패했어요. 잠시 후 다시 시도해 주세요.' };
+  }
+}
+
+export type { BookSearchHit };
+
+export type SearchBooksResult =
+  | { ok: true; results: BookSearchHit[] }
+  | { ok: false; error: string };
+
+/** 외부 카탈로그(네이버)에서 도서를 검색한다 — 키는 서버 전용. 빈 질의어는 빈 결과. */
+export async function searchBooks(query: string): Promise<SearchBooksResult> {
+  const trimmed = query.trim();
+  if (!trimmed) return { ok: true, results: [] };
+
+  try {
+    const userId = await (await createAuthSession()).getCurrentUserId();
+    if (!userId) return { ok: false, error: '로그인이 필요해요.' };
+
+    const useCase = await createSearchBooksUseCase();
+    const results = await useCase.execute(trimmed);
+    return { ok: true, results };
+  } catch (error) {
+    console.error('Failed to search books', error);
+    return { ok: false, error: '검색에 실패했어요. 잠시 후 다시 시도해 주세요.' };
   }
 }
 

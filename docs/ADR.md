@@ -163,4 +163,14 @@
 
 ---
 
+### ADR-016: 네이버 책 검색 — Server Action 프록시 · 표지는 색 스파인 · Book 미확장
+
+**결정**: 도서 검색을 `BookSearcher` Port + `NaverBookSearcher` 어댑터로 구현한다(규격: [`naver-book-search-api.md`](./naver-book-search-api.md)). (1) 네이버 키는 **서버 전용**이고 `searchBooks` **Server Action 으로 프록시**한다(클라이언트 노출 없음). (2) 검색 결과 표지는 실사 썸네일(`image`) 대신 **페이퍼 색 스파인**으로 표시한다 — ISBN/제목 해시로 색을 고정. (3) 책장에 담을 때는 `title`·`author` 만 도메인 `Book` 으로 옮기고, **ISBN·출판사·표지 이미지는 Book 에 추가하지 않는다**(현행 유지).
+
+**이유**: 키 보호·CORS 회피를 위해 서버 프록시가 필요(stack.md). 실사 표지는 따뜻한 페이퍼 톤·색 스파인 디자인(ADR-011)과 충돌하고 외부 이미지 도메인 설정·로딩 비용이 생겨, MVP 는 결정적 색 스파인으로 일관된 톤 유지. Book 에 ISBN/출판사/이미지를 더하려면 마이그레이션·중복 판정 정책이 필요해 가치 대비 과해 보류.
+
+**트레이드오프**: 색 스파인은 책 식별성이 실사보다 낮다(후속에 표지 이미지 옵션 검토 가능). ISBN 미저장으로 같은 책 중복 담기가 가능(후속에 ISBN 기반 dedup 도입 시 Book 확장). Port·유스케이스는 그대로라 검색 제공자(Google Books 등) 교체는 어댑터만 바꾸면 된다.
+
+---
+
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스), [`specs/`](./specs/) (기능별 상세 설계)

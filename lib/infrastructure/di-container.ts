@@ -12,6 +12,7 @@ import { StartDiscussionUseCase } from '@/lib/application/start-discussion.use-c
 import { ContinueDiscussionUseCase } from '@/lib/application/continue-discussion.use-case';
 import { ListDiscussionsUseCase } from '@/lib/application/list-discussions.use-case';
 import { GetBookDetailUseCase } from '@/lib/application/get-book-detail.use-case';
+import { SearchBooksUseCase } from '@/lib/application/search-books.use-case';
 import type { AuthSession } from '@/lib/domain/ports/auth-session';
 import { createSupabaseServerClient } from './supabase/server-client';
 import { SupabaseHighlightRepository } from './supabase/supabase-highlight-repository';
@@ -22,6 +23,8 @@ import { SupabaseDiscussionRepository } from './supabase/supabase-discussion-rep
 import { SupabaseAuthSession } from './supabase/supabase-auth-session';
 import { ClaudeAiDiscussionPartner } from './claude/claude-ai-discussion-partner';
 import { anthropicApiKey } from './claude/env';
+import { NaverBookSearcher } from './naver-books/naver-book-searcher';
+import { naverBookCredentials } from './naver-books/env';
 
 /**
  * 의존성 조립 — 유스케이스/포트에 Infra Adapter 를 주입하는 유일한 지점.
@@ -95,6 +98,11 @@ export async function createContinueDiscussionUseCase(): Promise<ContinueDiscuss
 export async function createListDiscussionsUseCase(): Promise<ListDiscussionsUseCase> {
   const client = await createSupabaseServerClient();
   return new ListDiscussionsUseCase(new SupabaseDiscussionRepository(client));
+}
+
+// 다른 팩토리와 호출 일관성을 위해 async(자격 누락은 reject 로 전파돼 진입점 catch 에서 처리).
+export function createSearchBooksUseCase(): Promise<SearchBooksUseCase> {
+  return Promise.resolve(new SearchBooksUseCase(new NaverBookSearcher(naverBookCredentials())));
 }
 
 export async function createGetBookDetailUseCase(): Promise<GetBookDetailUseCase> {
