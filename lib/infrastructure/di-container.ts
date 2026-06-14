@@ -11,6 +11,7 @@ import { UpdateUserProfileUseCase } from '@/lib/application/update-user-profile.
 import { StartDiscussionUseCase } from '@/lib/application/start-discussion.use-case';
 import { ContinueDiscussionUseCase } from '@/lib/application/continue-discussion.use-case';
 import { ListDiscussionsUseCase } from '@/lib/application/list-discussions.use-case';
+import { GetBookDetailUseCase } from '@/lib/application/get-book-detail.use-case';
 import type { AuthSession } from '@/lib/domain/ports/auth-session';
 import { createSupabaseServerClient } from './supabase/server-client';
 import { SupabaseHighlightRepository } from './supabase/supabase-highlight-repository';
@@ -94,6 +95,16 @@ export async function createContinueDiscussionUseCase(): Promise<ContinueDiscuss
 export async function createListDiscussionsUseCase(): Promise<ListDiscussionsUseCase> {
   const client = await createSupabaseServerClient();
   return new ListDiscussionsUseCase(new SupabaseDiscussionRepository(client));
+}
+
+export async function createGetBookDetailUseCase(): Promise<GetBookDetailUseCase> {
+  const client = await createSupabaseServerClient();
+  return new GetBookDetailUseCase(
+    new SupabaseBookRepository(client),
+    new SupabaseHighlightRepository(client),
+    new SupabaseDiscussionRepository(client),
+    new SupabaseReadingSessionRepository(client),
+  );
 }
 
 /** 현재 요청의 인증 컨텍스트(진입점 인가 게이트용). */

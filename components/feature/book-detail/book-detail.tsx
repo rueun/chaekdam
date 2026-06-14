@@ -21,6 +21,7 @@ export interface BookDetailRoom {
 }
 
 export interface BookDetailSession {
+  id: string;
   date: string;
   activity: string;
   range: string;
@@ -30,13 +31,16 @@ export interface BookDetailView {
   id: string;
   title: string;
   author: string;
-  /** 출판사 · 연도 등 부가 정보 */
-  publisherLine: string;
-  eyebrow: string;
+  /** 출판사 · 연도 등 부가 정보(도메인 미보유 — 없으면 생략) */
+  publisherLine?: string;
+  /** 장르 라벨 등(도메인 미보유 — 없으면 생략) */
+  eyebrow?: string;
   coverColor: string;
   status: BookStatusKey;
-  format: string;
-  startedAt: string;
+  /** 종이책/전자책 등(도메인 미보유 — 없으면 생략) */
+  format?: string;
+  /** 책장에 담은 날 라벨 */
+  addedAt: string;
   finishedAt?: string;
   bookmark?: number;
   sessions?: number;
@@ -44,7 +48,8 @@ export interface BookDetailView {
   rating?: number;
   review?: string;
   tags: string[];
-  intro: string;
+  /** 책 소개(도메인 미보유 — 없으면 섹션 생략) */
+  intro?: string;
   /** 작가 사망 여부 — '작가 본인' 페르소나 활성 판정(ADR-009) */
   authorDeceased: boolean;
   highlights: HighlightView[];
@@ -99,28 +104,34 @@ export function BookDetail({ book }: { book: BookDetailView }) {
           {book.title}
         </div>
         <div className="text-fg-2 flex flex-wrap items-center justify-center gap-1.5 text-[12px]">
-          <span>{book.format}</span>
-          <span className="text-paper-400">·</span>
-          <span>{book.startedAt} 시작</span>
+          {book.format ? (
+            <>
+              <span>{book.format}</span>
+              <span className="text-paper-400">·</span>
+            </>
+          ) : null}
+          <span>{book.addedAt} 담음</span>
         </div>
       </div>
 
       {/* 오른쪽 — 본문 */}
       <div className="min-w-0">
-        <div className="text-accent text-[11px] font-bold tracking-[0.1em] uppercase">
-          {book.eyebrow}
-        </div>
+        {book.eyebrow ? (
+          <div className="text-accent text-[11px] font-bold tracking-[0.1em] uppercase">
+            {book.eyebrow}
+          </div>
+        ) : null}
         <h1 className="text-ink-900 mt-1.5 font-serif text-[36px] leading-[1.15] font-semibold tracking-[-0.03em]">
           {book.title}
         </h1>
         <div className="text-fg-2 mt-2 text-[14px]">
-          {book.author} · {book.publisherLine}
+          {book.publisherLine ? `${book.author} · ${book.publisherLine}` : book.author}
         </div>
 
         {/* 상태 · 태그 */}
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
           <StatusBadge status={book.status} />
-          <span className="chip chip-soft chip-sm">{book.format}</span>
+          {book.format ? <span className="chip chip-soft chip-sm">{book.format}</span> : null}
           {book.tags.map((t) => (
             <span key={t} className="chip chip-sm">
               {t}
@@ -163,25 +174,35 @@ export function BookDetail({ book }: { book: BookDetailView }) {
         <div className="border-divider bg-bg-elevated my-[22px] grid grid-cols-4 gap-4 rounded-[12px] border px-6 py-[22px] max-[560px]:grid-cols-2">
           <Stat
             value={isDone ? '완독' : '읽는 중'}
-            label={isDone ? `${book.finishedAt ?? ''} 마침` : '12일째 읽는 중'}
+            label={isDone && book.finishedAt ? `${book.finishedAt} 마침` : '책장에 담음'}
           />
           {!isDone && book.bookmark ? (
             <Stat value={`p.${book.bookmark}`} label="내가 적은 북마크" />
           ) : null}
-          {isDone ? <Stat value={book.sessions ?? 0} unit="세션" label="읽기 횟수" /> : null}
+          {isDone && book.sessions ? (
+            <Stat value={book.sessions} unit="세션" label="읽기 횟수" />
+          ) : null}
           <Stat value={book.quotesCount} unit="개" label="한 줄 담음" />
-          <Stat value={book.startedAt} label="읽기 시작" />
+          <Stat value={book.addedAt} label="담은 날" />
         </div>
 
-        <SectionTitle>책 소개</SectionTitle>
-        <p className="text-ink-700 max-w-[660px] text-[15px] leading-[1.75]">{book.intro}</p>
+        {book.intro ? (
+          <>
+            <SectionTitle>책 소개</SectionTitle>
+            <p className="text-ink-700 max-w-[660px] text-[15px] leading-[1.75]">{book.intro}</p>
+          </>
+        ) : null}
 
         <SectionTitle>이 책에서 담은 한 줄</SectionTitle>
-        <div className="flex flex-col gap-3">
-          {book.highlights.map((h) => (
-            <HighlightCard key={h.id} highlight={h} />
-          ))}
-        </div>
+        {book.highlights.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {book.highlights.map((h) => (
+              <HighlightCard key={h.id} highlight={h} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-fg-2 text-[13px]">아직 이 책에서 담은 한 줄이 없어요.</p>
+        )}
 
         <SectionTitle>이 책의 AI 독서토론</SectionTitle>
         <p className="text-fg-2 -mt-2 mb-3.5 max-w-[540px] text-[13px] leading-[1.6]">
@@ -254,23 +275,27 @@ export function BookDetail({ book }: { book: BookDetailView }) {
           </li>
         </ul>
 
-        <SectionTitle>최근 세션</SectionTitle>
-        <ol className="border-divider bg-bg-elevated rounded-[12px] border py-2">
-          {book.recentSessions.map((s, i) => (
-            <li
-              key={i}
-              className="border-divider grid grid-cols-[1fr_auto_1.2fr] items-center gap-3.5 border-b px-5 py-3.5 text-[14px] last:border-b-0"
-            >
-              <span className="text-ink-900 font-serif text-[15px] font-semibold tracking-[-0.02em]">
-                {s.date}
-              </span>
-              <span className="text-leaf-700 bg-leaf-50 border-leaf-100 rounded-full border px-2.5 py-[3px] font-mono text-[12px] whitespace-nowrap">
-                {s.activity}
-              </span>
-              <span className="text-fg-2 text-right text-[12px]">{s.range}</span>
-            </li>
-          ))}
-        </ol>
+        {book.recentSessions.length > 0 ? (
+          <>
+            <SectionTitle>최근 세션</SectionTitle>
+            <ol className="border-divider bg-bg-elevated rounded-[12px] border py-2">
+              {book.recentSessions.map((s) => (
+                <li
+                  key={s.id}
+                  className="border-divider grid grid-cols-[1fr_auto_1.2fr] items-center gap-3.5 border-b px-5 py-3.5 text-[14px] last:border-b-0"
+                >
+                  <span className="text-ink-900 font-serif text-[15px] font-semibold tracking-[-0.02em]">
+                    {s.date}
+                  </span>
+                  <span className="text-leaf-700 bg-leaf-50 border-leaf-100 rounded-full border px-2.5 py-[3px] font-mono text-[12px] whitespace-nowrap">
+                    {s.activity}
+                  </span>
+                  <span className="text-fg-2 text-right text-[12px]">{s.range}</span>
+                </li>
+              ))}
+            </ol>
+          </>
+        ) : null}
       </div>
     </div>
   );
