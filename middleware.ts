@@ -2,8 +2,13 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/infrastructure/supabase/middleware-client';
 import { ROUTES } from '@/lib/router/routes';
 
-// 비로그인 접근 허용 경로(인증 화면 + 랜딩 + 개발용 ui-kit)
-const PUBLIC_PATHS = new Set<string>([ROUTES.AUTH.LOGIN(), ROUTES.AUTH.SIGNUP(), '/ui-kit']);
+// 비로그인 접근 허용 경로(인증 화면 + OAuth 콜백 + 랜딩 + 개발용 ui-kit)
+const PUBLIC_PATHS = new Set<string>([
+  ROUTES.AUTH.LOGIN(),
+  ROUTES.AUTH.SIGNUP(),
+  ROUTES.AUTH.CALLBACK(),
+  '/ui-kit',
+]);
 
 /**
  * 모든 요청에서 Supabase 세션을 갱신하고 접근을 통제한다.

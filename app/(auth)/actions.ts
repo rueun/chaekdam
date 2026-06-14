@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/infrastructure/supabase/server-client';
 import { loginSchema, signupSchema } from '@/lib/application/auth/schemas';
+import { siteUrl } from '@/lib/app-url';
 import { ROUTES } from '@/lib/router/routes';
 
 export interface AuthFormState {
@@ -67,4 +68,21 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
   revalidatePath('/', 'layout');
   redirect(ROUTES.AUTH.LOGIN());
+}
+
+/**
+ * Google 로그인 시작 — Supabase OAuth(PKCE) URL 로 리다이렉트한다.
+ * Google 인증 후 Supabase 가 {siteUrl}/auth/callback 으로 code 와 함께 돌려보낸다.
+ * redirectTo 는 설정값(siteUrl)으로 고정하고 Supabase allowlist 로 한 번 더 제한한다.
+ */
+export async function signInWithGoogle(): Promise<{ error: string } | void> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${siteUrl()}${ROUTES.AUTH.CALLBACK()}` },
+  });
+  if (error || !data.url) {
+    return { error: '구글 로그인을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.' };
+  }
+  redirect(data.url);
 }
