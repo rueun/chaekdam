@@ -22,6 +22,11 @@ class InMemoryHighlightRepository implements HighlightRepository {
   findAll(): Promise<Highlight[]> {
     return Promise.resolve([...this.saved]);
   }
+  remove(id: string): Promise<void> {
+    const index = this.saved.findIndex((h) => h.id === id);
+    if (index >= 0) this.saved.splice(index, 1);
+    return Promise.resolve();
+  }
 }
 
 describe('CaptureHighlightUseCase', () => {

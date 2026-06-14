@@ -62,6 +62,12 @@ export class SupabaseHighlightRepository implements HighlightRepository {
     if (error) throw new Error(`Failed to list highlights: ${error.message}`);
     return (data ?? []).map(toDomain);
   }
+
+  async remove(id: string): Promise<void> {
+    // RLS 가 본인 행만 매칭한다 — 타인 한 줄은 매칭 0건이라 영향 없음.
+    const { error } = await this.client.from('highlights').delete().eq('id', id);
+    if (error) throw new Error(`Failed to delete highlight: ${error.message}`);
+  }
 }
 
 /** Supabase row 를 도메인 Highlight 로 복원한다. */

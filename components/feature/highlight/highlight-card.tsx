@@ -1,11 +1,13 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { openQuoteMenu } from '@/components/ui/quote-menu';
 import { openConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
+import { deleteHighlight } from '@/app/(dashboard)/highlights/actions';
 
 export interface HighlightView {
   id: string;
@@ -47,6 +49,7 @@ interface HighlightCardProps {
  * 스타일은 디자인시스템 CSS(`.quote-card`).
  */
 export function HighlightCard({ highlight }: HighlightCardProps) {
+  const router = useRouter();
   // 저자 뒤에 붙는 보조 메타 — 책 제목·페이지·날짜 중 있는 것만
   const meta = [highlight.book, highlight.page, highlight.dateLabel].filter(Boolean).join(' · ');
 
@@ -70,8 +73,14 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
             body: <>삭제하면 이 문장과 메모가 함께 사라져요. 되돌릴 수 없어요.</>,
             confirmText: '삭제',
           });
-          // TODO(highlight): DeleteHighlight 유스케이스 연결. 그 전까진 실제 삭제 안 됨을 정직하게 안내.
-          if (confirmed) toast('삭제 기능은 곧 제공돼요');
+          if (!confirmed) return;
+          const result = await deleteHighlight(highlight.id);
+          if (result.ok) {
+            toast('한 줄을 삭제했어요');
+            router.refresh(); // 서버 렌더 목록을 다시 불러와 삭제된 카드를 제거
+          } else {
+            toast(result.error);
+          }
         })();
       },
     });

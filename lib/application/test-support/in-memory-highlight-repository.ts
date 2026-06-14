@@ -24,6 +24,11 @@ export class InMemoryHighlightRepository implements HighlightRepository {
     return Promise.resolve(this.sortedByRecent());
   }
 
+  remove(id: string): Promise<void> {
+    this.items.delete(id);
+    return Promise.resolve();
+  }
+
   private sortedByRecent(): Highlight[] {
     return [...this.items.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }

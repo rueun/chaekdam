@@ -1,6 +1,7 @@
 import 'server-only';
 import { CaptureHighlightUseCase } from '@/lib/application/capture-highlight.use-case';
 import { ListHighlightsUseCase } from '@/lib/application/list-highlights.use-case';
+import { DeleteHighlightUseCase } from '@/lib/application/delete-highlight.use-case';
 import { AddBookToShelfUseCase } from '@/lib/application/add-book-to-shelf.use-case';
 import { ListBooksUseCase } from '@/lib/application/list-books.use-case';
 import { SetBookStatusUseCase } from '@/lib/application/set-book-status.use-case';
@@ -38,6 +39,11 @@ export async function createCaptureHighlightUseCase(): Promise<CaptureHighlightU
 export async function createListHighlightsUseCase(): Promise<ListHighlightsUseCase> {
   const client = await createSupabaseServerClient();
   return new ListHighlightsUseCase(new SupabaseHighlightRepository(client));
+}
+
+export async function createDeleteHighlightUseCase(): Promise<DeleteHighlightUseCase> {
+  const client = await createSupabaseServerClient();
+  return new DeleteHighlightUseCase(new SupabaseHighlightRepository(client));
 }
 
 export async function createAddBookToShelfUseCase(): Promise<AddBookToShelfUseCase> {

@@ -145,4 +145,21 @@ describe('SupabaseHighlightRepository (통합)', () => {
     expect(await repoB.findById(secret.id)).toBeNull();
     expect(await repoB.findByBookId(bookA1)).toHaveLength(0);
   });
+
+  it('한 줄을 삭제한다 — 타인 것은 RLS 로 삭제되지 않는다', async () => {
+    const mine = Highlight.fromText(bookA1, `삭제 대상 ${crypto.randomUUID()}`);
+    await repoA.save(mine);
+    await repoA.remove(mine.id);
+    expect(await repoA.findById(mine.id)).toBeNull();
+
+    // B 가 A 의 한 줄 삭제를 시도해도 RLS 로 매칭 0건 → 그대로 남는다
+    const aOnly = Highlight.fromText(bookA1, `A 전용 ${crypto.randomUUID()}`);
+    await repoA.save(aOnly);
+    await repoB.remove(aOnly.id);
+    expect(await repoA.findById(aOnly.id)).not.toBeNull();
+  });
+
+  it('없는 id 삭제는 에러 없이 통과한다(멱등)', async () => {
+    await expect(repoA.remove(crypto.randomUUID())).resolves.toBeUndefined();
+  });
 });

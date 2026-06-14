@@ -14,4 +14,6 @@ export interface HighlightRepository {
   findByBookId(bookId: string): Promise<Highlight[]>;
   /** 한 줄 전체 목록을 최신순으로 조회한다(소유 범위는 Adapter/RLS 가 보장). */
   findAll(): Promise<Highlight[]>;
+  /** 한 줄을 삭제한다(소유 범위는 Adapter/RLS 가 보장). */
+  remove(id: string): Promise<void>;
 }
