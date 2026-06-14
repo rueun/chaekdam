@@ -35,7 +35,14 @@ export default async function LibraryPage() {
           </BookSearchTrigger>
         }
       />
-      <LibraryShelf books={views} />
+      <LibraryShelf
+        books={views}
+        addBookSlot={
+          <BookSearchTrigger className="btn btn-primary">
+            <Icon name="plus" size={16} />책 추가
+          </BookSearchTrigger>
+        }
+      />
     </>
   );
 }
