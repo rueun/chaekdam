@@ -96,4 +96,20 @@ export class ReadingLog {
   hasReadOn(year: number, month: number, day: number): boolean {
     return this.minutesByDay.has(readingDayKeyOf(year, month, day));
   }
+
+  /** 기준 오늘의 (연, 1~12월, 일) — 캘린더의 '오늘' 표시·기본 월 선택용. */
+  get todayParts(): { year: number; month: number; day: number } {
+    const [year, month, day] = this.todayKey.split('-').map(Number) as [number, number, number];
+    return { year, month, day };
+  }
+
+  /** 기록이 있는 월(연, 1~12월) 목록 — 오름차순. 캘린더 월 이동 범위 산출용. */
+  recordedMonths(): { year: number; month: number }[] {
+    const months = new Set<string>();
+    for (const key of this.minutesByDay.keys()) months.add(key.slice(0, 7)); // 'YYYY-MM'
+    return [...months].sort().map((ym) => {
+      const [year, month] = ym.split('-').map(Number) as [number, number];
+      return { year, month };
+    });
+  }
 }

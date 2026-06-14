@@ -105,6 +105,47 @@ export type Database = {
           },
         ]
       }
+      reading_sessions: {
+        Row: {
+          book_id: string
+          created_at: string
+          end_page: number | null
+          id: string
+          minutes: number
+          occurred_at: string
+          start_page: number | null
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          end_page?: number | null
+          id?: string
+          minutes: number
+          occurred_at?: string
+          start_page?: number | null
+          user_id?: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          end_page?: number | null
+          id?: string
+          minutes?: number
+          occurred_at?: string
+          start_page?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_sessions_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -11,10 +11,12 @@ import { HighlightCard, type HighlightView } from '@/components/feature/highligh
 import { BookSearchTrigger } from '@/components/feature/book-search/book-search-trigger';
 import { CaptureTrigger } from '@/components/feature/capture/capture-trigger';
 import { toBookStatusKey } from '@/components/feature/library/book-status-map';
+import { toReadingLogView } from '@/components/feature/reading-log/reading-log-view';
 import {
   createAuthSession,
   createListBooksUseCase,
   createListHighlightsUseCase,
+  createGetReadingLogUseCase,
 } from '@/lib/infrastructure/di-container';
 import { BookStatus } from '@/lib/domain/book/book-status';
 import { ROUTES } from '@/lib/router/routes';
@@ -38,11 +40,21 @@ export default async function HomePage() {
   const userId = await (await createAuthSession()).getCurrentUserId();
   if (!userId) redirect(ROUTES.AUTH.LOGIN());
 
-  const [listBooks, listHighlights] = await Promise.all([
+  const [listBooks, listHighlights, getReadingLog] = await Promise.all([
     createListBooksUseCase(),
     createListHighlightsUseCase(),
+    createGetReadingLogUseCase(),
   ]);
-  const [books, highlights] = await Promise.all([listBooks.execute(), listHighlights.execute()]);
+  const [books, highlights, readingLog] = await Promise.all([
+    listBooks.execute(),
+    listHighlights.execute(),
+    getReadingLog.execute(new Date()), // 진입점이 '오늘' 시각을 주입
+  ]);
+
+  const readingLogView = toReadingLogView(readingLog);
+  // 완독 권수: 책장 전체에서 집계(현재 findAll 상한 500). 한 줄 수도 한 줄 findAll 상한(200)에
+  // 영향받는다 — MVP 규모에선 무방하나, 본격 통계는 count 쿼리로 분리 예정(TODO).
+  const completedBookCount = books.filter((b) => b.status === BookStatus.DONE).length;
 
   const readingBooks: BookCardView[] = books
     .filter((b) => b.status === BookStatus.READING)
@@ -94,10 +106,9 @@ export default async function HomePage() {
         }
       />
 
-      {/* TODO(reading-log): Hero 통계·ReadingLogPanel 은 ReadingLog 도메인 연동 전 샘플값 */}
       <Hero
-        minutesToday={24}
-        deltaMinutes={6}
+        minutesToday={readingLogView.minutesToday}
+        deltaMinutes={readingLogView.deltaMinutes}
         captureActions={
           <>
             <CaptureTrigger className="btn btn-secondary">
@@ -112,7 +123,11 @@ export default async function HomePage() {
         }
       />
 
-      <ReadingLogPanel />
+      <ReadingLogPanel
+        view={readingLogView}
+        highlightCount={highlights.length}
+        completedBookCount={completedBookCount}
+      />
 
       <SectionHeader title="읽는 중" moreHref={ROUTES.LIBRARY()} />
       {readingBooks.length > 0 ? (

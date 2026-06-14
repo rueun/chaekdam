@@ -127,6 +127,27 @@ describe('ReadingLog', () => {
     });
   });
 
+  describe('캘린더 보조', () => {
+    it('기준 오늘의 연/월/일을 노출한다', () => {
+      expect(ReadingLog.from([], TODAY).todayParts).toEqual({ year: 2026, month: 6, day: 7 });
+    });
+
+    it('기록이 있는 월을 오름차순으로 반환한다', () => {
+      const log = ReadingLog.from(
+        [sessionOn(2026, 6, 7, 10), sessionOn(2026, 5, 31, 10), sessionOn(2026, 5, 1, 10)],
+        TODAY,
+      );
+      expect(log.recordedMonths()).toEqual([
+        { year: 2026, month: 5 },
+        { year: 2026, month: 6 },
+      ]);
+    });
+
+    it('기록이 없으면 빈 월 목록', () => {
+      expect(ReadingLog.from([], TODAY).recordedMonths()).toEqual([]);
+    });
+  });
+
   it('투영 객체는 동결되어 있다', () => {
     expect(Object.isFrozen(ReadingLog.from([], TODAY))).toBe(true);
   });

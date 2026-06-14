@@ -2,10 +2,8 @@
 
 import { useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils/cn';
+import type { ReadingLogView } from './reading-log-view';
 
-// 결정적 렌더(하이드레이션 안전)를 위해 '오늘'과 로그를 고정 샘플로 둔다.
-// 통계 파생값(분/한 줄 수)도 임시이며, 추후 ReadingLog 조회 유스케이스로 대체한다.
-const TODAY = { y: 2026, m: 5, d: 31 };
 const KO_MONTHS = [
   '1월',
   '2월',
@@ -21,11 +19,15 @@ const KO_MONTHS = [
   '12월',
 ];
 const DOWS = ['일', '월', '화', '수', '목', '금', '토'];
-const keyOf = (y: number, m: number) => `${y}-${String(m).padStart(2, '0')}`;
-const READING_LOG: Record<string, number[]> = {
-  '2026-05': [1, 2, 4, 5, 6, 8, 9, 11, 12, 13, 15, 16, 18, 20, 22, 24, 27, 29, 31],
-  '2026-04': [2, 3, 5, 7, 9, 10, 12, 14, 17, 19, 21, 24, 26, 28],
-};
+
+interface ReadingLogPanelProps {
+  /** 도메인 ReadingLog 에서 매핑한 직렬화 뷰(toReadingLogView). */
+  view: ReadingLogView;
+  /** 담은 한 줄 수(Highlight 도메인 — 페이지에서 합성, ADR-006). */
+  highlightCount: number;
+  /** 완독한 책 권수(Book 도메인 — 페이지에서 합성). */
+  completedBookCount: number;
+}
 
 function NavButton({
   onClick,
@@ -66,28 +68,41 @@ function Stat({ value, unit, label }: { value: string; unit: string; label: stri
 /**
  * 월간 독서 기록 패널 — 독서일 히트맵 캘린더 + 요약 통계.
  * (도메인 엔티티 `ReadingLog` 와 이름을 구분하기 위해 Panel 접미사.)
- * 새 스타일 컨벤션대로 Tailwind 유틸 + @theme 토큰으로 작성.
+ * 실제 데이터는 `view`(toReadingLogView)로 주입받는다. 월 이동만 클라이언트 상태.
  */
-export function ReadingLogPanel() {
-  const [cur, setCur] = useState({ y: TODAY.y, m: TODAY.m });
+export function ReadingLogPanel({
+  view,
+  highlightCount,
+  completedBookCount,
+}: ReadingLogPanelProps) {
+  const { today, months } = view;
+  // 기본 선택 = 오늘이 속한 월(매퍼가 현재 월을 항상 포함하므로 존재).
+  const todayIndex = Math.max(
+    0,
+    months.findIndex((m) => m.year === today.year && m.month === today.month),
+  );
+  const [index, setIndex] = useState(todayIndex);
 
-  const readDays = new Set(READING_LOG[keyOf(cur.y, cur.m)] ?? []);
-  // cur.m 은 1-indexed. new Date(y, m, 0) = m월의 말일, new Date(y, m-1, 1) = m월 1일.
-  const daysInMonth = new Date(cur.y, cur.m, 0).getDate();
-  const firstDow = new Date(cur.y, cur.m - 1, 1).getDay();
-  const isCurrentMonth = cur.y === TODAY.y && cur.m === TODAY.m;
+  // view(months) 가 바뀌어 index 가 범위를 벗어나도 안전하도록 읽을 때 클램프한다.
+  const safeIndex = Math.min(index, months.length - 1);
+  const cur = months[safeIndex];
+  if (!cur) return null; // months 는 최소 1개(현재 월 보장)지만 타입 안전을 위한 방어
 
-  const hasPrev = (cur.m === 1 ? keyOf(cur.y - 1, 12) : keyOf(cur.y, cur.m - 1)) in READING_LOG;
-  const hasNext = (cur.m === 12 ? keyOf(cur.y + 1, 1) : keyOf(cur.y, cur.m + 1)) in READING_LOG;
-  const goPrev = () =>
-    hasPrev && setCur((p) => (p.m === 1 ? { y: p.y - 1, m: 12 } : { y: p.y, m: p.m - 1 }));
-  const goNext = () =>
-    hasNext && setCur((p) => (p.m === 12 ? { y: p.y + 1, m: 1 } : { y: p.y, m: p.m + 1 }));
+  const readDays = new Set(cur.readDays);
+  // cur.month 는 1-indexed. new Date(y, m, 0) = m월 말일, new Date(y, m-1, 1) = m월 1일.
+  const daysInMonth = new Date(cur.year, cur.month, 0).getDate();
+  const firstDow = new Date(cur.year, cur.month - 1, 1).getDay();
+  const isCurrentMonth = cur.year === today.year && cur.month === today.month;
 
-  const readCount = readDays.size;
-  const minutes = readCount * 24;
-  const highlightCount = Math.round(readCount * 0.7);
-  const monthLabel = `${cur.y}년 ${KO_MONTHS[cur.m - 1]}`;
+  const hasPrev = safeIndex > 0;
+  const hasNext = safeIndex < months.length - 1;
+  const goPrev = () => hasPrev && setIndex(safeIndex - 1);
+  const goNext = () => hasNext && setIndex(safeIndex + 1);
+
+  const readCount = cur.readDays.length;
+  const totalHours = Math.floor(view.totalMinutes / 60);
+  const totalRemMin = view.totalMinutes % 60;
+  const monthLabel = `${cur.year}년 ${KO_MONTHS[cur.month - 1]}`;
 
   return (
     <section
@@ -142,8 +157,8 @@ export function ReadingLogPanel() {
             const day = i + 1;
             const dow = (firstDow + i) % 7;
             const isRead = readDays.has(day);
-            const isToday = isCurrentMonth && day === TODAY.d;
-            const isFuture = isCurrentMonth && day > TODAY.d;
+            const isToday = isCurrentMonth && day === today.day;
+            const isFuture = isCurrentMonth && day > today.day;
             return (
               <div
                 key={day}
@@ -180,14 +195,10 @@ export function ReadingLogPanel() {
         </div>
 
         <div className="grid grid-cols-2 gap-x-[18px] gap-y-3.5">
-          <Stat value="14" unit="일" label="현재 연속" />
-          <Stat
-            value={String(Math.floor(minutes / 60))}
-            unit={`시간 ${minutes % 60}분`}
-            label="총 독서 시간"
-          />
+          <Stat value={String(view.currentStreak)} unit="일" label="현재 연속" />
+          <Stat value={String(totalHours)} unit={`시간 ${totalRemMin}분`} label="총 독서 시간" />
           <Stat value={String(highlightCount)} unit="개" label="담은 한 줄" />
-          <Stat value="3" unit="권" label="완독한 책" />
+          <Stat value={String(completedBookCount)} unit="권" label="완독한 책" />
         </div>
 
         <div className="border-divider text-fg-3 flex items-center gap-3.5 border-t pt-3 text-[11px]">
