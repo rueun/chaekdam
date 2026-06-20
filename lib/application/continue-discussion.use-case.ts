@@ -50,4 +50,37 @@ export class ContinueDiscussionUseCase {
     await this.discussions.save(continued);
     return continued;
   }
+
+  /**
+   * 토론 이어가기(스트리밍) — AI 텍스트 델타를 도착하는 대로 yield 하고,
+   * 스트림이 정상 종료되면 사용자+AI 메시지를 함께 저장한다(Aggregate 트랜잭션 1개).
+   * 스트림 중단·실패 시 저장하지 않으므로 부분 응답이 남지 않는다(사용자 재시도 가능).
+   */
+  async *executeStreaming(command: ContinueDiscussionCommand): AsyncGenerator<string> {
+    const room = await this.discussions.findById(command.discussionId);
+    if (!room) throw new DiscussionNotFoundError(command.discussionId);
+
+    const [book, seedHighlight] = await Promise.all([
+      this.books.findById(room.bookId),
+      room.seedHighlightId ? this.highlights.findById(room.seedHighlightId) : null,
+    ]);
+    if (!book) throw new BookNotFoundError(room.bookId);
+
+    const withUser = room.addUserMessage(command.content);
+    let full = '';
+    const stream = this.ai.respondStream({
+      persona: Persona.of(room.personaKey),
+      book: { title: book.title, author: book.author },
+      seedHighlight: seedHighlight?.content ?? null,
+      history: withUser.messages.map((m) => ({ role: m.role, content: m.content })),
+    });
+    for await (const delta of stream) {
+      full += delta;
+      yield delta;
+    }
+
+    const aiText = full.trim();
+    if (!aiText) throw new Error('AI partner returned an empty stream');
+    await this.discussions.save(withUser.addAiMessage(aiText));
+  }
 }

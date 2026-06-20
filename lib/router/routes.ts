@@ -28,4 +28,11 @@ export const ROUTES = {
     LIST: () => '/discussions' as const,
     DETAIL: (id: string) => `/discussions/${id}` as const,
   },
+  // 내부 API — 스트리밍 등 Server Action 으로 표현 못 하는 경우만(ADR-017)
+  API: {
+    DISCUSSIONS: {
+      /** 토론 이어가기(AI 응답 스트리밍). POST { content } → text/plain 스트림 */
+      STREAM: (id: string) => `/api/discussions/${id}/stream` as const,
+    },
+  },
 } as const;

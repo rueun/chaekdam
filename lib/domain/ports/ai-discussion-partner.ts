@@ -27,4 +27,10 @@ export interface DiscussionContext {
 export interface AiDiscussionPartner {
   /** 컨텍스트로부터 다음 발화를 생성한다(완성 텍스트, 비스트리밍). */
   respond(context: DiscussionContext): Promise<string>;
+
+  /**
+   * 컨텍스트로부터 다음 발화를 생성하되 텍스트 조각(델타)을 점진적으로 흘려보낸다.
+   * AsyncIterable 은 표준 JS 라 도메인 순수성을 해치지 않는다(프레임워크 비의존).
+   */
+  respondStream(context: DiscussionContext): AsyncIterable<string>;
 }

@@ -106,7 +106,8 @@ export function DiscussionChat({
           );
         })}
 
-        {sending ? (
+        {/* 응답 대기 표시 — AI 발화가 흐르기 전(마지막이 내 메시지)일 때만. 스트림이 시작되면 채워지는 말풍선이 대신한다. */}
+        {sending && messages.at(-1)?.who !== 'ai' ? (
           <div className="flex max-w-[92%] gap-2.5">
             <span className="bg-talk-100 text-talk-700 flex size-[26px] shrink-0 items-center justify-center rounded-full text-[10px] font-bold">
               AI

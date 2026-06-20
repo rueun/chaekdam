@@ -88,7 +88,7 @@ export async function startDiscussion(formData: FormData) {
 }
 ```
 
-- Route Handler는 **외부 webhook 전용** (예: Stripe webhook)
+- Route Handler는 **외부 webhook + 스트리밍 응답 전용** (ADR-017). webhook 예: Stripe. 스트리밍 예: AI 토론 응답(`/api/discussions/[id]/stream`, `ReadableStream`). Server Action 으로 표현 가능한 일반 변경은 Server Action 으로 둔다.
 
 ## Supabase RLS
 

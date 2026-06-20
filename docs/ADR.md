@@ -173,6 +173,22 @@
 
 **갱신(2026-06-14)**: 위 (2)·(3)의 "색 스파인·표지 미저장"을 뒤집어 **실제 표지 썸네일**을 도입했다. `books.cover_image_url` 컬럼 추가 + `Book.coverImageUrl`, 검색 시 담으면 썸네일 URL 저장, 검색 결과·서재·위시·홈·책 상세에서 `BookCover` 가 이미지를 보여주고 **없거나 로딩 실패 시 색 스파인으로 폴백**한다. 외부 호스트는 `next.config` `images.remotePatterns`(`*.pstatic.net`)로 제한. ISBN 기반 dedup 은 여전히 미도입(제목+저자 매칭 유지).
 
+### ADR-017: AI 토론 응답 스트리밍 — Route Handler + ReadableStream (webhook 전용 규칙 완화)
+
+**결정**: ADR-015 의 "비스트리밍 우선"을 뒤집어 토론 이어가기를 **토큰 단위 스트리밍**으로 전환한다. (1) `AiDiscussionPartner` Port 에 `respondStream(context): AsyncIterable<string>` 를 추가하고 `ClaudeAiDiscussionPartner` 가 Anthropic `messages.create({ stream: true })` 의 `text_delta` 를 yield 한다(SDK 는 어댑터에만 격리, ADR-005). (2) `ContinueDiscussionUseCase.executeStreaming` 가 델타를 흘려보내며 누적하고 **스트림 정상 종료 시에만** 사용자+AI 메시지를 한 트랜잭션으로 저장한다(중단·실패 시 미저장 → 재시도). (3) 전송은 **Route Handler `POST /api/discussions/[id]/stream`** 가 `ReadableStream` 으로 내보내고 클라이언트는 `fetch().body` 리더로 소비한다. 따라서 **"Route Handler 는 외부 webhook 전용"(stack.md) 규칙을 "스트리밍 응답도 허용"으로 완화**한다. 기존 비스트리밍 `continueDiscussion` Server Action 은 제거(유스케이스 `execute` 는 비스트리밍 계약·테스트로 유지).
+
+**이유**: 비스트리밍은 응답이 수 초간 멈췄다 한 번에 떠 토론 UX 체감이 나쁘다. Server Action 은 토큰 단위 점진 응답을 표현하지 못하고, 의존성 없이 표준 패턴으로 구현하려면 Route Handler + `ReadableStream` 이 가장 단순하다(Vercel AI SDK 도입은 LLM 의존을 UI 가까이 끌어와 ADR-005 와 충돌해 보류). 컨텍스트 관리(방 단위 누적 + 매 턴 전체 재전송)는 그대로라 도메인·저장 모델 변경 없음.
+
+**트레이드오프**: Route Handler 진입점이 하나 늘어 검증/인증을 Server Action 과 별도로 둔다(미들웨어가 `/api/*` 도 인증 게이트하고, 라우트도 자체 인증 게이트로 이중 방어). 스트림 중단 시 그 턴은 저장되지 않아 사용자가 다시 보내야 한다. (프롬프트 캐싱은 ADR-018 에서 도입.)
+
+### ADR-018: AI 토론 프롬프트 캐싱 — 시스템 + 이력 prefix 증분 캐싱 (beta API)
+
+**결정**: 매 턴 전체 대화 이력을 재전송하는 비용(턴 수에 비례)을 줄이기 위해 Anthropic **프롬프트 캐싱**을 도입한다. `ClaudeAiDiscussionPartner` 가 (1) 시스템 프롬프트 블록과 (2) **메시지 배열의 마지막 메시지**에 `cache_control: { type: 'ephemeral' }` 를 달아, "직전까지의 이력 prefix"를 캐싱한다 — 다음 턴엔 동일 prefix(이력은 append-only)가 재현돼 캐시 히트(증분 캐싱). SDK 0.30.1 은 `cache_control` 이 beta 네임스페이스에만 있어 `client.beta.promptCaching.messages.create` 를 쓴다(스트리밍·비스트리밍 모두 지원). 캐싱은 순수 인프라 관심사라 **어댑터에만** 두고 도메인·`discussion-prompt`·Port 는 그대로다.
+
+**이유**: 컨텍스트 관리(방 단위 누적 + 매 턴 전체 재전송)는 유지하면서 비용만 줄이려면 캐싱이 정답이다 — 요약·윈도우와 달리 **맥락 손실이 0**. 실측 결과 동일 prefix 재호출 시 1차는 `cache_creation_input_tokens`(쓰기, 정가의 1.25배), 2차부터는 `cache_read_input_tokens`(읽기, 정가의 0.1배)로 처리돼 다회 턴 대화에서 큰 절감. 캐시 최소 토큰(Sonnet 1024) 미만의 짧은 대화에선 자동 비활성이라 부작용 없음.
+
+**트레이드오프**: beta API 의존(SDK 업그레이드 시 표준 GA API 로 이전 예정 — 어댑터만 수정). 캐시 TTL 5분이라 사용자가 오래 자리를 비우면 캐시가 만료돼 재생성(정상 동작, 비용만 1.25배 1회). 요약/슬라이딩 윈도우는 컨텍스트 윈도우 한계(200K)에 실제로 근접하는 초장기 대화가 생길 때 별도 도입(현재 YAGNI).
+
 ---
 
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스), [`specs/`](./specs/) (기능별 상세 설계)

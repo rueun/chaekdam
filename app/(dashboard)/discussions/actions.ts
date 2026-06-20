@@ -1,11 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import {
-  createAuthSession,
-  createStartDiscussionUseCase,
-  createContinueDiscussionUseCase,
-} from '@/lib/infrastructure/di-container';
+import { createAuthSession, createStartDiscussionUseCase } from '@/lib/infrastructure/di-container';
 import type { PersonaKey } from '@/lib/domain/persona/persona';
 import { DiscussionNotFoundError, PersonaNotAvailableError } from '@/lib/domain/shared/errors';
 import {
@@ -51,28 +47,5 @@ export async function startDiscussion(input: {
   }
 }
 
-export type ContinueDiscussionResult =
-  | { ok: true; messages: MessageView[] }
-  | { ok: false; error: string };
-
-/** 토론 이어가기 — 사용자 발화 + AI 응답. */
-export async function continueDiscussion(
-  discussionId: string,
-  content: string,
-): Promise<ContinueDiscussionResult> {
-  const userId = await (await createAuthSession()).getCurrentUserId();
-  if (!userId) return { ok: false, error: '로그인이 필요해요.' };
-
-  const trimmed = content.trim();
-  if (!trimmed) return { ok: false, error: '메시지를 입력해 주세요.' };
-
-  try {
-    const useCase = await createContinueDiscussionUseCase();
-    const room = await useCase.execute({ discussionId, content: trimmed });
-    // 목록은 force-dynamic 이라 다음 진입 시 최신을 읽는다 — 매 턴 revalidate 불필요.
-    return { ok: true, messages: room.messages.map(toMessageView) };
-  } catch (error) {
-    console.error('Failed to continue discussion', error);
-    return { ok: false, error: toUserError(error) };
-  }
-}
+// 토론 이어가기(AI 응답 스트리밍)는 Server Action 으로 표현 못 해 Route Handler 로 옮겼다(ADR-017).
+// → app/api/discussions/[id]/stream/route.ts

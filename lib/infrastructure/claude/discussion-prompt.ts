@@ -7,9 +7,8 @@ import type { DiscussionContext } from '@/lib/domain/ports/ai-discussion-partner
 
 /**
  * 시스템 프롬프트 — 공통 지침 + 페르소나 톤 + 책 메타(+시드 한 줄).
- * TODO(perf): 한 토론 안에서 턴마다 동일하므로 프롬프트 캐싱(cache_control) 대상이다.
- * SDK 0.30 에선 beta API(client.beta.promptCaching) 가 필요해 일단 일반 문자열로 둔다
- * (책 메타가 작아 현 시점 절감 효과 미미). SDK 업그레이드 시 캐싱 블록으로 전환.
+ * 한 토론 안에서 턴마다 동일하다 — 어댑터가 cache_control 로 캐싱한다(ADR-018).
+ * 이 함수는 순수 문자열만 만들고, 캐싱(인프라 관심사)은 어댑터가 책임진다.
  */
 export function buildSystemPrompt(context: DiscussionContext): string {
   const authorPart = context.book.author ? ` (저자: ${context.book.author})` : '';
