@@ -6,6 +6,8 @@ import {
   createCaptureHighlightUseCase,
   createCaptureHighlightFromPhotoUseCase,
   createDeleteHighlightUseCase,
+  createEditHighlightUseCase,
+  createMoveHighlightUseCase,
   createExtractHighlightFromPhotoUseCase,
 } from '@/lib/infrastructure/di-container';
 import { NoteSource } from '@/lib/domain/highlight/note-source';
@@ -74,6 +76,63 @@ export async function captureHighlight(
     return {
       ok: false,
       error: error instanceof DomainError ? '문장을 확인해 주세요.' : '저장에 실패했어요.',
+    };
+  }
+}
+
+export type EditHighlightResult = { ok: true } | { ok: false; error: string };
+
+/** 한 줄 수정 — 얇은 어댑터(인가 게이트 → 유스케이스). */
+export async function editHighlight(input: {
+  highlightId: string;
+  content: string;
+  page?: string | null;
+}): Promise<EditHighlightResult> {
+  try {
+    const userId = await (await createAuthSession()).getCurrentUserId();
+    if (!userId) return { ok: false, error: '로그인이 필요해요.' };
+
+    const trimmed = input.content.trim();
+    if (!trimmed) return { ok: false, error: '문장을 입력해 주세요.' };
+
+    const useCase = await createEditHighlightUseCase();
+    await useCase.execute({
+      highlightId: input.highlightId,
+      content: trimmed,
+      page: input.page ?? null,
+    });
+    revalidatePath(ROUTES.HIGHLIGHTS());
+    revalidatePath(ROUTES.DASHBOARD());
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof DomainError ? '문장을 확인해 주세요.' : '수정에 실패했어요.',
+    };
+  }
+}
+
+export type MoveHighlightResult = { ok: true } | { ok: false; error: string };
+
+/** 한 줄을 다른 책으로 이동 — 얇은 어댑터(인가 게이트 → 유스케이스). */
+export async function moveHighlight(input: {
+  highlightId: string;
+  bookId: string;
+}): Promise<MoveHighlightResult> {
+  try {
+    const userId = await (await createAuthSession()).getCurrentUserId();
+    if (!userId) return { ok: false, error: '로그인이 필요해요.' };
+    if (!input.bookId) return { ok: false, error: '옮길 책을 선택해 주세요.' };
+
+    const useCase = await createMoveHighlightUseCase();
+    await useCase.execute({ highlightId: input.highlightId, bookId: input.bookId });
+    revalidatePath(ROUTES.HIGHLIGHTS());
+    revalidatePath(ROUTES.DASHBOARD());
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof DomainError ? '옮길 책을 확인해 주세요.' : '이동에 실패했어요.',
     };
   }
 }

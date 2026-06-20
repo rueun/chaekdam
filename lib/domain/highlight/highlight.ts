@@ -1,5 +1,6 @@
 import { generateId } from '@/lib/domain/shared/id';
 import {
+  EmptyBookIdError,
   EmptyHighlightContentError,
   HighlightContentTooLongError,
   MissingPhotoUrlError,
@@ -73,6 +74,38 @@ export class Highlight {
       props.photoUrl,
       props.page,
       props.createdAt,
+    );
+  }
+
+  /**
+   * 본문·페이지를 수정한 새 한 줄을 반환한다(원본 불변).
+   * 본문은 재정규화·재검증한다. 출처·사진·식별자·생성시각은 유지한다.
+   */
+  edit(props: { content: string; page?: string | null }): Highlight {
+    return new Highlight(
+      this.id,
+      this.bookId,
+      this.source,
+      normalizeContent(props.content),
+      this.photoUrl,
+      // undefined = 페이지 유지, null = 명시적으로 지움.
+      props.page === undefined ? this.page : props.page,
+      this.createdAt,
+    );
+  }
+
+  /** 다른 책으로 옮긴 새 한 줄을 반환한다(원본 불변). 본문·출처·사진·식별자·생성시각 유지. */
+  moveTo(bookId: string): Highlight {
+    const target = bookId.trim();
+    if (!target) throw new EmptyBookIdError();
+    return new Highlight(
+      this.id,
+      target,
+      this.source,
+      this.content,
+      this.photoUrl,
+      this.page,
+      this.createdAt,
     );
   }
 

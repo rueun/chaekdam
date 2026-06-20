@@ -52,6 +52,20 @@ export class BookNotFoundError extends DomainError {
   }
 }
 
+/** 한 줄을 찾을 수 없음 */
+export class HighlightNotFoundError extends DomainError {
+  constructor(highlightId: string) {
+    super(`Highlight not found: ${highlightId}`);
+  }
+}
+
+/** 책 식별자가 비어 있음(이동 대상 미지정 등) */
+export class EmptyBookIdError extends DomainError {
+  constructor() {
+    super('Book id must not be empty');
+  }
+}
+
 /** 독서 세션 시간(분)이 유효하지 않음 */
 export class InvalidSessionMinutesError extends DomainError {
   constructor() {

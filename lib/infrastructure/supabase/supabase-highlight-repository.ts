@@ -19,15 +19,21 @@ export class SupabaseHighlightRepository implements HighlightRepository {
   constructor(private readonly client: SupabaseClient<Database>) {}
 
   async save(highlight: Highlight): Promise<void> {
-    // 한 줄은 불변 — 캡처는 신규 생성. user_id 는 DB default auth.uid() 가 채운다(RLS).
-    const { error } = await this.client.from('highlights').insert({
-      id: highlight.id,
-      book_id: highlight.bookId,
-      source: highlight.source,
-      content: highlight.content,
-      photo_url: highlight.photoUrl,
-      page: highlight.page,
-    });
+    // upsert — 신규 캡처는 삽입, 수정(같은 id 재저장)은 갱신. user_id 는 DB default auth.uid() 가
+    // 채우고 RLS(insert/update 본인) 가 보호한다. 한 줄은 불변이라 항상 전체 필드를 다시 쓴다.
+    const { error } = await this.client.from('highlights').upsert(
+      {
+        id: highlight.id,
+        book_id: highlight.bookId,
+        source: highlight.source,
+        content: highlight.content,
+        photo_url: highlight.photoUrl,
+        page: highlight.page,
+      },
+      { onConflict: 'id' }, // 충돌 기준을 PK 로 명시(PostgREST 기본값 의존 제거)
+    );
+    // user_id 는 payload 에 없어 INSERT 는 default auth.uid(), UPDATE 는 기존 값 유지.
+    // 타인 행 변조는 RLS update with check(auth.uid()=user_id) 가 차단한다.
     if (error) throw new Error(`Failed to save highlight: ${error.message}`);
   }
 

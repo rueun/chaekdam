@@ -8,6 +8,8 @@ import { openQuoteMenu } from '@/components/ui/quote-menu';
 import { openConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
 import { openHighlightShare } from '@/components/feature/share/highlight-share-card';
+import { openHighlightEdit } from '@/components/feature/highlight/highlight-edit-modal';
+import { openHighlightMove } from '@/components/feature/highlight/highlight-move-modal';
 import { deleteHighlight } from '@/app/(dashboard)/highlights/actions';
 
 export interface HighlightView {
@@ -58,8 +60,12 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
 
   const openMenu = (anchor: HTMLElement) => {
     openQuoteMenu(anchor, {
-      // TODO(highlight): 각 액션을 Highlight 유스케이스(수정·고정·이동·보관)로 교체
-      onEdit: () => toast('문장 수정은 곧 제공돼요'),
+      // TODO(highlight): 고정·이동·보관 액션을 Highlight 유스케이스로 교체(수정은 구현됨)
+      onEdit: () =>
+        openHighlightEdit(
+          { id: highlight.id, content: highlight.content, page: highlight.page },
+          () => router.refresh(),
+        ),
       onPin: () => toast('홈에 고정했어요'),
       onCopy: () => {
         navigator.clipboard
@@ -73,7 +79,7 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
           author: highlight.author,
           book: highlight.book,
         }),
-      onMove: () => toast('다른 책으로 이동은 곧 제공돼요'),
+      onMove: () => openHighlightMove(highlight.id, () => router.refresh()),
       onArchive: () => toast('보관함에 넣었어요'),
       onDelete: () => {
         void (async () => {

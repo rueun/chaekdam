@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Highlight, HIGHLIGHT_CONTENT_MAX_LENGTH } from './highlight';
 import { NoteSource } from './note-source';
 import {
+  EmptyBookIdError,
   EmptyHighlightContentError,
   HighlightContentTooLongError,
   MissingPhotoUrlError,
@@ -138,6 +139,53 @@ describe('Highlight', () => {
       const a = Highlight.fromText('book-1', '문장');
       const b = Highlight.fromText('book-1', '문장');
       expect(a.id).not.toBe(b.id);
+    });
+  });
+
+  describe('edit', () => {
+    it('본문·페이지를 바꾼 새 한 줄을 반환하고 원본은 그대로다', () => {
+      const original = Highlight.fromText('book-1', '원래 문장', '10');
+      const edited = original.edit({ content: '고친 문장', page: '42' });
+
+      expect(edited).not.toBe(original);
+      expect(edited.content).toBe('고친 문장');
+      expect(edited.page).toBe('42');
+      expect(edited.id).toBe(original.id); // 식별자·출처 유지
+      expect(edited.source).toBe(original.source);
+      expect(original.content).toBe('원래 문장'); // 원본 불변
+    });
+
+    it('page 를 생략하면 기존 페이지를 유지한다', () => {
+      const original = Highlight.fromText('book-1', '문장', '10');
+      expect(original.edit({ content: '바뀐 문장' }).page).toBe('10');
+    });
+
+    it('page 를 null 로 주면 페이지를 지운다', () => {
+      const original = Highlight.fromText('book-1', '문장', '10');
+      expect(original.edit({ content: '바뀐 문장', page: null }).page).toBeNull();
+    });
+
+    it('빈 본문으로는 수정할 수 없다', () => {
+      const original = Highlight.fromText('book-1', '문장');
+      expect(() => original.edit({ content: '   ' })).toThrow(EmptyHighlightContentError);
+    });
+  });
+
+  describe('moveTo', () => {
+    it('다른 책으로 옮긴 새 한 줄을 반환하고 원본은 그대로다', () => {
+      const original = Highlight.fromText('book-a', '문장');
+      const moved = original.moveTo('book-b');
+
+      expect(moved).not.toBe(original);
+      expect(moved.bookId).toBe('book-b');
+      expect(moved.id).toBe(original.id);
+      expect(moved.content).toBe('문장');
+      expect(original.bookId).toBe('book-a'); // 원본 불변
+    });
+
+    it('빈 책 식별자로는 옮길 수 없다', () => {
+      const original = Highlight.fromText('book-a', '문장');
+      expect(() => original.moveTo('  ')).toThrow(EmptyBookIdError);
     });
   });
 });
