@@ -1,28 +1,20 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { TopBar } from '@/components/layout/top-bar';
-import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
+import { HighlightCard } from '@/components/feature/highlight/highlight-card';
+import { HighlightList } from '@/components/feature/highlight/highlight-list';
 import { HighlightsFilter } from '@/components/feature/highlight/highlights-filter';
 import { Icon } from '@/components/ui/icon';
 import { CaptureTrigger } from '@/components/feature/capture/capture-trigger';
-import {
-  createAuthSession,
-  createListBooksUseCase,
-  createListHighlightsUseCase,
-} from '@/lib/infrastructure/di-container';
+import { createAuthSession } from '@/lib/infrastructure/di-container';
+import { HIGHLIGHTS_PAGE_SIZE, loadHighlightViews } from './load-highlight-views';
 import { ROUTES } from '@/lib/router/routes';
 
 // 최신 데이터 반영 — 캡처 후 revalidate 와 함께 항상 최신 목록을 보여준다.
 export const dynamic = 'force-dynamic';
 
-/** 날짜 → '6월 7일' 라벨(KST 고정 — 서버 TZ 영향 제거). */
-function formatDateLabel(date: Date): string {
-  return date.toLocaleDateString('ko-KR', {
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'Asia/Seoul',
-  });
-}
+/** 태그 필터 시 메모리 필터를 위해 한 번에 더 가져오는 상한. */
+const TAG_FILTER_FETCH = 200;
 
 export default async function HighlightsPage({
   searchParams,
@@ -39,38 +31,15 @@ export default async function HighlightsPage({
   const tagFilter = params.tag?.trim() ?? '';
   const tagFilterKey = tagFilter.toLowerCase();
 
-  const [listHighlights, listBooks] = await Promise.all([
-    createListHighlightsUseCase(),
-    createListBooksUseCase(),
-  ]);
-  const [allHighlights, books] = await Promise.all([
-    listHighlights.execute(scope),
-    listBooks.execute(),
-  ]);
-
-  // 태그 필터 — 대소문자 무시. 목록 상한(200) 내에서 메모리 필터(본격 검색은 후속).
-  const highlights = tagFilter
-    ? allHighlights.filter((h) => h.tags.some((t) => t.toLowerCase() === tagFilterKey))
-    : allHighlights;
-
-  // 한 줄을 책 메타(제목·저자)로 보강 — book_id 로 조회(여러 도메인 조합은 화면에서, ADR-006).
-  const bookById = new Map(books.map((b) => [b.id, b]));
-  const views: HighlightView[] = highlights.map((h) => {
-    const book = bookById.get(h.bookId);
-    const author = book?.author?.trim() ? book.author : undefined;
-    return {
-      id: h.id,
-      content: h.content,
-      author,
-      book: book?.title,
-      page: h.page ?? undefined,
-      dateLabel: formatDateLabel(h.createdAt),
-      photoUrl: h.photoUrl ?? undefined,
-      pinned: h.pinned,
-      archived: h.archived,
-      tags: [...h.tags],
-    };
+  // 태그 필터 시엔 더 많이 가져와 메모리 필터(더보기 없음), 아니면 첫 페이지만(더보기 제공).
+  const views = await loadHighlightViews(scope, {
+    limit: tagFilter ? TAG_FILTER_FETCH : HIGHLIGHTS_PAGE_SIZE,
+    offset: 0,
   });
+  // 태그 필터 — 대소문자 무시. 뷰의 태그로 필터(본격 DB 검색은 후속).
+  const visible = tagFilter
+    ? views.filter((v) => (v.tags ?? []).some((t) => t.toLowerCase() === tagFilterKey))
+    : views;
 
   const isArchived = scope === 'archived';
 
@@ -78,7 +47,13 @@ export default async function HighlightsPage({
     <>
       <TopBar
         title="밑줄 모음"
-        subtitle={views.length > 0 ? `${views.length}개의 문장` : '담은 한 줄이 여기에 모여요'}
+        subtitle={
+          visible.length === 0
+            ? '담은 한 줄이 여기에 모여요'
+            : tagFilter
+              ? `${visible.length}개의 문장` // 태그 필터는 전수 결과라 정확
+              : '담은 한 줄을 모아둬요' // 더보기로 일부만 로드 — 총계는 표시하지 않음
+        }
         action={
           <CaptureTrigger className="btn btn-primary">
             <Icon name="pen-line" size={16} />한 줄 담기
@@ -101,12 +76,17 @@ export default async function HighlightsPage({
         </div>
       ) : null}
 
-      {views.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4 max-[860px]:grid-cols-1">
-          {views.map((view) => (
-            <HighlightCard key={view.id} highlight={view} />
-          ))}
-        </div>
+      {visible.length > 0 ? (
+        tagFilter ? (
+          // 태그 필터 결과는 정적으로(더보기 없음 — 메모리 필터라 페이지네이션 비대상).
+          <div className="grid grid-cols-2 gap-4 max-[860px]:grid-cols-1">
+            {visible.map((view) => (
+              <HighlightCard key={view.id} highlight={view} />
+            ))}
+          </div>
+        ) : (
+          <HighlightList initialItems={visible} scope={scope} pageSize={HIGHLIGHTS_PAGE_SIZE} />
+        )
       ) : (
         <div className="flex flex-col items-center gap-2 py-20 text-center">
           <span

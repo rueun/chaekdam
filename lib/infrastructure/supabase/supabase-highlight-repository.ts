@@ -1,14 +1,24 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Highlight } from '@/lib/domain/highlight/highlight';
 import { NoteSource } from '@/lib/domain/highlight/note-source';
-import type { HighlightRepository } from '@/lib/domain/ports/highlight-repository';
+import type { HighlightPage, HighlightRepository } from '@/lib/domain/ports/highlight-repository';
 import type { Database } from './types.gen';
 
 type HighlightRow = Database['public']['Tables']['highlights']['Row'];
 type DbNoteSource = Database['public']['Enums']['note_source'];
 
-/** findAll 방어적 상한 — 페이지네이션 도입 전 무한정 조회 방지 */
+/** 한 페이지 최대 개수 — 한 번에 가져올 상한(무한정 스캔 방지). */
 const HIGHLIGHTS_LIST_LIMIT = 200;
+
+/** 페이지 옵션을 안전한 offset/limit 으로 정규화(음수·과대 방지). */
+function pageBounds(page?: HighlightPage): { offset: number; limit: number } {
+  const offset = Math.max(0, Math.trunc(page?.offset ?? 0));
+  const limit = Math.min(
+    HIGHLIGHTS_LIST_LIMIT,
+    Math.max(1, Math.trunc(page?.limit ?? HIGHLIGHTS_LIST_LIMIT)),
+  );
+  return { offset, limit };
+}
 
 /**
  * HighlightRepository 의 Supabase 어댑터.
@@ -60,28 +70,30 @@ export class SupabaseHighlightRepository implements HighlightRepository {
     return (data ?? []).map(toDomain);
   }
 
-  async findAll(): Promise<Highlight[]> {
+  async findAll(page?: HighlightPage): Promise<Highlight[]> {
     // RLS 가 본인 행으로 한정. 보관 제외 + 고정 우선, 그 안에서 최신순(ADR-021).
-    // 방어적 상한(무한정 스캔 방지). 본격 페이지네이션은 후속.
+    // 페이지(ADR-025) — '더보기' 로 offset 만큼 건너뛰고 limit 개. 미지정 시 기본 상한.
+    const { offset, limit } = pageBounds(page);
     const { data, error } = await this.client
       .from('highlights')
       .select('*')
       .eq('archived', false)
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(HIGHLIGHTS_LIST_LIMIT);
+      .range(offset, offset + limit - 1);
     if (error) throw new Error(`Failed to list highlights: ${error.message}`);
     return (data ?? []).map(toDomain);
   }
 
-  async findArchived(): Promise<Highlight[]> {
+  async findArchived(page?: HighlightPage): Promise<Highlight[]> {
     // 보관함 — archived = true 만 최신순.
+    const { offset, limit } = pageBounds(page);
     const { data, error } = await this.client
       .from('highlights')
       .select('*')
       .eq('archived', true)
       .order('created_at', { ascending: false })
-      .limit(HIGHLIGHTS_LIST_LIMIT);
+      .range(offset, offset + limit - 1);
     if (error) throw new Error(`Failed to list archived highlights: ${error.message}`);
     return (data ?? []).map(toDomain);
   }

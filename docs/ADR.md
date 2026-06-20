@@ -237,6 +237,14 @@
 
 **트레이드오프**: 아이콘이 SVG 플레이스홀더라 일부 플랫폼(특히 iOS 홈 화면 아이콘)은 래스터 PNG(192/512, maskable)를 요구해 완전한 설치 품질엔 PNG 에셋이 필요(후속). 서비스 워커가 없어 오프라인 동작·설치 프롬프트(beforeinstallprompt) 신뢰성은 제한적 — 정식 PWA(오프라인·푸시)는 후속 결정.
 
+### ADR-025: 한 줄 목록 '더보기' 페이지네이션
+
+**결정**: 한 줄 목록의 고정 상한(200) 대신 '더보기' 페이지네이션을 둔다. (1) `HighlightRepository.findAll/findArchived` 에 **선택적** `HighlightPage{limit,offset}` 추가 — Supabase `.range`, 미지정 시 기존 상한(기존 구현·테스트 무영향). (2) `ListHighlightsUseCase.execute(scope, page?)`. (3) 서버 공용 로더 `loadHighlightViews(scope, page)` 가 한 줄×책 메타를 합쳐 뷰로 — 페이지·`loadMoreHighlights` 액션이 공유. (4) 클라이언트 `HighlightList` 가 첫 페이지(30) 이후를 이어붙인다(id 중복 제거, offset 누적). 태그 필터 시엔 더보기 비활성(메모리 필터).
+
+**이유**: 한 줄은 무한히 쌓이는데 200 상한은 오래된 것을 영구히 가린다. offset 페이지네이션 + '더보기'는 무한 스크롤보다 단순·예측 가능하고 SSR 첫 페이지와 잘 맞는다. Port 옵션을 선택적으로 둬 홈·다른 호출자와 기존 구현을 건드리지 않는다.
+
+**트레이드오프**: offset 방식이라 로드 중 삭제·추가되면 경계에서 누락/중복 가능(중복은 id 로 제거, 누락은 드묾 — 커서 페이지네이션은 후속). 태그 필터는 여전히 메모리 기반이라 페이지네이션 비대상(DB 태그 필터는 후속). 책장·위시·토론 목록은 아직 상한 유지(같은 패턴으로 확장 가능).
+
 ---
 
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스), [`specs/`](./specs/) (기능별 상세 설계)

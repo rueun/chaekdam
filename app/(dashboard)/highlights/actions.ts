@@ -14,6 +14,9 @@ import {
 } from '@/lib/infrastructure/di-container';
 import { NoteSource } from '@/lib/domain/highlight/note-source';
 import { DomainError } from '@/lib/domain/shared/errors';
+import type { HighlightScope } from '@/lib/application/list-highlights.use-case';
+import type { HighlightView } from '@/components/feature/highlight/highlight-card';
+import { HIGHLIGHTS_PAGE_SIZE, loadHighlightViews } from './load-highlight-views';
 import { ROUTES } from '@/lib/router/routes';
 
 /** data URL(`data:image/...;base64,...`) → MIME + base64 분리. 형식이 아니면 null. */
@@ -84,6 +87,19 @@ export async function captureHighlight(
       error: error instanceof DomainError ? '문장을 확인해 주세요.' : '저장에 실패했어요.',
     };
   }
+}
+
+/**
+ * 한 줄 '더보기' — offset 부터 한 페이지를 더 불러온다(ADR-025). 태그 필터 없는 목록 전용.
+ * 미인증이면 빈 배열(클라이언트는 더 이상 불러올 게 없다고 본다).
+ */
+export async function loadMoreHighlights(
+  scope: HighlightScope,
+  offset: number,
+): Promise<HighlightView[]> {
+  const userId = await (await createAuthSession()).getCurrentUserId();
+  if (!userId) return [];
+  return loadHighlightViews(scope, { limit: HIGHLIGHTS_PAGE_SIZE, offset: Math.max(0, offset) });
 }
 
 export type EditHighlightResult = { ok: true } | { ok: false; error: string };

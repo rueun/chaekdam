@@ -42,4 +42,18 @@ describe('ListHighlightsUseCase', () => {
     const result = await new ListHighlightsUseCase(new InMemoryHighlightRepository()).execute();
     expect(result).toEqual([]);
   });
+
+  it('페이지(limit/offset)로 나눠 겹치지 않게 가져온다(ADR-025)', async () => {
+    const repo = await repoWith(
+      ...Array.from({ length: 5 }, (_v, i) => Highlight.fromText('b1', `문장 ${i}`)),
+    );
+    const useCase = new ListHighlightsUseCase(repo);
+    const p1 = await useCase.execute('active', { limit: 2, offset: 0 });
+    const p2 = await useCase.execute('active', { limit: 2, offset: 2 });
+    const p3 = await useCase.execute('active', { limit: 2, offset: 4 });
+
+    expect([p1.length, p2.length, p3.length]).toEqual([2, 2, 1]);
+    const ids = new Set([...p1, ...p2, ...p3].map((h) => h.id));
+    expect(ids.size).toBe(5); // 페이지가 겹치지 않고 전부 커버
+  });
 });
