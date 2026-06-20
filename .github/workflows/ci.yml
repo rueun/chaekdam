@@ -87,3 +87,52 @@ jobs:
       - name: Stop Supabase
         if: always()
         run: pnpm exec supabase stop
+
+  # 핵심 사용자 플로우 E2E — 실제 브라우저 + Next + Supabase(testing.md).
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Start Supabase (applies migrations)
+        run: pnpm exec supabase start
+
+      - name: Export Supabase env
+        shell: bash
+        run: |
+          source <(pnpm exec supabase status -o env 2>/dev/null)
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+
+      - name: E2E tests
+        run: pnpm test:e2e # webServer(pnpm dev)는 Playwright 가 띄운다
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Stop Supabase
+        if: always()
+        run: pnpm exec supabase stop
