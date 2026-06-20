@@ -91,13 +91,21 @@ export function DiscussionWorkspace({
 
   if (!active) {
     return (
-      <div className="border-divider bg-bg-elevated flex min-h-[420px] flex-col items-center justify-center gap-4 rounded-lg border p-10 text-center">
-        <p className="text-fg-2 text-[14px] leading-[1.6]">
-          아직 시작한 토론이 없어요.
-          <br />
-          읽는 중이거나 완독한 책으로 첫 대화를 열어보세요.
+      <div className="flex flex-col items-center gap-2 py-20 text-center">
+        <span
+          className="bg-surface text-fg-3 grid size-16 place-content-center rounded-full"
+          aria-hidden
+        >
+          <Icon name="messages-square" size={28} />
+        </span>
+        <div className="text-ink-900 mt-2 font-serif text-[18px] font-semibold tracking-[-0.02em]">
+          아직 시작한 토론이 없어요
+        </div>
+        <p className="text-body-sm text-fg-2 max-w-[420px] leading-[1.6]">
+          읽는 중이거나 완독한 책으로 첫 대화를 열어보세요. 페르소나가 책에 대해 천천히 질문을
+          건네요.
         </p>
-        <button type="button" className="btn btn-primary" onClick={openModal}>
+        <button type="button" className="btn btn-primary mt-2" onClick={openModal}>
           <Icon name="plus" size={16} />새 대화 시작
         </button>
       </div>
