@@ -5,10 +5,22 @@ import {
   createAuthSession,
   createCaptureHighlightUseCase,
   createDeleteHighlightUseCase,
+  createExtractHighlightFromPhotoUseCase,
 } from '@/lib/infrastructure/di-container';
 import { NoteSource } from '@/lib/domain/highlight/note-source';
 import { DomainError } from '@/lib/domain/shared/errors';
 import { ROUTES } from '@/lib/router/routes';
+
+/** data URL(`data:image/...;base64,...`) → MIME + base64 분리. 형식이 아니면 null. */
+function parseImageDataUrl(dataUrl: string): { mediaType: string; base64: string } | null {
+  const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+  if (!match) return null;
+  return { mediaType: match[1]!, base64: match[2]! };
+}
+
+// base64 길이 상한(약 4MB) — Server Action 본문 한도(next.config bodySizeLimit '4mb')와 정합.
+// 한도 초과 시 Next 의 413 대신 친절한 메시지를 먼저 돌려준다. 클라이언트는 다운스케일 후 전송.
+const MAX_BASE64_LENGTH = 4_000_000;
 
 export interface CaptureHighlightInput {
   bookId: string;
@@ -45,6 +57,32 @@ export async function captureHighlight(
       ok: false,
       error: error instanceof DomainError ? '문장을 확인해 주세요.' : '저장에 실패했어요.',
     };
+  }
+}
+
+export type ExtractHighlightResult = { ok: true; text: string } | { ok: false; error: string };
+
+/**
+ * 사진 → 구절 추출 — 얇은 어댑터. data URL 을 검증해 Vision 유스케이스로 넘긴다.
+ * 추출 텍스트는 사용자가 검토·수정 후 captureHighlight 로 저장한다(저장과 분리).
+ */
+export async function extractHighlightFromImage(dataUrl: string): Promise<ExtractHighlightResult> {
+  const userId = await (await createAuthSession()).getCurrentUserId();
+  if (!userId) return { ok: false, error: '로그인이 필요해요.' };
+
+  const parsed = parseImageDataUrl(dataUrl);
+  if (!parsed) return { ok: false, error: '이미지를 읽을 수 없어요.' };
+  if (parsed.base64.length > MAX_BASE64_LENGTH) {
+    return { ok: false, error: '이미지가 너무 커요. 더 작은 사진으로 시도해 주세요.' };
+  }
+
+  try {
+    const useCase = await createExtractHighlightFromPhotoUseCase();
+    const text = await useCase.execute({ base64: parsed.base64, mediaType: parsed.mediaType });
+    return { ok: true, text };
+  } catch (error) {
+    console.error('Failed to extract highlight from image', error);
+    return { ok: false, error: '구절 추출에 실패했어요. 직접 입력해 주세요.' };
   }
 }
 

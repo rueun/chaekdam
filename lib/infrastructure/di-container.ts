@@ -2,6 +2,7 @@ import 'server-only';
 import { CaptureHighlightUseCase } from '@/lib/application/capture-highlight.use-case';
 import { ListHighlightsUseCase } from '@/lib/application/list-highlights.use-case';
 import { DeleteHighlightUseCase } from '@/lib/application/delete-highlight.use-case';
+import { ExtractHighlightFromPhotoUseCase } from '@/lib/application/extract-highlight-from-photo.use-case';
 import { AddBookToShelfUseCase } from '@/lib/application/add-book-to-shelf.use-case';
 import { ListBooksUseCase } from '@/lib/application/list-books.use-case';
 import { SetBookStatusUseCase } from '@/lib/application/set-book-status.use-case';
@@ -23,6 +24,7 @@ import { SupabaseUserProfileRepository } from './supabase/supabase-user-profile-
 import { SupabaseDiscussionRepository } from './supabase/supabase-discussion-repository';
 import { SupabaseAuthSession } from './supabase/supabase-auth-session';
 import { ClaudeAiDiscussionPartner } from './claude/claude-ai-discussion-partner';
+import { ClaudeHighlightExtractor } from './claude/claude-highlight-extractor';
 import { anthropicApiKey } from './claude/env';
 import { NaverBookSearcher } from './naver-books/naver-book-searcher';
 import { naverBookCredentials } from './naver-books/env';
@@ -44,6 +46,13 @@ export async function createListHighlightsUseCase(): Promise<ListHighlightsUseCa
 export async function createDeleteHighlightUseCase(): Promise<DeleteHighlightUseCase> {
   const client = await createSupabaseServerClient();
   return new DeleteHighlightUseCase(new SupabaseHighlightRepository(client));
+}
+
+// Vision 추출은 Supabase 클라이언트가 필요 없어 동기 조립(호출 일관성을 위해 Promise 반환).
+export function createExtractHighlightFromPhotoUseCase(): Promise<ExtractHighlightFromPhotoUseCase> {
+  return Promise.resolve(
+    new ExtractHighlightFromPhotoUseCase(new ClaudeHighlightExtractor(anthropicApiKey())),
+  );
 }
 
 export async function createAddBookToShelfUseCase(): Promise<AddBookToShelfUseCase> {

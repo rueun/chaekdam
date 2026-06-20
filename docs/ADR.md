@@ -189,6 +189,14 @@
 
 **트레이드오프**: beta API 의존(SDK 업그레이드 시 표준 GA API 로 이전 예정 — 어댑터만 수정). 캐시 TTL 5분이라 사용자가 오래 자리를 비우면 캐시가 만료돼 재생성(정상 동작, 비용만 1.25배 1회). 요약/슬라이딩 윈도우는 컨텍스트 윈도우 한계(200K)에 실제로 근접하는 초장기 대화가 생길 때 별도 도입(현재 YAGNI).
 
+### ADR-019: 사진 → 한 줄 추출은 Claude Vision (별도 OCR·PhotoStorage 없이)
+
+**결정**: 책 사진에서 구절을 뽑는 기능을 `HighlightExtractor` Port + `ClaudeHighlightExtractor` 어댑터로 구현한다. (1) Tesseract·Google Vision 등 **별도 OCR 없이** Claude 멀티모달 비전으로 추출한다(stack.md). (2) 클라이언트가 이미지를 **다운스케일(긴 변 ~1568px, JPEG)** 해 data URL 로 만들고 `extractHighlightFromImage` Server Action 에 넘긴다 — 서버 액션 본문 한도/토큰 비용을 줄이기 위함(원본 업로드 대신). (3) 추출 텍스트는 **사용자가 검토·수정한 뒤** 기존 `captureHighlight`(TEXT)로 저장한다. **사진 원본 영속화(PhotoStorage·Supabase Storage)는 도입하지 않는다** — 현 가치는 "구절 추출"이고, Storage 버킷·RLS·정리 정책은 비용 대비 과해 보류.
+
+**이유**: 비전 추출이 핵심 차별점이고 이미 도입한 Claude 키·어댑터 패턴(ADR-005)을 재사용한다. 다운스케일은 Claude 가 어차피 큰 이미지를 줄여 처리하므로 화질 손실이 거의 없고 페이로드/비용을 크게 줄인다. 추출↔저장을 분리해, 추출 실패·오인식 시에도 사용자가 직접 입력해 저장할 수 있다(견고성).
+
+**트레이드오프**: 사진 원본이 남지 않아 `Highlight` 는 `NoteSource.TEXT` 로 저장된다(도메인의 `fromPhoto`/`photoUrl` 경로는 PhotoStorage 도입 시 활성화 예정). HEIC 등 일부 포맷은 브라우저 `createImageBitmap` 지원에 의존(미지원 시 직접 입력으로 폴백). 추출 품질은 사진 상태에 좌우되며 사용자 검토 단계가 안전망이다.
+
 ---
 
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스), [`specs/`](./specs/) (기능별 상세 설계)

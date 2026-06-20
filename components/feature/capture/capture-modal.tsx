@@ -8,11 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Icon, type IconName } from '@/components/ui/icon';
 import { toast } from '@/components/ui/toast';
-import { captureHighlight } from '@/app/(dashboard)/highlights/actions';
+import { captureHighlight, extractHighlightFromImage } from '@/app/(dashboard)/highlights/actions';
 import { listMyBookOptions, type BookOption } from '@/app/(dashboard)/library/actions';
-
-// TODO(capture): 이미지 선택 후 Claude vision 으로 구절 추출한 결과로 대체
-const SAMPLE_OCR = '아주 천천히 책장을 넘기는 사람만이 어떤 문장이 자신의 것인지 알아본다.';
+import { downscaleImageToDataUrl } from '@/lib/utils/downscale-image';
 
 interface CaptureData {
   bookId: string;
@@ -29,11 +27,14 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [pending, setPending] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [extractedText, setExtractedText] = useState('');
   const [books, setBooks] = useState<BookOption[]>([]);
   const [booksLoading, setBooksLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const mountedRef = useRef(true);
+  const requestSeqRef = useRef(0);
   useEffect(() => {
     // Strict Mode 마운트 재실행에서도 true 로 복구.
     mountedRef.current = true;
@@ -66,7 +67,33 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 
   const selectImage = (file?: File) => {
     if (!file) return;
+    // 추출 요청 버전 — 추출 중 새 파일/취소 시 늦게 끝난 이전 응답이 최신 상태를 덮어쓰지 않게 한다.
+    const seq = (requestSeqRef.current += 1);
     setImageUrl(URL.createObjectURL(file));
+    setExtractedText('');
+    setExtracting(true);
+    // 이미지를 다운스케일해 Vision 추출(ADR-019). 실패해도 직접 입력으로 진행할 수 있게 한다.
+    void (async () => {
+      const current = () => mountedRef.current && requestSeqRef.current === seq;
+      try {
+        const dataUrl = await downscaleImageToDataUrl(file);
+        const result = await extractHighlightFromImage(dataUrl);
+        if (!current()) return;
+        if (result.ok) setExtractedText(result.text);
+        else toast(result.error);
+      } catch {
+        if (current()) toast('이미지를 처리하지 못했어요. 직접 입력해 주세요.');
+      } finally {
+        if (current()) setExtracting(false);
+      }
+    })();
+  };
+
+  const resetImage = () => {
+    requestSeqRef.current += 1; // 진행 중 추출 결과 무효화
+    setImageUrl(null);
+    setExtractedText('');
+    setExtracting(false);
   };
 
   // 검토한 텍스트를 Highlight 로 저장(Server Action → 유스케이스). 사진 업로드는 후속.
@@ -90,19 +117,28 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       isOpen={isOpen}
       onClose={onClose}
       eyebrow="한 줄 담기"
-      title={imageUrl ? '문장 확인' : '문구 촬영 또는 이미지 업로드'}
+      title={
+        imageUrl ? (extracting ? '구절을 읽는 중' : '문장 확인') : '문구 촬영 또는 이미지 업로드'
+      }
       className="w-[min(680px,100%)]"
     >
       {imageUrl ? (
-        <CaptureReview
-          imageUrl={imageUrl}
-          books={books}
-          booksLoading={booksLoading}
-          onRetake={() => setImageUrl(null)}
-          onSave={saveHighlight}
-          onLater={onClose}
-          pending={pending}
-        />
+        extracting ? (
+          <CaptureExtracting imageUrl={imageUrl} onCancel={resetImage} />
+        ) : (
+          // extracting=false 로 전환될 때 새로 마운트되므로 비제어 textarea 의 defaultValue 가
+          // 그 시점의 추출 텍스트로 채워진다(같은 컴포넌트 재사용으로 바꾸면 깨지니 분기 유지).
+          <CaptureReview
+            imageUrl={imageUrl}
+            initialContent={extractedText}
+            books={books}
+            booksLoading={booksLoading}
+            onRetake={resetImage}
+            onSave={saveHighlight}
+            onLater={onClose}
+            pending={pending}
+          />
+        )
       ) : (
         <>
           <div className="mb-4 grid grid-cols-2 gap-3">
@@ -211,8 +247,31 @@ function CapturePath({
   );
 }
 
+/** Vision 추출 중 화면 — 미리보기 + 진행 안내. */
+function CaptureExtracting({ imageUrl, onCancel }: { imageUrl: string; onCancel: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-4 py-6 text-center">
+      <div className="border-divider relative h-40 w-32 overflow-hidden rounded-[12px] border">
+        {/* 업로드한 blob 미리보기 — next/image 부적합이라 img 사용 */}
+        <img src={imageUrl} alt="담은 사진" className="h-full w-full object-cover" />
+        <div className="bg-ink-900/40 absolute inset-0 grid place-content-center">
+          <Icon name="scan-text" size={28} className="animate-pulse text-white" />
+        </div>
+      </div>
+      <div>
+        <div className="text-ink-900 text-[15px] font-semibold">사진에서 구절을 읽고 있어요…</div>
+        <div className="text-fg-2 mt-1 text-[13px]">잠시만 기다려 주세요</div>
+      </div>
+      <Button variant="ghost" onClick={onCancel}>
+        다른 사진 고르기
+      </Button>
+    </div>
+  );
+}
+
 function CaptureReview({
   imageUrl,
+  initialContent,
   books,
   booksLoading,
   onRetake,
@@ -221,6 +280,8 @@ function CaptureReview({
   pending,
 }: {
   imageUrl: string;
+  /** Vision 으로 추출한 구절(없으면 빈 문자열 — 사용자가 직접 입력) */
+  initialContent: string;
   books: BookOption[];
   booksLoading: boolean;
   onRetake: () => void;
@@ -279,11 +340,16 @@ function CaptureReview({
 
         <div className="flex flex-col gap-3.5">
           <label className="block">
-            <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">인식된 문장</span>
+            <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">
+              {initialContent ? '인식된 문장' : '문장 입력'}
+            </span>
             <textarea
               ref={ocrRef}
-              aria-label="인식된 문장"
-              defaultValue={SAMPLE_OCR}
+              aria-label="담을 문장"
+              defaultValue={initialContent}
+              placeholder={
+                initialContent ? undefined : '사진에서 구절을 찾지 못했어요. 직접 입력해 주세요.'
+              }
               rows={3}
               className="bg-bg-elevated text-ink-900 focus:border-leaf-400 border-field-border w-full rounded-[10px] border p-3 font-serif text-[15px] leading-[1.6] outline-none focus:shadow-[0_0_0_2px_var(--accent-ring)]"
             />
