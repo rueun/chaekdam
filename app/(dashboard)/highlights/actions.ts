@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import {
   createAuthSession,
   createCaptureHighlightUseCase,
+  createCaptureHighlightFromPhotoUseCase,
   createDeleteHighlightUseCase,
   createExtractHighlightFromPhotoUseCase,
 } from '@/lib/infrastructure/di-container';
@@ -26,13 +27,15 @@ export interface CaptureHighlightInput {
   bookId: string;
   content: string;
   page?: string | null;
+  /** 사진 원본(다운스케일된 data URL). 있으면 원본을 저장하고 PHOTO 출처로 남긴다(ADR-020). */
+  photoDataUrl?: string | null;
 }
 
 export type CaptureHighlightResult = { ok: true } | { ok: false; error: string };
 
 /**
- * 한 줄 담기 — 얇은 어댑터. 입력을 유스케이스로 넘겨 저장한다.
- * 사진 업로드(PhotoStorage)는 후속이라 현재는 검토한 텍스트(TEXT)로 저장한다.
+ * 한 줄 담기 — 얇은 어댑터. 사진(photoDataUrl)이 있으면 원본을 저장하고 PHOTO 출처로,
+ * 없으면 검토한 텍스트(TEXT)로 저장한다. 비즈니스 로직은 유스케이스에 위임.
  */
 export async function captureHighlight(
   input: CaptureHighlightInput,
@@ -42,13 +45,28 @@ export async function captureHighlight(
     const userId = await (await createAuthSession()).getCurrentUserId();
     if (!userId) return { ok: false, error: '로그인이 필요해요.' };
 
-    const useCase = await createCaptureHighlightUseCase();
-    await useCase.execute({
-      source: NoteSource.TEXT,
-      bookId: input.bookId,
-      content: input.content,
-      page: input.page ?? null,
-    });
+    if (input.photoDataUrl) {
+      const parsed = parseImageDataUrl(input.photoDataUrl);
+      if (!parsed) return { ok: false, error: '이미지를 읽을 수 없어요.' };
+      if (parsed.base64.length > MAX_BASE64_LENGTH) {
+        return { ok: false, error: '이미지가 너무 커요. 더 작은 사진으로 시도해 주세요.' };
+      }
+      const photoUseCase = await createCaptureHighlightFromPhotoUseCase();
+      await photoUseCase.execute({
+        bookId: input.bookId,
+        content: input.content,
+        image: { base64: parsed.base64, mediaType: parsed.mediaType },
+        page: input.page ?? null,
+      });
+    } else {
+      const useCase = await createCaptureHighlightUseCase();
+      await useCase.execute({
+        source: NoteSource.TEXT,
+        bookId: input.bookId,
+        content: input.content,
+        page: input.page ?? null,
+      });
+    }
     revalidatePath(ROUTES.HIGHLIGHTS());
     return { ok: true };
   } catch (error) {

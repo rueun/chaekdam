@@ -3,6 +3,7 @@ import { CaptureHighlightUseCase } from '@/lib/application/capture-highlight.use
 import { ListHighlightsUseCase } from '@/lib/application/list-highlights.use-case';
 import { DeleteHighlightUseCase } from '@/lib/application/delete-highlight.use-case';
 import { ExtractHighlightFromPhotoUseCase } from '@/lib/application/extract-highlight-from-photo.use-case';
+import { CaptureHighlightFromPhotoUseCase } from '@/lib/application/capture-highlight-from-photo.use-case';
 import { AddBookToShelfUseCase } from '@/lib/application/add-book-to-shelf.use-case';
 import { ListBooksUseCase } from '@/lib/application/list-books.use-case';
 import { SetBookStatusUseCase } from '@/lib/application/set-book-status.use-case';
@@ -18,6 +19,7 @@ import { SearchBooksUseCase } from '@/lib/application/search-books.use-case';
 import type { AuthSession } from '@/lib/domain/ports/auth-session';
 import { createSupabaseServerClient } from './supabase/server-client';
 import { SupabaseHighlightRepository } from './supabase/supabase-highlight-repository';
+import { SupabasePhotoStorage } from './supabase/supabase-photo-storage';
 import { SupabaseBookRepository } from './supabase/supabase-book-repository';
 import { SupabaseReadingSessionRepository } from './supabase/supabase-reading-session-repository';
 import { SupabaseUserProfileRepository } from './supabase/supabase-user-profile-repository';
@@ -52,6 +54,14 @@ export async function createDeleteHighlightUseCase(): Promise<DeleteHighlightUse
 export function createExtractHighlightFromPhotoUseCase(): Promise<ExtractHighlightFromPhotoUseCase> {
   return Promise.resolve(
     new ExtractHighlightFromPhotoUseCase(new ClaudeHighlightExtractor(anthropicApiKey())),
+  );
+}
+
+export async function createCaptureHighlightFromPhotoUseCase(): Promise<CaptureHighlightFromPhotoUseCase> {
+  const client = await createSupabaseServerClient();
+  return new CaptureHighlightFromPhotoUseCase(
+    new SupabasePhotoStorage(client),
+    new SupabaseHighlightRepository(client),
   );
 }
 

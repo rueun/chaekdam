@@ -197,6 +197,14 @@
 
 **트레이드오프**: 사진 원본이 남지 않아 `Highlight` 는 `NoteSource.TEXT` 로 저장된다(도메인의 `fromPhoto`/`photoUrl` 경로는 PhotoStorage 도입 시 활성화 예정). HEIC 등 일부 포맷은 브라우저 `createImageBitmap` 지원에 의존(미지원 시 직접 입력으로 폴백). 추출 품질은 사진 상태에 좌우되며 사용자 검토 단계가 안전망이다.
 
+### ADR-020: 사진 원본 저장 — Supabase Storage(public 버킷) + PHOTO 출처 Highlight
+
+**결정**: ADR-019 의 "사진 원본 미저장(TEXT 로 저장)"을 뒤집어, 사진으로 담은 한 줄은 **원본 사진을 저장하고 `NoteSource.PHOTO`** 로 남긴다. (1) `PhotoStorage` Port + `SupabasePhotoStorage` 어댑터(Supabase Storage). (2) `highlight-photos` **public 버킷** — 객체 경로 `{userId}/{uuid}.{ext}`, 쓰기/수정/삭제는 Storage RLS 로 본인 폴더에만 제한, 읽기는 공개 URL(추측 불가한 uuid 경로). 기존 책 표지 공개 URL(ADR-016 갱신)과 동일한 정책이라 읽기 경로가 단순(서명 URL 불필요). (3) `CaptureHighlightFromPhotoUseCase` 가 업로드(PhotoStorage)→저장(HighlightRepository)을 한 흐름으로 조율, `captureHighlight` Server Action 이 `photoDataUrl` 유무로 PHOTO/TEXT 분기. (4) 저장하는 이미지는 Vision 추출에 쓴 **다운스케일본(~1568px JPEG)** 을 재사용 — 두 번째 업로드를 피하고 용량/비용을 bound. (5) 한 줄 카드에 사진 썸네일 표시.
+
+**이유**: "사진으로 담은 기록"의 맥락(어떤 책장·지면이었는지)을 남기는 것이 저널링 가치를 높인다. 도메인(`Highlight.fromPhoto`/`photoUrl`)·테이블(`photo_url`+`photo_requires_url` 제약)은 이미 PHOTO 를 지원하고 있어, 빠진 Storage 어댑터만 채우면 됐다. public 버킷은 서명 URL 의 만료·매 조회 서명 비용을 피하면서 기존 공개 표지 URL 패턴과 일관된다.
+
+**트레이드오프**: public 버킷은 URL 이 유출되면 누구나 접근 가능(경로가 추측 불가한 uuid 라 위험은 낮음). 더 강한 비공개가 필요하면 private 버킷 + 서명 URL 로 전환(어댑터·읽기 매퍼만 수정). 원본이 아니라 다운스케일본을 저장하므로 초고해상도 원본은 보존되지 않는다(MVP 의 용량·비용 절충). 업로드 실패 시 한 줄도 저장되지 않는다(원자적).
+
 ---
 
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스), [`specs/`](./specs/) (기능별 상세 설계)

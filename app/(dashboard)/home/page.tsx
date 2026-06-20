@@ -92,6 +92,7 @@ export default async function HomePage() {
       book: book?.title,
       page: h.page ?? undefined,
       dateLabel: formatDateLabel(h.createdAt),
+      photoUrl: h.photoUrl ?? undefined,
     };
   });
 

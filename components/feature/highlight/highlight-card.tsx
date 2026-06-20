@@ -24,6 +24,8 @@ export interface HighlightView {
   page?: string;
   /** 책 메타가 없을 때 보조 메타로 쓰는 날짜 라벨(예: '6월 7일') */
   dateLabel?: string;
+  /** 사진 출처(PHOTO)면 원본 사진 URL — 썸네일로 표시(ADR-020) */
+  photoUrl?: string;
 }
 
 /** emphasis 가 있으면 content 의 해당 부분을 <mark> 로 감싼다 (없거나 공백뿐이면 원문). */
@@ -95,6 +97,16 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
 
   return (
     <article className="quote-card">
+      {highlight.photoUrl && /^https?:\/\//.test(highlight.photoUrl) ? (
+        // 공개 버킷 URL(ADR-020) — next/image 설정 불필요해 img 사용. http(s) 만 허용, 실패 시 숨김.
+        <img
+          src={highlight.photoUrl}
+          alt="담은 한 줄의 원본 사진"
+          loading="lazy"
+          className="border-divider mb-3 max-h-44 w-full rounded-[10px] border object-cover"
+          onError={(e) => (e.currentTarget.style.display = 'none')}
+        />
+      ) : null}
       <div className="q-text">{markEmphasis(highlight.content, highlight.emphasis)}</div>
       <div className="q-meta">
         <div>

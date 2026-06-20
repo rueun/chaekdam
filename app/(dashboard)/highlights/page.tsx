@@ -45,6 +45,7 @@ export default async function HighlightsPage() {
       book: book?.title,
       page: h.page ?? undefined,
       dateLabel: formatDateLabel(h.createdAt),
+      photoUrl: h.photoUrl ?? undefined,
     };
   });
 

@@ -29,6 +29,8 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   const [pending, setPending] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [extractedText, setExtractedText] = useState('');
+  // 다운스케일된 사진(저장 시 원본으로 업로드 → PHOTO 출처, ADR-020)
+  const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [books, setBooks] = useState<BookOption[]>([]);
   const [booksLoading, setBooksLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -71,12 +73,15 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     const seq = (requestSeqRef.current += 1);
     setImageUrl(URL.createObjectURL(file));
     setExtractedText('');
+    setPhotoDataUrl(null);
     setExtracting(true);
-    // 이미지를 다운스케일해 Vision 추출(ADR-019). 실패해도 직접 입력으로 진행할 수 있게 한다.
+    // 이미지를 다운스케일해 (1) 저장용 원본으로 보관, (2) Vision 추출(ADR-019).
+    // 추출 실패해도 직접 입력 + 사진 저장으로 진행할 수 있게 한다.
     void (async () => {
       const current = () => mountedRef.current && requestSeqRef.current === seq;
       try {
         const dataUrl = await downscaleImageToDataUrl(file);
+        if (current()) setPhotoDataUrl(dataUrl);
         const result = await extractHighlightFromImage(dataUrl);
         if (!current()) return;
         if (result.ok) setExtractedText(result.text);
@@ -93,14 +98,15 @@ function CaptureModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     requestSeqRef.current += 1; // 진행 중 추출 결과 무효화
     setImageUrl(null);
     setExtractedText('');
+    setPhotoDataUrl(null);
     setExtracting(false);
   };
 
-  // 검토한 텍스트를 Highlight 로 저장(Server Action → 유스케이스). 사진 업로드는 후속.
+  // 검토한 텍스트 + 사진(있으면)을 Highlight 로 저장(Server Action → 유스케이스).
   const saveHighlight = (data: CaptureData) => {
     void (async () => {
       setPending(true);
-      const result = await captureHighlight(data);
+      const result = await captureHighlight({ ...data, photoDataUrl });
       if (!mountedRef.current) return; // 저장 중 모달이 닫혔으면 setState 생략
       setPending(false);
       if (result.ok) {
