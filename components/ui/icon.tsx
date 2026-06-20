@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Coffee,
   Copy,
+  Download,
   Feather,
   FolderInput,
   HelpCircle,
@@ -33,6 +34,7 @@ import {
   Search,
   SearchX,
   Settings,
+  Share2,
   Sparkles,
   Square,
   Trash2,
@@ -88,6 +90,8 @@ const ICON_MAP = {
   'upload-cloud': UploadCloud,
   'refresh-cw': RefreshCw,
   'user-round': UserRound,
+  download: Download,
+  'share-2': Share2,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICON_MAP;

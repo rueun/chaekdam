@@ -9,6 +9,7 @@ export interface QuoteMenuHandlers {
   onEdit?: () => void;
   onPin?: () => void;
   onCopy?: () => void;
+  onShare?: () => void;
   onMove?: () => void;
   onArchive?: () => void;
   onDelete?: () => void;
@@ -103,6 +104,9 @@ function QuoteMenu({
         </MenuRow>
         <MenuRow icon="copy" kbd="⌘C" onClick={run(handlers.onCopy)}>
           텍스트 복사
+        </MenuRow>
+        <MenuRow icon="share-2" onClick={run(handlers.onShare)}>
+          이미지로 공유
         </MenuRow>
         <Separator />
         <MenuRow icon="folder-input" onClick={run(handlers.onMove)}>

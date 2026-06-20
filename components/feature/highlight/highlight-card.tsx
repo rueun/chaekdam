@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/icon';
 import { openQuoteMenu } from '@/components/ui/quote-menu';
 import { openConfirm } from '@/components/ui/confirm-dialog';
 import { toast } from '@/components/ui/toast';
+import { openHighlightShare } from '@/components/feature/share/highlight-share-card';
 import { deleteHighlight } from '@/app/(dashboard)/highlights/actions';
 
 export interface HighlightView {
@@ -64,6 +65,12 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
           .then(() => toast('문장을 복사했어요'))
           .catch(() => toast('복사에 실패했어요'));
       },
+      onShare: () =>
+        openHighlightShare({
+          content: highlight.content,
+          author: highlight.author,
+          book: highlight.book,
+        }),
       onMove: () => toast('다른 책으로 이동은 곧 제공돼요'),
       onArchive: () => toast('보관함에 넣었어요'),
       onDelete: () => {
