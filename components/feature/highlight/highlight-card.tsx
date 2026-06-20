@@ -1,7 +1,9 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ROUTES } from '@/lib/router/routes';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { openQuoteMenu } from '@/components/ui/quote-menu';
@@ -36,6 +38,8 @@ export interface HighlightView {
   pinned?: boolean;
   /** 보관 여부 — 메뉴 라벨(ADR-021) */
   archived?: boolean;
+  /** 자유 입력 태그(ADR-023) — 칩으로 표시·필터 링크 */
+  tags?: string[];
 }
 
 /** emphasis 가 있으면 content 의 해당 부분을 <mark> 로 감싼다 (없거나 공백뿐이면 원문). */
@@ -72,7 +76,12 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
       archived: highlight.archived,
       onEdit: () =>
         openHighlightEdit(
-          { id: highlight.id, content: highlight.content, page: highlight.page },
+          {
+            id: highlight.id,
+            content: highlight.content,
+            page: highlight.page,
+            tags: highlight.tags,
+          },
           () => router.refresh(),
         ),
       onPin: () => {
@@ -149,6 +158,19 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
         />
       ) : null}
       <div className="q-text">{markEmphasis(highlight.content, highlight.emphasis)}</div>
+      {highlight.tags && highlight.tags.length > 0 ? (
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {highlight.tags.map((tag) => (
+            <Link
+              key={tag}
+              href={`${ROUTES.HIGHLIGHTS()}?tag=${encodeURIComponent(tag)}`}
+              className="bg-surface text-fg-2 hover:bg-paper-100 hover:text-ink-800 rounded-full px-2 py-0.5 text-[11px] transition-colors"
+            >
+              #{tag}
+            </Link>
+          ))}
+        </div>
+      ) : null}
       <div className="q-meta">
         <div>
           {highlight.author ? <b>{highlight.author}</b> : null}

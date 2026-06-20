@@ -31,6 +31,7 @@ export class SupabaseHighlightRepository implements HighlightRepository {
         page: highlight.page,
         pinned: highlight.pinned,
         archived: highlight.archived,
+        tags: [...highlight.tags],
       },
       { onConflict: 'id' }, // 충돌 기준을 PK 로 명시(PostgREST 기본값 의존 제거)
     );
@@ -104,6 +105,7 @@ function toDomain(row: HighlightRow): Highlight {
     createdAt: new Date(row.created_at),
     pinned: row.pinned,
     archived: row.archived,
+    tags: row.tags,
   });
 }
 

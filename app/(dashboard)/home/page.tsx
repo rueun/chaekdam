@@ -95,6 +95,7 @@ export default async function HomePage() {
       photoUrl: h.photoUrl ?? undefined,
       pinned: h.pinned,
       archived: h.archived,
+      tags: [...h.tags],
     };
   });
 

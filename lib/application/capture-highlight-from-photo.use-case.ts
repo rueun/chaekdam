@@ -8,6 +8,7 @@ export interface CaptureHighlightFromPhotoCommand {
   content: string;
   image: { base64: string; mediaType: string };
   page?: string | null;
+  tags?: readonly string[];
 }
 
 /**
@@ -29,6 +30,7 @@ export class CaptureHighlightFromPhotoUseCase {
         photoUrl,
         command.content,
         command.page ?? null,
+        command.tags ?? [],
       );
       await this.highlights.save(highlight);
     } catch (error) {

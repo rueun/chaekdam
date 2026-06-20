@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Icon } from '@/components/ui/icon';
 import { toast } from '@/components/ui/toast';
 import { editHighlight } from '@/app/(dashboard)/highlights/actions';
+import { parseTags } from '@/lib/utils/parse-tags';
 
 interface EditTarget {
   id: string;
   content: string;
   page?: string;
+  tags?: string[];
 }
 
 /** 한 줄 수정 모달을 띄운다. 저장 성공 시 onSaved 를 호출한다(목록 갱신 등). */
@@ -35,6 +37,7 @@ function HighlightEditModal({
 }) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const pageRef = useRef<HTMLInputElement>(null);
+  const tagsRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
   const mountedRef = useRef(true);
 
@@ -57,6 +60,7 @@ function HighlightEditModal({
         highlightId: target.id,
         content,
         page: page.length > 0 ? page : null,
+        tags: parseTags(tagsRef.current?.value ?? ''),
       });
       if (!mountedRef.current) return;
       setPending(false);
@@ -89,16 +93,27 @@ function HighlightEditModal({
             className="bg-bg-elevated text-ink-900 focus:border-leaf-400 border-field-border w-full rounded-[10px] border p-3 font-serif text-[15px] leading-[1.6] outline-none focus:shadow-[0_0_0_2px_var(--accent-ring)]"
           />
         </label>
-        <label className="block max-w-[160px]">
-          <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">페이지</span>
-          <Input
-            ref={pageRef}
-            defaultValue={target.page ?? ''}
-            placeholder="예: 42"
-            inputMode="numeric"
-            aria-label="페이지"
-          />
-        </label>
+        <div className="grid grid-cols-[160px_1fr] gap-3 max-[400px]:grid-cols-1">
+          <label className="block">
+            <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">페이지</span>
+            <Input
+              ref={pageRef}
+              defaultValue={target.page ?? ''}
+              placeholder="예: 42"
+              inputMode="numeric"
+              aria-label="페이지"
+            />
+          </label>
+          <label className="block">
+            <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">태그</span>
+            <Input
+              ref={tagsRef}
+              defaultValue={(target.tags ?? []).join(', ')}
+              placeholder="쉼표로 구분 (예: 위로, 성장)"
+              aria-label="태그"
+            />
+          </label>
+        </div>
       </div>
 
       <div className="mt-5 flex items-center justify-end gap-2">

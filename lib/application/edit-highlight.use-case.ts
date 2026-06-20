@@ -6,6 +6,7 @@ export interface EditHighlightCommand {
   highlightId: string;
   content: string;
   page?: string | null;
+  tags?: readonly string[];
 }
 
 /**
@@ -19,7 +20,7 @@ export class EditHighlightUseCase {
     const highlight = await this.highlights.findById(command.highlightId);
     if (!highlight) throw new HighlightNotFoundError(command.highlightId);
     await this.highlights.save(
-      highlight.edit({ content: command.content, page: command.page ?? null }),
+      highlight.edit({ content: command.content, page: command.page ?? null, tags: command.tags }),
     );
   }
 }

@@ -7,13 +7,20 @@ import type { HighlightRepository } from '@/lib/domain/ports/highlight-repositor
  * 사진은 이미 업로드되어 URL 이 확보된 상태로 들어온다(업로드는 진입점/Infra 책임).
  */
 export type CaptureHighlightCommand =
-  | { source: typeof NoteSource.TEXT; bookId: string; content: string; page?: string | null }
+  | {
+      source: typeof NoteSource.TEXT;
+      bookId: string;
+      content: string;
+      page?: string | null;
+      tags?: readonly string[];
+    }
   | {
       source: typeof NoteSource.PHOTO;
       bookId: string;
       content: string;
       photoUrl: string;
       page?: string | null;
+      tags?: readonly string[];
     };
 
 export interface CaptureHighlightResult {
@@ -29,10 +36,11 @@ export class CaptureHighlightUseCase {
 
   async execute(command: CaptureHighlightCommand): Promise<CaptureHighlightResult> {
     const page = command.page ?? null;
+    const tags = command.tags ?? [];
     const highlight =
       command.source === NoteSource.PHOTO
-        ? Highlight.fromPhoto(command.bookId, command.photoUrl, command.content, page)
-        : Highlight.fromText(command.bookId, command.content, page);
+        ? Highlight.fromPhoto(command.bookId, command.photoUrl, command.content, page, tags)
+        : Highlight.fromText(command.bookId, command.content, page, tags);
 
     await this.highlights.save(highlight);
     return { highlightId: highlight.id };

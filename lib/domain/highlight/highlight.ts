@@ -9,6 +9,10 @@ import { NoteSource } from './note-source';
 
 /** 한 줄 본문 최대 길이 */
 export const HIGHLIGHT_CONTENT_MAX_LENGTH = 5000;
+/** 한 줄당 태그 최대 개수 */
+export const HIGHLIGHT_MAX_TAGS = 10;
+/** 태그 1개 최대 길이 */
+export const HIGHLIGHT_TAG_MAX_LENGTH = 30;
 
 /**
  * 한 줄(Highlight) — 캡처한 인상 깊은 구절. 저널링의 핵심 단위(ADR-010).
@@ -30,23 +34,31 @@ export class Highlight {
     readonly pinned: boolean,
     /** 보관 여부 — 기본 목록에서 숨기고 보관함에서만 보인다(ADR-021) */
     readonly archived: boolean,
+    /** 자유 입력 태그(ADR-023) — 정규화·동결됨 */
+    readonly tags: readonly string[],
   ) {
+    Object.freeze(this.tags);
     Object.freeze(this);
   }
 
   /** 직접 입력한 텍스트로 한 줄을 만든다. */
-  static fromText(bookId: string, content: string, page: string | null = null): Highlight {
-    const normalized = normalizeContent(content);
+  static fromText(
+    bookId: string,
+    content: string,
+    page: string | null = null,
+    tags: readonly string[] = [],
+  ): Highlight {
     return new Highlight(
       generateId(),
       bookId,
       NoteSource.TEXT,
-      normalized,
+      normalizeContent(content),
       null,
       page,
       new Date(),
       false,
       false,
+      normalizeTags(tags),
     );
   }
 
@@ -56,20 +68,21 @@ export class Highlight {
     photoUrl: string,
     extractedText: string,
     page: string | null = null,
+    tags: readonly string[] = [],
   ): Highlight {
     const url = photoUrl.trim();
     if (!url) throw new MissingPhotoUrlError();
-    const normalized = normalizeContent(extractedText);
     return new Highlight(
       generateId(),
       bookId,
       NoteSource.PHOTO,
-      normalized,
+      normalizeContent(extractedText),
       url,
       page,
       new Date(),
       false,
       false,
+      normalizeTags(tags),
     );
   }
 
@@ -88,6 +101,7 @@ export class Highlight {
     createdAt: Date;
     pinned?: boolean;
     archived?: boolean;
+    tags?: readonly string[];
   }): Highlight {
     if (props.source === NoteSource.PHOTO && !props.photoUrl) {
       throw new MissingPhotoUrlError();
@@ -102,14 +116,16 @@ export class Highlight {
       props.createdAt,
       props.pinned ?? false,
       props.archived ?? false,
+      // 멱등 정규화 — 저장 당시 규칙과 달라졌거나 마이그레이션으로 오염된 행도 항상 유효하게.
+      normalizeTags(props.tags ?? []),
     );
   }
 
   /**
-   * 본문·페이지를 수정한 새 한 줄을 반환한다(원본 불변).
+   * 본문·페이지·태그를 수정한 새 한 줄을 반환한다(원본 불변).
    * 본문은 재정규화·재검증한다. 출처·사진·식별자·생성시각·고정/보관 상태는 유지한다.
    */
-  edit(props: { content: string; page?: string | null }): Highlight {
+  edit(props: { content: string; page?: string | null; tags?: readonly string[] }): Highlight {
     return new Highlight(
       this.id,
       this.bookId,
@@ -121,6 +137,8 @@ export class Highlight {
       this.createdAt,
       this.pinned,
       this.archived,
+      // undefined = 태그 유지, 배열 = 교체.
+      props.tags === undefined ? this.tags : normalizeTags(props.tags),
     );
   }
 
@@ -156,7 +174,7 @@ export class Highlight {
     return this.source === NoteSource.PHOTO;
   }
 
-  /** 본문·페이지를 제외한 메타(책·고정·보관)만 바꾼 새 한 줄을 만든다(내부 전용). */
+  /** 본문·페이지·태그를 제외한 메타(책·고정·보관)만 바꾼 새 한 줄을 만든다(내부 전용). */
   private copyWith(changes: { bookId?: string; pinned?: boolean; archived?: boolean }): Highlight {
     return new Highlight(
       this.id,
@@ -168,6 +186,7 @@ export class Highlight {
       this.createdAt,
       changes.pinned ?? this.pinned,
       changes.archived ?? this.archived,
+      this.tags,
     );
   }
 }
@@ -184,4 +203,23 @@ function normalizeContent(raw: string): string {
     throw new HighlightContentTooLongError(HIGHLIGHT_CONTENT_MAX_LENGTH);
   }
   return trimmed;
+}
+
+/**
+ * 태그 정규화 — 공백 제거·빈/과길이 제거·대소문자 무시 중복 제거·개수 상한.
+ * 자유 입력이라 예외 대신 정규화로 흡수한다(원본 표기는 유지, 중복 판정만 소문자 기준).
+ */
+function normalizeTags(raw: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const tag of raw) {
+    const trimmed = tag.trim();
+    if (!trimmed || trimmed.length > HIGHLIGHT_TAG_MAX_LENGTH) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(trimmed);
+    if (result.length >= HIGHLIGHT_MAX_TAGS) break;
+  }
+  return result;
 }

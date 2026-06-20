@@ -218,4 +218,40 @@ describe('Highlight', () => {
       expect(archived.unarchive().archived).toBe(false);
     });
   });
+
+  describe('tags', () => {
+    it('기본 태그는 빈 배열이다', () => {
+      expect(Highlight.fromText('b1', '문장').tags).toEqual([]);
+    });
+
+    it('태그를 정규화한다 — 공백 제거·빈 제거·대소문자 무시 중복 제거', () => {
+      const h = Highlight.fromText('b1', '문장', null, [' 위로 ', '위로', '', '성장']);
+      expect(h.tags).toEqual(['위로', '성장']);
+    });
+
+    it('태그 개수를 상한(10)으로 제한한다', () => {
+      const many = Array.from({ length: 15 }, (_, i) => `태그${i}`);
+      expect(Highlight.fromText('b1', '문장', null, many).tags).toHaveLength(10);
+    });
+
+    it('30자를 넘는 태그는 버린다', () => {
+      const tooLong = 'ㄱ'.repeat(31);
+      expect(Highlight.fromText('b1', '문장', null, [tooLong, '짧은']).tags).toEqual(['짧은']);
+    });
+
+    it('모두 공백/빈 문자열이면 빈 배열이다', () => {
+      expect(Highlight.fromText('b1', '문장', null, ['', '   ']).tags).toEqual([]);
+    });
+
+    it('edit 으로 태그를 교체한다(undefined 면 유지)', () => {
+      const h = Highlight.fromText('b1', '문장', null, ['위로']);
+      expect(h.edit({ content: '문장', tags: ['성장'] }).tags).toEqual(['성장']);
+      expect(h.edit({ content: '문장' }).tags).toEqual(['위로']); // 유지
+    });
+
+    it('태그 배열은 동결되어 변경할 수 없다', () => {
+      const h = Highlight.fromText('b1', '문장', null, ['위로']);
+      expect(Object.isFrozen(h.tags)).toBe(true);
+    });
+  });
 });

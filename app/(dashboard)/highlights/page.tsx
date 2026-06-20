@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { TopBar } from '@/components/layout/top-bar';
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
@@ -26,22 +27,31 @@ function formatDateLabel(date: Date): string {
 export default async function HighlightsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ archived?: string }>;
+  searchParams: Promise<{ archived?: string; tag?: string }>;
 }) {
   // 진입점 인가 게이트(미들웨어·RLS 외 1차 방어). 미인증이면 로그인으로.
   const userId = await (await createAuthSession()).getCurrentUserId();
   if (!userId) redirect(ROUTES.AUTH.LOGIN());
 
-  const scope = (await searchParams).archived === '1' ? 'archived' : 'active';
+  const params = await searchParams;
+  const scope = params.archived === '1' ? 'archived' : 'active';
+  // 비교는 소문자 기준으로 통일(태그 원본 표기는 보존, 일치만 대소문자 무시).
+  const tagFilter = params.tag?.trim() ?? '';
+  const tagFilterKey = tagFilter.toLowerCase();
 
   const [listHighlights, listBooks] = await Promise.all([
     createListHighlightsUseCase(),
     createListBooksUseCase(),
   ]);
-  const [highlights, books] = await Promise.all([
+  const [allHighlights, books] = await Promise.all([
     listHighlights.execute(scope),
     listBooks.execute(),
   ]);
+
+  // 태그 필터 — 대소문자 무시. 목록 상한(200) 내에서 메모리 필터(본격 검색은 후속).
+  const highlights = tagFilter
+    ? allHighlights.filter((h) => h.tags.some((t) => t.toLowerCase() === tagFilterKey))
+    : allHighlights;
 
   // 한 줄을 책 메타(제목·저자)로 보강 — book_id 로 조회(여러 도메인 조합은 화면에서, ADR-006).
   const bookById = new Map(books.map((b) => [b.id, b]));
@@ -58,6 +68,7 @@ export default async function HighlightsPage({
       photoUrl: h.photoUrl ?? undefined,
       pinned: h.pinned,
       archived: h.archived,
+      tags: [...h.tags],
     };
   });
 
@@ -78,6 +89,17 @@ export default async function HighlightsPage({
       <div className="mb-5">
         <HighlightsFilter scope={scope} />
       </div>
+
+      {tagFilter ? (
+        <div className="text-fg-2 mb-4 flex items-center gap-2 text-[13px]">
+          <span>
+            <b className="text-ink-900 font-semibold">#{tagFilter}</b> 태그로 보는 중
+          </span>
+          <Link href={ROUTES.HIGHLIGHTS()} className="text-accent font-semibold hover:underline">
+            필터 해제
+          </Link>
+        </div>
+      ) : null}
 
       {views.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 max-[860px]:grid-cols-1">

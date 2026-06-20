@@ -11,11 +11,13 @@ import { toast } from '@/components/ui/toast';
 import { captureHighlight, extractHighlightFromImage } from '@/app/(dashboard)/highlights/actions';
 import { listMyBookOptions, type BookOption } from '@/app/(dashboard)/library/actions';
 import { downscaleImageToDataUrl } from '@/lib/utils/downscale-image';
+import { parseTags } from '@/lib/utils/parse-tags';
 
 interface CaptureData {
   bookId: string;
   content: string;
   page: string | null;
+  tags: string[];
 }
 
 /** 한 줄 담기 모달을 띄운다. */
@@ -297,6 +299,7 @@ function CaptureReview({
 }) {
   const ocrRef = useRef<HTMLTextAreaElement>(null);
   const pageRef = useRef<HTMLInputElement>(null);
+  const tagsRef = useRef<HTMLInputElement>(null);
   const [bookId, setBookId] = useState('');
   const noBooks = !booksLoading && books.length === 0;
 
@@ -318,7 +321,12 @@ function CaptureReview({
       return;
     }
     const trimmedPage = pageRef.current?.value.trim() ?? '';
-    onSave({ bookId, content, page: trimmedPage.length > 0 ? trimmedPage : null });
+    onSave({
+      bookId,
+      content,
+      page: trimmedPage.length > 0 ? trimmedPage : null,
+      tags: parseTags(tagsRef.current?.value ?? ''),
+    });
   };
 
   return (
@@ -388,8 +396,7 @@ function CaptureReview({
             </label>
             <label className="block">
               <span className="text-fg-3 mb-1.5 block text-[12px] font-semibold">태그</span>
-              {/* TODO(highlight): 태그 도메인 도입 후 활성화 — 현재 미저장이라 비활성 */}
-              <Input placeholder="곧 제공돼요" aria-label="태그" disabled />
+              <Input ref={tagsRef} placeholder="쉼표로 구분 (예: 위로, 성장)" aria-label="태그" />
             </label>
           </div>
         </div>

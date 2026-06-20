@@ -123,6 +123,7 @@ export type Database = {
           photo_url: string | null
           pinned: boolean
           source: Database["public"]["Enums"]["note_source"]
+          tags: string[]
           user_id: string
         }
         Insert: {
@@ -135,6 +136,7 @@ export type Database = {
           photo_url?: string | null
           pinned?: boolean
           source: Database["public"]["Enums"]["note_source"]
+          tags?: string[]
           user_id?: string
         }
         Update: {
@@ -147,6 +149,7 @@ export type Database = {
           photo_url?: string | null
           pinned?: boolean
           source?: Database["public"]["Enums"]["note_source"]
+          tags?: string[]
           user_id?: string
         }
         Relationships: [

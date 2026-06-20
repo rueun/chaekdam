@@ -33,6 +33,8 @@ export interface CaptureHighlightInput {
   page?: string | null;
   /** 사진 원본(다운스케일된 data URL). 있으면 원본을 저장하고 PHOTO 출처로 남긴다(ADR-020). */
   photoDataUrl?: string | null;
+  /** 자유 입력 태그(ADR-023) */
+  tags?: string[];
 }
 
 export type CaptureHighlightResult = { ok: true } | { ok: false; error: string };
@@ -61,6 +63,7 @@ export async function captureHighlight(
         content: input.content,
         image: { base64: parsed.base64, mediaType: parsed.mediaType },
         page: input.page ?? null,
+        tags: input.tags ?? [],
       });
     } else {
       const useCase = await createCaptureHighlightUseCase();
@@ -69,6 +72,7 @@ export async function captureHighlight(
         bookId: input.bookId,
         content: input.content,
         page: input.page ?? null,
+        tags: input.tags ?? [],
       });
     }
     revalidatePath(ROUTES.HIGHLIGHTS());
@@ -89,6 +93,7 @@ export async function editHighlight(input: {
   highlightId: string;
   content: string;
   page?: string | null;
+  tags?: string[];
 }): Promise<EditHighlightResult> {
   try {
     const userId = await (await createAuthSession()).getCurrentUserId();
@@ -102,6 +107,7 @@ export async function editHighlight(input: {
       highlightId: input.highlightId,
       content: trimmed,
       page: input.page ?? null,
+      tags: input.tags,
     });
     revalidatePath(ROUTES.HIGHLIGHTS());
     revalidatePath(ROUTES.DASHBOARD());
