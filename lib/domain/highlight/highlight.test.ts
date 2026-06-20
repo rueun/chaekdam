@@ -188,4 +188,34 @@ describe('Highlight', () => {
       expect(() => original.moveTo('  ')).toThrow(EmptyBookIdError);
     });
   });
+
+  describe('pin · archive', () => {
+    it('기본 상태는 고정·보관 모두 false 다', () => {
+      const highlight = Highlight.fromText('b1', '문장');
+      expect(highlight.pinned).toBe(false);
+      expect(highlight.archived).toBe(false);
+    });
+
+    it('pin/unpin 은 원본을 보존한 새 한 줄을 반환한다', () => {
+      const original = Highlight.fromText('b1', '문장');
+      const pinned = original.pin();
+      expect(pinned).not.toBe(original);
+      expect(pinned.pinned).toBe(true);
+      expect(original.pinned).toBe(false); // 원본 불변
+      expect(pinned.unpin().pinned).toBe(false);
+    });
+
+    it('archive 는 보관하면서 고정을 함께 해제한다(불변식)', () => {
+      const pinned = Highlight.fromText('b1', '문장').pin();
+      const archived = pinned.archive();
+      expect(archived.archived).toBe(true);
+      expect(archived.pinned).toBe(false); // 보관 시 고정 해제
+      expect(pinned.archived).toBe(false); // 원본 불변
+    });
+
+    it('unarchive 는 보관을 해제한다', () => {
+      const archived = Highlight.fromText('b1', '문장').archive();
+      expect(archived.unarchive().archived).toBe(false);
+    });
+  });
 });

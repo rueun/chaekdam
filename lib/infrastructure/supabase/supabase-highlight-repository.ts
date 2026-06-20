@@ -29,6 +29,8 @@ export class SupabaseHighlightRepository implements HighlightRepository {
         content: highlight.content,
         photo_url: highlight.photoUrl,
         page: highlight.page,
+        pinned: highlight.pinned,
+        archived: highlight.archived,
       },
       { onConflict: 'id' }, // 충돌 기준을 PK 로 명시(PostgREST 기본값 의존 제거)
     );
@@ -58,14 +60,28 @@ export class SupabaseHighlightRepository implements HighlightRepository {
   }
 
   async findAll(): Promise<Highlight[]> {
-    // RLS 가 본인 행으로 한정한다 — 별도 user_id 필터 불필요.
-    // 방어적 상한(무한정 스캔 방지). 본격 페이지네이션은 후속 — Port 시그니처에 옵션 추가 예정.
+    // RLS 가 본인 행으로 한정. 보관 제외 + 고정 우선, 그 안에서 최신순(ADR-021).
+    // 방어적 상한(무한정 스캔 방지). 본격 페이지네이션은 후속.
     const { data, error } = await this.client
       .from('highlights')
       .select('*')
+      .eq('archived', false)
+      .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(HIGHLIGHTS_LIST_LIMIT);
     if (error) throw new Error(`Failed to list highlights: ${error.message}`);
+    return (data ?? []).map(toDomain);
+  }
+
+  async findArchived(): Promise<Highlight[]> {
+    // 보관함 — archived = true 만 최신순.
+    const { data, error } = await this.client
+      .from('highlights')
+      .select('*')
+      .eq('archived', true)
+      .order('created_at', { ascending: false })
+      .limit(HIGHLIGHTS_LIST_LIMIT);
+    if (error) throw new Error(`Failed to list archived highlights: ${error.message}`);
     return (data ?? []).map(toDomain);
   }
 
@@ -86,6 +102,8 @@ function toDomain(row: HighlightRow): Highlight {
     photoUrl: row.photo_url,
     page: row.page,
     createdAt: new Date(row.created_at),
+    pinned: row.pinned,
+    archived: row.archived,
   });
 }
 

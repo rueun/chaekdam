@@ -93,6 +93,8 @@ export default async function HomePage() {
       page: h.page ?? undefined,
       dateLabel: formatDateLabel(h.createdAt),
       photoUrl: h.photoUrl ?? undefined,
+      pinned: h.pinned,
+      archived: h.archived,
     };
   });
 

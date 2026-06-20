@@ -20,7 +20,10 @@ class InMemoryHighlightRepository implements HighlightRepository {
     return Promise.resolve(this.saved.filter((h) => h.bookId === bookId));
   }
   findAll(): Promise<Highlight[]> {
-    return Promise.resolve([...this.saved]);
+    return Promise.resolve(this.saved.filter((h) => !h.archived));
+  }
+  findArchived(): Promise<Highlight[]> {
+    return Promise.resolve(this.saved.filter((h) => h.archived));
   }
   remove(id: string): Promise<void> {
     const index = this.saved.findIndex((h) => h.id === id);

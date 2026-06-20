@@ -10,7 +10,11 @@ import { toast } from '@/components/ui/toast';
 import { openHighlightShare } from '@/components/feature/share/highlight-share-card';
 import { openHighlightEdit } from '@/components/feature/highlight/highlight-edit-modal';
 import { openHighlightMove } from '@/components/feature/highlight/highlight-move-modal';
-import { deleteHighlight } from '@/app/(dashboard)/highlights/actions';
+import {
+  deleteHighlight,
+  pinHighlight,
+  archiveHighlight,
+} from '@/app/(dashboard)/highlights/actions';
 
 export interface HighlightView {
   id: string;
@@ -28,6 +32,10 @@ export interface HighlightView {
   dateLabel?: string;
   /** 사진 출처(PHOTO)면 원본 사진 URL — 썸네일로 표시(ADR-020) */
   photoUrl?: string;
+  /** 고정 여부 — 핀 배지 + 메뉴 라벨(ADR-021) */
+  pinned?: boolean;
+  /** 보관 여부 — 메뉴 라벨(ADR-021) */
+  archived?: boolean;
 }
 
 /** emphasis 가 있으면 content 의 해당 부분을 <mark> 로 감싼다 (없거나 공백뿐이면 원문). */
@@ -60,13 +68,24 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
 
   const openMenu = (anchor: HTMLElement) => {
     openQuoteMenu(anchor, {
-      // TODO(highlight): 고정·이동·보관 액션을 Highlight 유스케이스로 교체(수정은 구현됨)
+      pinned: highlight.pinned,
+      archived: highlight.archived,
       onEdit: () =>
         openHighlightEdit(
           { id: highlight.id, content: highlight.content, page: highlight.page },
           () => router.refresh(),
         ),
-      onPin: () => toast('홈에 고정했어요'),
+      onPin: () => {
+        void (async () => {
+          const result = await pinHighlight(highlight.id, !highlight.pinned);
+          if (result.ok) {
+            toast(highlight.pinned ? '고정을 해제했어요' : '홈에 고정했어요');
+            router.refresh();
+          } else {
+            toast(result.error);
+          }
+        })();
+      },
       onCopy: () => {
         navigator.clipboard
           ?.writeText(highlight.content)
@@ -80,7 +99,17 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
           book: highlight.book,
         }),
       onMove: () => openHighlightMove(highlight.id, () => router.refresh()),
-      onArchive: () => toast('보관함에 넣었어요'),
+      onArchive: () => {
+        void (async () => {
+          const result = await archiveHighlight(highlight.id, !highlight.archived);
+          if (result.ok) {
+            toast(highlight.archived ? '보관을 해제했어요' : '보관함에 넣었어요');
+            router.refresh();
+          } else {
+            toast(result.error);
+          }
+        })();
+      },
       onDelete: () => {
         void (async () => {
           const confirmed = await openConfirm({
@@ -103,6 +132,12 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
 
   return (
     <article className="quote-card">
+      {highlight.pinned ? (
+        <div className="text-accent mb-2 inline-flex items-center gap-1 text-[11px] font-semibold tracking-[0.02em]">
+          <Icon name="pin" size={12} />
+          고정됨
+        </div>
+      ) : null}
       {highlight.photoUrl && /^https?:\/\//.test(highlight.photoUrl) ? (
         // 공개 버킷 URL(ADR-020) — next/image 설정 불필요해 img 사용. http(s) 만 허용, 실패 시 숨김.
         <img

@@ -1,6 +1,7 @@
 /**
- * 브라우저에서 이미지를 다운스케일해 JPEG data URL 로 변환한다.
- * Vision 전송 전 호출 — 페이로드/토큰 비용을 줄이고 서버 액션 본문 한도를 넘지 않게 한다.
+ * 브라우저에서 이미지를 다운스케일해 **항상 `image/jpeg` data URL** 로 변환한다.
+ * (입력 포맷과 무관하게 JPEG — 서버의 parseImageDataUrl 이 mediaType 을 image/jpeg 로 받는다.)
+ * Vision 전송·원본 저장 전 호출 — 페이로드/토큰 비용을 줄이고 서버 액션 본문 한도를 넘지 않게 한다.
  * (Claude 는 어차피 긴 변을 ~1568px 로 줄여 처리하므로 화질 손실이 거의 없다.)
  */
 export async function downscaleImageToDataUrl(

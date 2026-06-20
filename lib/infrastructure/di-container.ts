@@ -4,6 +4,8 @@ import { ListHighlightsUseCase } from '@/lib/application/list-highlights.use-cas
 import { DeleteHighlightUseCase } from '@/lib/application/delete-highlight.use-case';
 import { EditHighlightUseCase } from '@/lib/application/edit-highlight.use-case';
 import { MoveHighlightUseCase } from '@/lib/application/move-highlight.use-case';
+import { PinHighlightUseCase } from '@/lib/application/pin-highlight.use-case';
+import { ArchiveHighlightUseCase } from '@/lib/application/archive-highlight.use-case';
 import { ExtractHighlightFromPhotoUseCase } from '@/lib/application/extract-highlight-from-photo.use-case';
 import { CaptureHighlightFromPhotoUseCase } from '@/lib/application/capture-highlight-from-photo.use-case';
 import { AddBookToShelfUseCase } from '@/lib/application/add-book-to-shelf.use-case';
@@ -60,6 +62,16 @@ export async function createEditHighlightUseCase(): Promise<EditHighlightUseCase
 export async function createMoveHighlightUseCase(): Promise<MoveHighlightUseCase> {
   const client = await createSupabaseServerClient();
   return new MoveHighlightUseCase(new SupabaseHighlightRepository(client));
+}
+
+export async function createPinHighlightUseCase(): Promise<PinHighlightUseCase> {
+  const client = await createSupabaseServerClient();
+  return new PinHighlightUseCase(new SupabaseHighlightRepository(client));
+}
+
+export async function createArchiveHighlightUseCase(): Promise<ArchiveHighlightUseCase> {
+  const client = await createSupabaseServerClient();
+  return new ArchiveHighlightUseCase(new SupabaseHighlightRepository(client));
 }
 
 // Vision 추출은 Supabase 클라이언트가 필요 없어 동기 조립(호출 일관성을 위해 Promise 반환).

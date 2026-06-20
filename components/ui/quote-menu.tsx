@@ -13,6 +13,10 @@ export interface QuoteMenuHandlers {
   onMove?: () => void;
   onArchive?: () => void;
   onDelete?: () => void;
+  /** 현재 고정 여부 — 라벨을 '홈에 고정'/'고정 해제' 로 전환 */
+  pinned?: boolean;
+  /** 현재 보관 여부 — 라벨을 '보관함에 넣기'/'보관 해제' 로 전환 */
+  archived?: boolean;
 }
 
 const MENU_WIDTH = 240;
@@ -100,7 +104,7 @@ function QuoteMenu({
           문장 수정
         </MenuRow>
         <MenuRow icon="pin" onClick={run(handlers.onPin)}>
-          홈에 고정
+          {handlers.pinned ? '고정 해제' : '홈에 고정'}
         </MenuRow>
         <MenuRow icon="copy" kbd="⌘C" onClick={run(handlers.onCopy)}>
           텍스트 복사
@@ -113,7 +117,7 @@ function QuoteMenu({
           다른 책으로 이동
         </MenuRow>
         <MenuRow icon="archive" onClick={run(handlers.onArchive)}>
-          보관함에 넣기
+          {handlers.archived ? '보관 해제' : '보관함에 넣기'}
         </MenuRow>
         <Separator />
         <MenuRow icon="trash-2" danger onClick={run(handlers.onDelete)}>

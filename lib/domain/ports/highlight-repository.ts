@@ -12,8 +12,10 @@ export interface HighlightRepository {
   findById(id: string): Promise<Highlight | null>;
   /** 특정 책의 한 줄 목록을 최신순으로 조회한다. */
   findByBookId(bookId: string): Promise<Highlight[]>;
-  /** 한 줄 전체 목록을 최신순으로 조회한다(소유 범위는 Adapter/RLS 가 보장). */
+  /** 보관하지 않은 한 줄 목록(고정 우선, 그 안에서 최신순). 소유 범위는 Adapter/RLS 가 보장. */
   findAll(): Promise<Highlight[]>;
+  /** 보관한 한 줄 목록을 최신순으로 조회한다(보관함). */
+  findArchived(): Promise<Highlight[]>;
   /** 한 줄을 삭제한다(소유 범위는 Adapter/RLS 가 보장). */
   remove(id: string): Promise<void>;
 }

@@ -8,6 +8,8 @@ import {
   createDeleteHighlightUseCase,
   createEditHighlightUseCase,
   createMoveHighlightUseCase,
+  createPinHighlightUseCase,
+  createArchiveHighlightUseCase,
   createExtractHighlightFromPhotoUseCase,
 } from '@/lib/infrastructure/di-container';
 import { NoteSource } from '@/lib/domain/highlight/note-source';
@@ -134,6 +136,50 @@ export async function moveHighlight(input: {
       ok: false,
       error: error instanceof DomainError ? '옮길 책을 확인해 주세요.' : '이동에 실패했어요.',
     };
+  }
+}
+
+export type PinHighlightResult = { ok: true } | { ok: false; error: string };
+
+/** 한 줄 고정/해제 — 얇은 어댑터(인가 게이트 → 유스케이스). */
+export async function pinHighlight(
+  highlightId: string,
+  pinned: boolean,
+): Promise<PinHighlightResult> {
+  try {
+    const userId = await (await createAuthSession()).getCurrentUserId();
+    if (!userId) return { ok: false, error: '로그인이 필요해요.' };
+
+    const useCase = await createPinHighlightUseCase();
+    await useCase.execute({ highlightId, pinned });
+    revalidatePath(ROUTES.HIGHLIGHTS());
+    revalidatePath(ROUTES.DASHBOARD());
+    return { ok: true };
+  } catch (error) {
+    console.error('Failed to pin highlight', error);
+    return { ok: false, error: '잠시 후 다시 시도해 주세요.' };
+  }
+}
+
+export type ArchiveHighlightResult = { ok: true } | { ok: false; error: string };
+
+/** 한 줄 보관/해제 — 얇은 어댑터(인가 게이트 → 유스케이스). */
+export async function archiveHighlight(
+  highlightId: string,
+  archived: boolean,
+): Promise<ArchiveHighlightResult> {
+  try {
+    const userId = await (await createAuthSession()).getCurrentUserId();
+    if (!userId) return { ok: false, error: '로그인이 필요해요.' };
+
+    const useCase = await createArchiveHighlightUseCase();
+    await useCase.execute({ highlightId, archived });
+    revalidatePath(ROUTES.HIGHLIGHTS());
+    revalidatePath(ROUTES.DASHBOARD());
+    return { ok: true };
+  } catch (error) {
+    console.error('Failed to archive highlight', error);
+    return { ok: false, error: '잠시 후 다시 시도해 주세요.' };
   }
 }
 

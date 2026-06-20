@@ -67,6 +67,7 @@ describe('CaptureHighlightFromPhotoUseCase', () => {
       findById: () => Promise.resolve(null),
       findByBookId: () => Promise.resolve([] as Highlight[]),
       findAll: () => Promise.resolve([] as Highlight[]),
+      findArchived: () => Promise.resolve([] as Highlight[]),
       remove: () => Promise.resolve(),
     };
     const useCase = new CaptureHighlightFromPhotoUseCase(photos, failingRepo);

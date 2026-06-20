@@ -26,6 +26,10 @@ export class Highlight {
     readonly photoUrl: string | null,
     readonly page: string | null,
     readonly createdAt: Date,
+    /** 홈/목록 상단 고정 여부(ADR-021) */
+    readonly pinned: boolean,
+    /** 보관 여부 — 기본 목록에서 숨기고 보관함에서만 보인다(ADR-021) */
+    readonly archived: boolean,
   ) {
     Object.freeze(this);
   }
@@ -33,7 +37,17 @@ export class Highlight {
   /** 직접 입력한 텍스트로 한 줄을 만든다. */
   static fromText(bookId: string, content: string, page: string | null = null): Highlight {
     const normalized = normalizeContent(content);
-    return new Highlight(generateId(), bookId, NoteSource.TEXT, normalized, null, page, new Date());
+    return new Highlight(
+      generateId(),
+      bookId,
+      NoteSource.TEXT,
+      normalized,
+      null,
+      page,
+      new Date(),
+      false,
+      false,
+    );
   }
 
   /** 사진에서 추출한 구절로 한 줄을 만든다. */
@@ -46,7 +60,17 @@ export class Highlight {
     const url = photoUrl.trim();
     if (!url) throw new MissingPhotoUrlError();
     const normalized = normalizeContent(extractedText);
-    return new Highlight(generateId(), bookId, NoteSource.PHOTO, normalized, url, page, new Date());
+    return new Highlight(
+      generateId(),
+      bookId,
+      NoteSource.PHOTO,
+      normalized,
+      url,
+      page,
+      new Date(),
+      false,
+      false,
+    );
   }
 
   /**
@@ -62,6 +86,8 @@ export class Highlight {
     photoUrl: string | null;
     page: string | null;
     createdAt: Date;
+    pinned?: boolean;
+    archived?: boolean;
   }): Highlight {
     if (props.source === NoteSource.PHOTO && !props.photoUrl) {
       throw new MissingPhotoUrlError();
@@ -74,12 +100,14 @@ export class Highlight {
       props.photoUrl,
       props.page,
       props.createdAt,
+      props.pinned ?? false,
+      props.archived ?? false,
     );
   }
 
   /**
    * 본문·페이지를 수정한 새 한 줄을 반환한다(원본 불변).
-   * 본문은 재정규화·재검증한다. 출처·사진·식별자·생성시각은 유지한다.
+   * 본문은 재정규화·재검증한다. 출처·사진·식별자·생성시각·고정/보관 상태는 유지한다.
    */
   edit(props: { content: string; page?: string | null }): Highlight {
     return new Highlight(
@@ -91,27 +119,56 @@ export class Highlight {
       // undefined = 페이지 유지, null = 명시적으로 지움.
       props.page === undefined ? this.page : props.page,
       this.createdAt,
+      this.pinned,
+      this.archived,
     );
   }
 
-  /** 다른 책으로 옮긴 새 한 줄을 반환한다(원본 불변). 본문·출처·사진·식별자·생성시각 유지. */
+  /** 다른 책으로 옮긴 새 한 줄을 반환한다(원본 불변). */
   moveTo(bookId: string): Highlight {
     const target = bookId.trim();
     if (!target) throw new EmptyBookIdError();
-    return new Highlight(
-      this.id,
-      target,
-      this.source,
-      this.content,
-      this.photoUrl,
-      this.page,
-      this.createdAt,
-    );
+    return this.copyWith({ bookId: target });
+  }
+
+  /** 고정한 새 한 줄을 반환한다(원본 불변). */
+  pin(): Highlight {
+    return this.copyWith({ pinned: true });
+  }
+
+  /** 고정을 해제한 새 한 줄을 반환한다(원본 불변). */
+  unpin(): Highlight {
+    return this.copyWith({ pinned: false });
+  }
+
+  /** 보관한 새 한 줄을 반환한다(원본 불변). 보관 시 고정은 해제한다. */
+  archive(): Highlight {
+    return this.copyWith({ archived: true, pinned: false });
+  }
+
+  /** 보관을 해제한 새 한 줄을 반환한다(원본 불변). */
+  unarchive(): Highlight {
+    return this.copyWith({ archived: false });
   }
 
   /** 사진 출처 여부 */
   isFromPhoto(): boolean {
     return this.source === NoteSource.PHOTO;
+  }
+
+  /** 본문·페이지를 제외한 메타(책·고정·보관)만 바꾼 새 한 줄을 만든다(내부 전용). */
+  private copyWith(changes: { bookId?: string; pinned?: boolean; archived?: boolean }): Highlight {
+    return new Highlight(
+      this.id,
+      changes.bookId ?? this.bookId,
+      this.source,
+      this.content,
+      this.photoUrl,
+      this.page,
+      this.createdAt,
+      changes.pinned ?? this.pinned,
+      changes.archived ?? this.archived,
+    );
   }
 }
 

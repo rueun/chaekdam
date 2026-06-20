@@ -114,32 +114,38 @@ export type Database = {
       }
       highlights: {
         Row: {
+          archived: boolean
           book_id: string
           content: string
           created_at: string
           id: string
           page: string | null
           photo_url: string | null
+          pinned: boolean
           source: Database["public"]["Enums"]["note_source"]
           user_id: string
         }
         Insert: {
+          archived?: boolean
           book_id: string
           content: string
           created_at?: string
           id?: string
           page?: string | null
           photo_url?: string | null
+          pinned?: boolean
           source: Database["public"]["Enums"]["note_source"]
           user_id?: string
         }
         Update: {
+          archived?: boolean
           book_id?: string
           content?: string
           created_at?: string
           id?: string
           page?: string | null
           photo_url?: string | null
+          pinned?: boolean
           source?: Database["public"]["Enums"]["note_source"]
           user_id?: string
         }

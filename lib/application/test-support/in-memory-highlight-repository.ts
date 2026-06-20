@@ -21,7 +21,13 @@ export class InMemoryHighlightRepository implements HighlightRepository {
   }
 
   findAll(): Promise<Highlight[]> {
-    return Promise.resolve(this.sortedByRecent());
+    // 보관 제외 + 고정 우선, 그 안에서 최신순(어댑터 findAll 정렬과 일치).
+    const active = this.sortedByRecent().filter((h) => !h.archived);
+    return Promise.resolve(active.sort((a, b) => Number(b.pinned) - Number(a.pinned)));
+  }
+
+  findArchived(): Promise<Highlight[]> {
+    return Promise.resolve(this.sortedByRecent().filter((h) => h.archived));
   }
 
   remove(id: string): Promise<void> {

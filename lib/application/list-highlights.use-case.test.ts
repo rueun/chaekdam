@@ -1,36 +1,41 @@
 import { describe, it, expect } from 'vitest';
 import { ListHighlightsUseCase } from './list-highlights.use-case';
+import { InMemoryHighlightRepository } from './test-support/in-memory-highlight-repository';
 import { Highlight } from '@/lib/domain/highlight/highlight';
-import type { HighlightRepository } from '@/lib/domain/ports/highlight-repository';
 
-class InMemoryHighlightRepository implements HighlightRepository {
-  constructor(private readonly items: Highlight[] = []) {}
-  save(): Promise<void> {
-    return Promise.resolve();
-  }
-  findById(id: string): Promise<Highlight | null> {
-    return Promise.resolve(this.items.find((h) => h.id === id) ?? null);
-  }
-  findByBookId(bookId: string): Promise<Highlight[]> {
-    return Promise.resolve(this.items.filter((h) => h.bookId === bookId));
-  }
-  findAll(): Promise<Highlight[]> {
-    return Promise.resolve([...this.items]);
-  }
-  remove(): Promise<void> {
-    return Promise.resolve();
-  }
+async function repoWith(...highlights: Highlight[]): Promise<InMemoryHighlightRepository> {
+  const repo = new InMemoryHighlightRepository();
+  for (const highlight of highlights) await repo.save(highlight);
+  return repo;
 }
 
 describe('ListHighlightsUseCase', () => {
-  it('담은 한 줄 전체를 돌려준다', async () => {
-    const repo = new InMemoryHighlightRepository([
+  it('기본(active) 범위는 보관하지 않은 한 줄을 돌려준다', async () => {
+    const repo = await repoWith(
       Highlight.fromText('b1', '문장 1'),
-      Highlight.fromText('b2', '문장 2'),
-    ]);
+      Highlight.fromText('b2', '문장 2').archive(),
+    );
     const result = await new ListHighlightsUseCase(repo).execute();
-    expect(result).toHaveLength(2);
-    expect(result.map((h) => h.content)).toEqual(['문장 1', '문장 2']);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.content).toBe('문장 1');
+  });
+
+  it('고정한 한 줄을 목록 상단에 둔다', async () => {
+    const first = Highlight.fromText('b1', '먼저');
+    const second = Highlight.fromText('b1', '나중').pin();
+    const repo = await repoWith(first, second);
+    const result = await new ListHighlightsUseCase(repo).execute();
+    expect(result[0]!.content).toBe('나중'); // 고정 우선
+  });
+
+  it("'archived' 범위는 보관한 한 줄만 돌려준다", async () => {
+    const repo = await repoWith(
+      Highlight.fromText('b1', '문장 1'),
+      Highlight.fromText('b2', '보관됨').archive(),
+    );
+    const result = await new ListHighlightsUseCase(repo).execute('archived');
+    expect(result).toHaveLength(1);
+    expect(result[0]!.content).toBe('보관됨');
   });
 
   it('담은 한 줄이 없으면 빈 목록을 돌려준다', async () => {
