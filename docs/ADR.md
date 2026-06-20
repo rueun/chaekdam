@@ -229,6 +229,14 @@
 
 **트레이드오프**: 자유 입력이라 표기 흔들림(동의어·오타)이 생긴다 — 추천/자동완성은 후속. 필터가 메모리 기반이라 200개 상한에 묶인다(GIN 인덱스는 추후 서버 쿼리 필터 도입 시 활용). 책 단위 태그(book-detail 의 `tags`)는 여전히 미구현(한 줄 태그와 별개).
 
+### ADR-024: PWA 매니페스트 — 설치형 앱 기본 셋업(SVG 아이콘 플레이스홀더)
+
+**결정**: 모바일 PWA 우선 방향(PRD)에 맞춰 PWA 기본 셋업을 둔다. (1) `app/manifest.ts`(Next Metadata 라우트)로 `/manifest.webmanifest` 생성 — name·short_name·standalone·start_url·색(theme=`--terra-500`, bg=`--paper-50`). (2) 브랜드 **SVG 아이콘**(`public/icon.svg` 매니페스트용 + `app/icon.svg` 파비콘) — 폰트 비의존 '밑줄 그은 한 줄' 모티프. (3) `layout` 에 `viewport.themeColor` + `appleWebApp` 메타. 서비스 워커(오프라인)는 도입하지 않는다.
+
+**이유**: 매니페스트+아이콘+테마색만으로 "홈 화면에 추가" 설치 경험의 기본을 확보한다. 색·아이콘을 디자인 토큰과 일치시켜 브랜드 일관성 유지. 오프라인 캐싱(SW)은 데이터가 사용자별·실시간(Supabase/Claude)이라 가치 대비 복잡도가 커 보류.
+
+**트레이드오프**: 아이콘이 SVG 플레이스홀더라 일부 플랫폼(특히 iOS 홈 화면 아이콘)은 래스터 PNG(192/512, maskable)를 요구해 완전한 설치 품질엔 PNG 에셋이 필요(후속). 서비스 워커가 없어 오프라인 동작·설치 프롬프트(beforeinstallprompt) 신뢰성은 제한적 — 정식 PWA(오프라인·푸시)는 후속 결정.
+
 ---
 
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스), [`specs/`](./specs/) (기능별 상세 설계)
