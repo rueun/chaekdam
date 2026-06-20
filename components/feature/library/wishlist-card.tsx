@@ -42,7 +42,19 @@ export function WishlistCard({
       </div>
 
       {isEmpty ? (
-        <p className="text-body-sm text-fg-2 py-2">아직 담아둔 책이 없어요.</p>
+        <div className="flex flex-col items-center gap-2 py-6 text-center">
+          <span
+            className="bg-surface text-fg-3 grid size-11 place-content-center rounded-full"
+            aria-hidden
+          >
+            <Icon name="bookmark" size={20} />
+          </span>
+          <p className="text-body-sm text-fg-2 leading-[1.6]">
+            아직 담아둔 책이 없어요.
+            <br />
+            다음에 읽고 싶은 책을 담아보세요.
+          </p>
+        </div>
       ) : (
         items.map((item) => (
           <div className="rec-row wish-row" key={item.id}>
