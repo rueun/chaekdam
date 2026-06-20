@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Discussion } from './discussion';
 import { Message } from './message';
+import type { PersonaKey } from '@/lib/domain/persona/persona';
 import { PersonaNotAvailableError } from '@/lib/domain/shared/errors';
 
 describe('Discussion', () => {
@@ -19,8 +20,13 @@ describe('Discussion', () => {
       expect(d.seedHighlightId).toBe('h1');
     });
 
-    it('가용하지 않은 페르소나(작가 본인)는 거부한다', () => {
-      expect(() => Discussion.start({ bookId: 'b1', personaKey: 'author' })).toThrow(
+    it('작가 본인 페르소나로도 방을 연다(사망 작가 제약은 StartDiscussion 이 검증, ADR-022)', () => {
+      const d = Discussion.start({ bookId: 'b1', personaKey: 'author' });
+      expect(d.personaKey).toBe('author');
+    });
+
+    it('정의되지 않은 페르소나는 거부한다', () => {
+      expect(() => Discussion.start({ bookId: 'b1', personaKey: 'ghost' as PersonaKey })).toThrow(
         PersonaNotAvailableError,
       );
     });

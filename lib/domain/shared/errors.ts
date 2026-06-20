@@ -101,6 +101,13 @@ export class PersonaNotAvailableError extends DomainError {
   }
 }
 
+/** '작가 본인' 페르소나를 생존(또는 미등록) 작가의 책에 쓰려 함(ADR-022) */
+export class AuthorPersonaUnavailableError extends DomainError {
+  constructor(author: string) {
+    super(`Author persona requires a deceased author: ${author}`);
+  }
+}
+
 /** 토론을 찾을 수 없음 */
 export class DiscussionNotFoundError extends DomainError {
   constructor(discussionId: string) {

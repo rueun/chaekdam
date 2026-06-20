@@ -1,6 +1,6 @@
 import { Discussion } from '@/lib/domain/discussion/discussion';
 import { Persona, type PersonaKey } from '@/lib/domain/persona/persona';
-import { BookNotFoundError } from '@/lib/domain/shared/errors';
+import { AuthorPersonaUnavailableError, BookNotFoundError } from '@/lib/domain/shared/errors';
 import type { DiscussionRepository } from '@/lib/domain/ports/discussion-repository';
 import type { AiDiscussionPartner } from '@/lib/domain/ports/ai-discussion-partner';
 import type { BookRepository } from '@/lib/domain/ports/book-repository';
@@ -33,6 +33,11 @@ export class StartDiscussionUseCase {
       command.seedHighlightId ? this.highlights.findById(command.seedHighlightId) : null,
     ]);
     if (!book) throw new BookNotFoundError(command.bookId);
+
+    // '작가 본인' 페르소나는 사망 작가의 책에만 허용한다(ADR-022). UI 비활성과 무관하게 재검증한다.
+    if (!Persona.of(command.personaKey).canDiscussBookBy(book.author)) {
+      throw new AuthorPersonaUnavailableError(book.author);
+    }
 
     // 시드 한 줄: 지정됐고 실제로 존재할 때만 사용(삭제됐으면 시드 없이 진행 — FK 안전).
     const seedHighlightId = seedHighlight?.id ?? null;

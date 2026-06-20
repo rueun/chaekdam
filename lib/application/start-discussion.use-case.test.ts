@@ -6,7 +6,7 @@ import { InMemoryHighlightRepository } from './test-support/in-memory-highlight-
 import { FakeAiDiscussionPartner } from './test-support/fake-ai-discussion-partner';
 import { Book } from '@/lib/domain/book/book';
 import { Highlight } from '@/lib/domain/highlight/highlight';
-import { BookNotFoundError, PersonaNotAvailableError } from '@/lib/domain/shared/errors';
+import { AuthorPersonaUnavailableError, BookNotFoundError } from '@/lib/domain/shared/errors';
 
 function makeUseCase() {
   const discussions = new InMemoryDiscussionRepository();
@@ -68,13 +68,23 @@ describe('StartDiscussionUseCase', () => {
     );
   });
 
-  it('가용하지 않은 페르소나(작가 본인)는 거부한다', async () => {
+  it("'작가 본인' 페르소나는 사망 작가 책에서 시작할 수 있다", async () => {
     const { useCase, books } = makeUseCase();
-    const book = Book.register({ title: '데미안' });
+    const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
+    await books.save(book);
+
+    const room = await useCase.execute({ bookId: book.id, personaKey: 'author' });
+    expect(room.personaKey).toBe('author');
+    expect(room.messageCount).toBe(1);
+  });
+
+  it("'작가 본인' 페르소나를 생존 작가 책에 쓰면 거부한다(ADR-022)", async () => {
+    const { useCase, books } = makeUseCase();
+    const book = Book.register({ title: '일곱 해의 마지막', author: '김연수' });
     await books.save(book);
 
     await expect(useCase.execute({ bookId: book.id, personaKey: 'author' })).rejects.toThrow(
-      PersonaNotAvailableError,
+      AuthorPersonaUnavailableError,
     );
   });
 

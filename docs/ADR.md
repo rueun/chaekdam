@@ -213,6 +213,14 @@
 
 **트레이드오프**: `pinned`·`archived` 컬럼 추가로 마이그레이션 + Supabase 타입 재생성(`pnpm supabase:types`)이 필요하다(이 커밋은 `types.gen.ts` 를 수동 반영 — 적용 후 재생성으로 정합). 고정은 전역 1단계(섹션/순서 커스터마이즈 없음), 보관함은 별도 페이지가 아니라 같은 목록의 필터다(규모가 커지면 전용 화면 검토). 권한은 RLS(update 본인) + 유스케이스의 findById(RLS 범위)로 보호.
 
+### ADR-022: '작가 본인' 페르소나 활성화 — 사망 작가 판정(큐레이션 목록)
+
+**결정**: ADR-015 에서 보류했던 **작가 본인 페르소나를 활성화**한다. (1) `Persona.AVAILABLE` 에 `author` 추가 — 선택 가능 목록에 포함. (2) 책별 제약은 도메인 서비스 `Author.isDeceased(name)` 로 판정하고, `StartDiscussionUseCase` 가 `persona.requiresDeceasedAuthor && !Author.isDeceased(book.author)` 면 `AuthorPersonaUnavailableError` 로 거부한다. (3) `Author` 는 시스템 큐레이션 사망 작가 목록(공백 제거 부분 일치)으로 MVP 판정 — 페르소나처럼 코드 상수. (4) UI(new-chat-modal·book-detail)는 이미 `onlyDeceased`/`authorDeceased` 로 비활성·안내가 구현돼 있어, 두 진입 페이지에서 `authorDeceased`를 `Author.isDeceased` 로 채우기만 했다.
+
+**이유**: 사망 작가의 목소리로 작품을 듣는 경험은 책담의 차별 기능인데, "생존 작가 사칭" 우려로 보류돼 있었다. 사망 작가로 한정하면 그 우려가 해소된다. 판정 데이터는 외부 인물 DB(Wikidata 등)가 이상적이나 연동 비용이 커, MVP 는 잘 알려진 사망 작가 큐레이션 목록으로 시작한다. UI 가 이미 대비돼 있어 도메인 판정만 채우면 됐다.
+
+**트레이드오프**: 큐레이션 목록이라 미등록 사망 작가는 생존으로 오판(작가 본인 페르소나 비활성)된다 — 목록 확장 또는 외부 데이터 소스로 개선 가능. 이름 부분 일치라 동명이인·번역 표기 차이로 오판 여지가 있다(정밀 판정은 후속). 저작권(사후 70년) 만료와 '사망'은 다르나, 페르소나 활성 기준은 '사망'으로 둔다(목소리 재현의 윤리 기준).
+
 ---
 
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스), [`specs/`](./specs/) (기능별 상세 설계)

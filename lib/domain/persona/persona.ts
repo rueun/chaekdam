@@ -4,6 +4,8 @@
  *
  * `tone` 은 어댑터가 시스템 프롬프트에 끼워 넣는 페르소나별 지침이다(책 메타·공통 지침은 어댑터 책임).
  */
+import { Author } from '@/lib/domain/author/author';
+
 export type PersonaKey = 'socrates' | 'critic' | 'author' | 'friend';
 
 export class Persona {
@@ -45,10 +47,14 @@ export class Persona {
     ),
   };
 
-  /** MVP 가용 페르소나 — 작가 본인은 보류(ADR-015). 런타임에서도 변경 불가하도록 동결. */
+  /**
+   * 가용 페르소나(표시 순서). 작가 본인은 '사망 작가' 책에 한해 쓸 수 있고(ADR-022),
+   * 책별 제약은 StartDiscussion 이 Author 로 검증한다(여기선 선택 가능 목록만). 동결.
+   */
   private static readonly AVAILABLE: readonly PersonaKey[] = Object.freeze([
     'socrates',
     'critic',
+    'author',
     'friend',
   ]);
 
@@ -65,5 +71,13 @@ export class Persona {
   /** 토론 생성에 사용할 수 있는 페르소나인지. */
   static isAvailable(key: PersonaKey): boolean {
     return Persona.AVAILABLE.includes(key);
+  }
+
+  /**
+   * 이 페르소나로 해당 작가의 책을 토론할 수 있는지(정보 전문가).
+   * 작가 본인 페르소나는 사망 작가에 한해 허용한다(ADR-022).
+   */
+  canDiscussBookBy(authorName: string): boolean {
+    return !this.requiresDeceasedAuthor || Author.isDeceased(authorName);
   }
 }

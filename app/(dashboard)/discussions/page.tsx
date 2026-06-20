@@ -11,6 +11,7 @@ import {
   createListDiscussionsUseCase,
 } from '@/lib/infrastructure/di-container';
 import { BookStatus } from '@/lib/domain/book/book-status';
+import { Author } from '@/lib/domain/author/author';
 import { ROUTES } from '@/lib/router/routes';
 
 export const dynamic = 'force-dynamic';
@@ -40,8 +41,8 @@ function toNewChatBook(book: {
     author: book.author,
     statusLabel: book.status === BookStatus.READING ? '읽는 중' : '완독',
     coverColor: book.coverColor ?? DEFAULT_COVER,
-    // 작가 사망 메타 파이프라인 부재(ADR-015) — 작가 본인 페르소나는 항상 비활성.
-    authorDeceased: false,
+    // 사망 작가만 '작가 본인' 페르소나 활성(ADR-022, 큐레이션 판정).
+    authorDeceased: Author.isDeceased(book.author),
   };
 }
 

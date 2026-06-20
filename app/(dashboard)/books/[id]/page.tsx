@@ -10,6 +10,7 @@ import type { HighlightView } from '@/components/feature/highlight/highlight-car
 import { toBookStatusKey } from '@/components/feature/library/book-status-map';
 import { createAuthSession, createGetBookDetailUseCase } from '@/lib/infrastructure/di-container';
 import type { BookDetailResult } from '@/lib/application/get-book-detail.use-case';
+import { Author } from '@/lib/domain/author/author';
 import { ROUTES } from '@/lib/router/routes';
 
 export const dynamic = 'force-dynamic';
@@ -69,8 +70,8 @@ function toBookDetailView(detail: BookDetailResult): BookDetailView {
     quotesCount: highlights.length,
     sessions: sessions.length,
     tags: [],
-    // 작가 사망 메타 파이프라인 부재(ADR-015) — 작가 본인 페르소나는 항상 비활성.
-    authorDeceased: false,
+    // 사망 작가만 '작가 본인' 페르소나 활성(ADR-022, 큐레이션 판정).
+    authorDeceased: Author.isDeceased(book.author),
     highlights: highlightViews,
     rooms,
     recentSessions,

@@ -9,9 +9,9 @@ describe('Persona', () => {
     expect(socrates.tone).toBeTruthy();
   });
 
-  it('MVP 가용 페르소나는 작가 본인을 제외한 3종이다', () => {
-    expect(Persona.availableKeys()).toEqual(['socrates', 'critic', 'friend']);
-    expect(Persona.isAvailable('author')).toBe(false);
+  it('가용 페르소나는 4종이다(작가 본인은 책별 제약을 StartDiscussion 이 검증, ADR-022)', () => {
+    expect(Persona.availableKeys()).toEqual(['socrates', 'critic', 'author', 'friend']);
+    expect(Persona.isAvailable('author')).toBe(true);
     expect(Persona.isAvailable('socrates')).toBe(true);
   });
 
@@ -27,8 +27,8 @@ describe('Persona', () => {
   it('availableKeys 결과를 외부에서 변경할 수 없다', () => {
     expect(() => {
       // readonly 를 캐스트로 우회해도 동결된 배열이라 런타임에서 막힌다.
-      (Persona.availableKeys() as PersonaKey[]).push('author');
+      (Persona.availableKeys() as PersonaKey[]).push('socrates');
     }).toThrow(TypeError);
-    expect(Persona.availableKeys()).toEqual(['socrates', 'critic', 'friend']);
+    expect(Persona.availableKeys()).toEqual(['socrates', 'critic', 'author', 'friend']);
   });
 });
