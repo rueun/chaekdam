@@ -48,8 +48,8 @@ export default async function HomePage() {
   ]);
   const [books, highlights, readingLog] = await Promise.all([
     listBooks.execute(),
-    listHighlights.execute(),
-    getReadingLog.execute(new Date()), // 진입점이 '오늘' 시각을 주입
+    listHighlights.execute(currentUser.id),
+    getReadingLog.execute(currentUser.id, new Date()), // 진입점이 사용자·'오늘' 시각을 주입
   ]);
 
   // 신규 사용자(책·한 줄 0) — 온보딩 가이드 노출. 첫 행동 후 데이터가 생기면 자연 소멸(ADR-026).

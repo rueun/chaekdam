@@ -13,8 +13,8 @@ describe('MoveHighlightUseCase', () => {
     const useCase = new MoveHighlightUseCase(highlights);
     await useCase.execute({ highlightId: original.id, userId: 'owner', bookId: 'book-b' });
 
-    expect(await highlights.findByBookId('book-a')).toHaveLength(0);
-    const moved = (await highlights.findByBookId('book-b'))[0]!;
+    expect(await highlights.findByBookId('owner', 'book-a')).toHaveLength(0);
+    const moved = (await highlights.findByBookId('owner', 'book-b'))[0]!;
     expect(moved.id).toBe(original.id);
     expect(moved.content).toBe('문장');
   });
@@ -45,6 +45,6 @@ describe('MoveHighlightUseCase', () => {
     await expect(
       useCase.execute({ highlightId: original.id, userId: 'intruder', bookId: 'book-b' }),
     ).rejects.toThrow(HighlightAccessDeniedError);
-    expect(await highlights.findByBookId('book-a')).toHaveLength(1); // 옮겨지지 않음
+    expect(await highlights.findByBookId('owner', 'book-a')).toHaveLength(1); // 옮겨지지 않음
   });
 });

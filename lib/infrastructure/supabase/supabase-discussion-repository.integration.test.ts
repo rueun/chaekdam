@@ -125,7 +125,7 @@ describe('SupabaseDiscussionRepository (통합)', () => {
     }).addAiMessage('B 의 방');
     await repoB.save(theirs);
 
-    const allB = await repoB.findAll();
+    const allB = await repoB.findAll(userBId);
     expect(allB.some((d) => d.id === theirs.id)).toBe(true);
     expect(allB.some((d) => d.id === mine.id)).toBe(false);
     // B 가 A 의 방을 직접 조회해도 RLS 로 막힌다

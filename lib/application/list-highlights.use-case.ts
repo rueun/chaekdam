@@ -6,14 +6,18 @@ export type HighlightScope = 'active' | 'archived';
 
 /**
  * 담은 한 줄 목록 조회(Query). 기본은 활성(보관 제외·고정 우선), 'archived' 면 보관함.
- * page 로 '더보기' 페이지네이션(ADR-025). 소유 범위는 Repository/RLS 가 보장한다.
+ * page 로 '더보기' 페이지네이션(ADR-025). userId 소유 범위는 Repository 계약으로 명시(ADR-027).
  */
 export class ListHighlightsUseCase {
   constructor(private readonly highlights: HighlightRepository) {}
 
-  execute(scope: HighlightScope = 'active', page?: HighlightPage): Promise<Highlight[]> {
+  execute(
+    userId: string,
+    scope: HighlightScope = 'active',
+    page?: HighlightPage,
+  ): Promise<Highlight[]> {
     return scope === 'archived'
-      ? this.highlights.findArchived(page)
-      : this.highlights.findAll(page);
+      ? this.highlights.findArchived(userId, page)
+      : this.highlights.findAll(userId, page);
   }
 }

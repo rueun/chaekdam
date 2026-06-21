@@ -54,7 +54,10 @@ export default async function DiscussionsPage() {
     createListBooksUseCase(),
     createListDiscussionsUseCase(),
   ]);
-  const [books, discussions] = await Promise.all([listBooks.execute(), listDiscussions.execute()]);
+  const [books, discussions] = await Promise.all([
+    listBooks.execute(),
+    listDiscussions.execute(userId),
+  ]);
 
   const bookById = new Map(books.map((b) => [b.id, b]));
 

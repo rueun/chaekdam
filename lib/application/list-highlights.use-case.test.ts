@@ -15,16 +15,26 @@ describe('ListHighlightsUseCase', () => {
       Highlight.fromText('owner', 'b1', '문장 1'),
       Highlight.fromText('owner', 'b2', '문장 2').archive(),
     );
-    const result = await new ListHighlightsUseCase(repo).execute();
+    const result = await new ListHighlightsUseCase(repo).execute('owner');
     expect(result).toHaveLength(1);
     expect(result[0]!.content).toBe('문장 1');
+  });
+
+  it('타인의 한 줄은 목록에 섞이지 않는다(ADR-027, RLS 없이도 소유 범위)', async () => {
+    const repo = await repoWith(
+      Highlight.fromText('owner', 'b1', '내 문장'),
+      Highlight.fromText('intruder', 'b1', '남의 문장'),
+    );
+    const mine = await new ListHighlightsUseCase(repo).execute('owner');
+    expect(mine).toHaveLength(1);
+    expect(mine[0]!.content).toBe('내 문장');
   });
 
   it('고정한 한 줄을 목록 상단에 둔다', async () => {
     const first = Highlight.fromText('owner', 'b1', '먼저');
     const second = Highlight.fromText('owner', 'b1', '나중').pin();
     const repo = await repoWith(first, second);
-    const result = await new ListHighlightsUseCase(repo).execute();
+    const result = await new ListHighlightsUseCase(repo).execute('owner');
     expect(result[0]!.content).toBe('나중'); // 고정 우선
   });
 
@@ -33,13 +43,15 @@ describe('ListHighlightsUseCase', () => {
       Highlight.fromText('owner', 'b1', '문장 1'),
       Highlight.fromText('owner', 'b2', '보관됨').archive(),
     );
-    const result = await new ListHighlightsUseCase(repo).execute('archived');
+    const result = await new ListHighlightsUseCase(repo).execute('owner', 'archived');
     expect(result).toHaveLength(1);
     expect(result[0]!.content).toBe('보관됨');
   });
 
   it('담은 한 줄이 없으면 빈 목록을 돌려준다', async () => {
-    const result = await new ListHighlightsUseCase(new InMemoryHighlightRepository()).execute();
+    const result = await new ListHighlightsUseCase(new InMemoryHighlightRepository()).execute(
+      'owner',
+    );
     expect(result).toEqual([]);
   });
 
@@ -48,9 +60,9 @@ describe('ListHighlightsUseCase', () => {
       ...Array.from({ length: 5 }, (_v, i) => Highlight.fromText('owner', 'b1', `문장 ${i}`)),
     );
     const useCase = new ListHighlightsUseCase(repo);
-    const p1 = await useCase.execute('active', { limit: 2, offset: 0 });
-    const p2 = await useCase.execute('active', { limit: 2, offset: 2 });
-    const p3 = await useCase.execute('active', { limit: 2, offset: 4 });
+    const p1 = await useCase.execute('owner', 'active', { limit: 2, offset: 0 });
+    const p2 = await useCase.execute('owner', 'active', { limit: 2, offset: 2 });
+    const p3 = await useCase.execute('owner', 'active', { limit: 2, offset: 4 });
 
     expect([p1.length, p2.length, p3.length]).toEqual([2, 2, 1]);
     const ids = new Set([...p1, ...p2, ...p3].map((h) => h.id));

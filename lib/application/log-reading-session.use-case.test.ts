@@ -13,7 +13,7 @@ describe('LogReadingSessionUseCase', () => {
     });
 
     expect(result.sessionId).toBeTruthy();
-    const all = await repo.findAll();
+    const all = await repo.findAll('owner');
     expect(all).toHaveLength(1);
     expect(all[0]!.minutes).toBe(30);
     expect(all[0]!.bookId).toBe('b1');
@@ -25,6 +25,6 @@ describe('LogReadingSessionUseCase', () => {
     await expect(
       new LogReadingSessionUseCase(repo).execute({ userId: 'owner', bookId: 'b1', minutes: 0 }),
     ).rejects.toThrow(InvalidSessionMinutesError);
-    expect(await repo.findAll()).toHaveLength(0);
+    expect(await repo.findAll('owner')).toHaveLength(0);
   });
 });

@@ -1,5 +1,6 @@
 import type { ReadingSession } from '@/lib/domain/reading-log/reading-session';
 import type { ReadingSessionRepository } from '@/lib/domain/ports/reading-session-repository';
+import { OwnedBy } from '@/lib/domain/reading-log/specs/owned-by';
 
 /**
  * 테스트용 In-Memory ReadingSessionRepository — Mock 이 아닌 진짜 저장 동작(testing 규칙).
@@ -13,11 +14,12 @@ export class InMemoryReadingSessionRepository implements ReadingSessionRepositor
     return Promise.resolve();
   }
 
-  findAll(): Promise<ReadingSession[]> {
-    // Port 계약(최근순)을 Fake 도 충실히 재현 — 정렬 의존 버그를 테스트가 잡도록.
-    const sorted = [...this.items.values()].sort(
-      (a, b) => b.occurredAt.getTime() - a.occurredAt.getTime(),
-    );
+  findAll(userId: string): Promise<ReadingSession[]> {
+    // userId 소유분만 최근순으로(소유 범위 — RLS 없는 Fake 에서 OwnedBy 로 명시 필터, ADR-027).
+    const owned = new OwnedBy(userId);
+    const sorted = [...this.items.values()]
+      .filter((s) => owned.isSatisfiedBy(s))
+      .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime());
     return Promise.resolve(sorted);
   }
 }

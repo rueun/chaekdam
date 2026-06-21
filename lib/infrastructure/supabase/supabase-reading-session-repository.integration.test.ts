@@ -86,7 +86,7 @@ describe('SupabaseReadingSessionRepository (통합)', () => {
       }),
     );
 
-    const all = await repoA.findAll();
+    const all = await repoA.findAll(userAId);
     expect(all.length).toBeGreaterThanOrEqual(2);
     // 최근순(occurred_at desc) — 6/7 이 6/6 보다 먼저
     expect(all[0]!.occurredAt.getTime()).toBeGreaterThan(all[1]!.occurredAt.getTime());
@@ -106,7 +106,7 @@ describe('SupabaseReadingSessionRepository (통합)', () => {
     await repoA.save(ReadingSession.log({ ownerId: userAId, bookId: bookAId, minutes: 20 }));
     await repoB.save(ReadingSession.log({ ownerId: userBId, bookId: bookBId, minutes: 99 }));
 
-    const allB = await repoB.findAll();
+    const allB = await repoB.findAll(userBId);
     expect(allB.some((s) => s.minutes === 99)).toBe(true);
     expect(allB.some((s) => s.bookId === bookAId)).toBe(false);
     expect(allB.some((s) => s.ownerId === userAId)).toBe(false); // A 소유 세션이 B 에게 안 보임

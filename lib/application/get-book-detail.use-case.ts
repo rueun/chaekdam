@@ -17,7 +17,7 @@ export interface BookDetailResult {
 
 /**
  * 책 상세 조회(Query) — 한 책 + 그 책의 한 줄·토론·독서 세션을 모은다(ADR-006 화면 합성).
- * 책이 없으면 null. 소유 범위는 Repository/RLS 가 보장한다.
+ * 책이 없으면 null. userId 소유 범위는 한 줄·토론·세션 Repository 계약으로 명시(ADR-027).
  * (discussions/sessions 는 현재 findAll 후 bookId 필터 — 규모 커지면 Port 에 findByBookId 추가.)
  */
 export class GetBookDetailUseCase {
@@ -28,14 +28,14 @@ export class GetBookDetailUseCase {
     private readonly sessions: ReadingSessionRepository,
   ) {}
 
-  async execute(bookId: string): Promise<BookDetailResult | null> {
+  async execute(userId: string, bookId: string): Promise<BookDetailResult | null> {
     const book = await this.books.findById(bookId);
     if (!book) return null;
 
     const [highlights, allDiscussions, allSessions] = await Promise.all([
-      this.highlights.findByBookId(bookId),
-      this.discussions.findAll(),
-      this.sessions.findAll(),
+      this.highlights.findByBookId(userId, bookId),
+      this.discussions.findAll(userId),
+      this.sessions.findAll(userId),
     ]);
 
     return {

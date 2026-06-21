@@ -32,7 +32,7 @@ export default async function HighlightsPage({
   const tagFilterKey = tagFilter.toLowerCase();
 
   // 태그 필터 시엔 더 많이 가져와 메모리 필터(더보기 없음), 아니면 첫 페이지만(더보기 제공).
-  const views = await loadHighlightViews(scope, {
+  const views = await loadHighlightViews(userId, scope, {
     limit: tagFilter ? TAG_FILTER_FETCH : HIGHLIGHTS_PAGE_SIZE,
     offset: 0,
   });

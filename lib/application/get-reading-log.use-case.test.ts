@@ -24,16 +24,37 @@ describe('GetReadingLogUseCase', () => {
       occurredAt: onDay(2026, 6, 6),
     });
 
-    const readingLog = await new GetReadingLogUseCase(repo).execute(TODAY);
+    const readingLog = await new GetReadingLogUseCase(repo).execute('owner', TODAY);
 
     expect(readingLog.minutesToday).toBe(40);
     expect(readingLog.currentStreak).toBe(2);
     expect(readingLog.monthReadCount(2026, 6)).toBe(2);
   });
 
+  it('타인의 세션은 집계에 섞이지 않는다(ADR-027, RLS 없이도 소유 범위)', async () => {
+    const repo = new InMemoryReadingSessionRepository();
+    const log = new LogReadingSessionUseCase(repo);
+    await log.execute({
+      userId: 'owner',
+      bookId: 'b1',
+      minutes: 40,
+      occurredAt: onDay(2026, 6, 7),
+    });
+    await log.execute({
+      userId: 'intruder',
+      bookId: 'b1',
+      minutes: 99,
+      occurredAt: onDay(2026, 6, 7),
+    });
+
+    const readingLog = await new GetReadingLogUseCase(repo).execute('owner', TODAY);
+    expect(readingLog.minutesToday).toBe(40); // 남의 99 분은 제외
+    expect(readingLog.totalMinutes).toBe(40);
+  });
+
   it('기록이 없으면 빈 투영을 반환한다', async () => {
     const repo = new InMemoryReadingSessionRepository();
-    const readingLog = await new GetReadingLogUseCase(repo).execute(TODAY);
+    const readingLog = await new GetReadingLogUseCase(repo).execute('owner', TODAY);
 
     expect(readingLog.minutesToday).toBe(0);
     expect(readingLog.currentStreak).toBe(0);

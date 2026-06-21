@@ -73,11 +73,13 @@ export class SupabaseDiscussionRepository implements DiscussionRepository {
     return toDomain(room, messages ?? []);
   }
 
-  async findAll(): Promise<Discussion[]> {
-    // RLS 가 본인 행으로 한정한다. 방을 최신순으로 가져온 뒤 메시지를 한 번에 조회해 그룹핑(2 쿼리).
+  async findAll(userId: string): Promise<Discussion[]> {
+    // user_id 명시 필터(ADR-027) — RLS(1차)와 이중 방어. 방을 최신순으로 가져온 뒤
+    // 메시지를 한 번에 조회해 그룹핑(2 쿼리).
     const { data: rooms, error } = await this.client
       .from('discussions')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(DISCUSSIONS_LIST_LIMIT);
     if (error) throw new Error(`Failed to list discussions: ${error.message}`);

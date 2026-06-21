@@ -101,7 +101,10 @@ export async function loadMoreHighlights(
 ): Promise<HighlightView[]> {
   const userId = await (await createAuthSession()).getCurrentUserId();
   if (!userId) return [];
-  return loadHighlightViews(scope, { limit: HIGHLIGHTS_PAGE_SIZE, offset: Math.max(0, offset) });
+  return loadHighlightViews(userId, scope, {
+    limit: HIGHLIGHTS_PAGE_SIZE,
+    offset: Math.max(0, offset),
+  });
 }
 
 export type EditHighlightResult = { ok: true } | { ok: false; error: string };

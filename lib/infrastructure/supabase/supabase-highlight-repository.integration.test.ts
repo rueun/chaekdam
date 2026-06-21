@@ -102,7 +102,7 @@ describe('SupabaseHighlightRepository (통합)', () => {
     await repoA.save(Highlight.fromText(userAId, bookA2, '둘째 문장'));
     await repoA.save(Highlight.fromText(userAId, bookA1, '다른 책 문장'));
 
-    const list = await repoA.findByBookId(bookA2);
+    const list = await repoA.findByBookId(userAId, bookA2);
     expect(list).toHaveLength(2);
     expect(list.map((h) => h.content)).toEqual(expect.arrayContaining(['첫 문장', '둘째 문장']));
   });
@@ -130,11 +130,11 @@ describe('SupabaseHighlightRepository (통합)', () => {
     await repoA.save(Highlight.fromText(userAId, bookA1, markerA));
     await repoB.save(Highlight.fromText(userBId, bookB1, markerB));
 
-    const allA = await repoA.findAll();
+    const allA = await repoA.findAll(userAId);
     expect(allA.some((h) => h.content === markerA)).toBe(true);
     expect(allA.some((h) => h.content === markerB)).toBe(false); // A 는 B 것을 못 봄
 
-    const allB = await repoB.findAll();
+    const allB = await repoB.findAll(userBId);
     expect(allB.some((h) => h.content === markerB)).toBe(true);
     expect(allB.some((h) => h.content === markerA)).toBe(false); // B 는 A 것을 못 봄
   });
@@ -145,7 +145,7 @@ describe('SupabaseHighlightRepository (통합)', () => {
 
     // B 권한으로는 A 의 한 줄이 보이지 않아야 한다
     expect(await repoB.findById(secret.id)).toBeNull();
-    expect(await repoB.findByBookId(bookA1)).toHaveLength(0);
+    expect(await repoB.findByBookId(userBId, bookA1)).toHaveLength(0);
   });
 
   it('한 줄을 삭제한다 — 타인 것은 RLS 로 삭제되지 않는다', async () => {

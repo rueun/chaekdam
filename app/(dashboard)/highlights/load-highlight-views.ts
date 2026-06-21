@@ -23,6 +23,7 @@ function formatDateLabel(date: Date): string {
  * 여러 도메인 조합(한 줄 × 책)은 화면 계층에서 합친다(ADR-006).
  */
 export async function loadHighlightViews(
+  userId: string,
   scope: HighlightScope,
   page: { limit: number; offset: number },
 ): Promise<HighlightView[]> {
@@ -31,7 +32,7 @@ export async function loadHighlightViews(
     createListBooksUseCase(),
   ]);
   const [highlights, books] = await Promise.all([
-    listHighlights.execute(scope, page),
+    listHighlights.execute(userId, scope, page),
     listBooks.execute(),
   ]);
 

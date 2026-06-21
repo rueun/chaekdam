@@ -31,11 +31,12 @@ export class SupabaseReadingSessionRepository implements ReadingSessionRepositor
     if (error) throw new Error(`Failed to save reading session: ${error.message}`);
   }
 
-  async findAll(): Promise<ReadingSession[]> {
-    // RLS 가 본인 행으로 한정한다 — 별도 user_id 필터 불필요.
+  async findAll(userId: string): Promise<ReadingSession[]> {
+    // user_id 명시 필터(ADR-027) — RLS(1차)와 이중 방어. 백엔드 분리 시에도 소유 범위 유지.
     const { data, error } = await this.client
       .from('reading_sessions')
       .select('*')
+      .eq('user_id', userId)
       .order('occurred_at', { ascending: false })
       .limit(READING_SESSIONS_LIST_LIMIT);
     if (error) throw new Error(`Failed to list reading sessions: ${error.message}`);

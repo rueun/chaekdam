@@ -265,7 +265,9 @@
 
 **ReadingSession 적용 범위**: `ReadingSession` 은 **append-only Aggregate**(생성=`log`, 그 외 `findAll` 읽기)라 per-entity 인가 결정 지점(`loadOwnedX`/`OwnedBy` 소비처)이 없다. 따라서 패턴 중 적용 가능한 부분만 — **엔티티 `ownerId`(log/restore) + 생성 시 설정 + 어댑터가 `user_id = ownerId` 를 명시 영속** — 을 적용했다. 소비처 없는 `OwnedBy` Specification 은 YAGNI 라 두지 않는다.
 
-**남은 후속**: 읽기 경로(`Repository.findAll`)는 세 Aggregate 모두 아직 RLS 단독 방어다. 백엔드 분리(RLS 부재) 대비 `findAll(userId)` 형태의 명시적 소유자 필터를 **세 Aggregate 동시에** 도입하는 것이 일관적이라(특히 `GetBookDetail` 이 sessions·discussions 를 함께 조회) 별도 슬라이스로 묶어 진행한다. Book Aggregate 의 ownerId 화도 함께.
+**읽기 경로 통합(완료)**: 세 Aggregate의 목록 조회 Port에 `userId`를 명시했다 — `HighlightRepository.findAll/findArchived/findByBookId(userId, …)`, `DiscussionRepository.findAll(userId)`, `ReadingSessionRepository.findAll(userId)`. Supabase 어댑터는 `.eq('user_id', userId)`를 RLS 위에 더해(이중 방어), InMemory 어댑터는 각 도메인의 `OwnedBy` Specification으로 필터한다(ReadingSession `OwnedBy`도 이 시점에 소비처가 생겨 추가). 유스케이스(`ListHighlights`/`ListDiscussions`/`GetReadingLog`/`GetBookDetail`)와 진입점이 세션 `userId`를 주입한다. 이로써 RLS 없는 환경에서도 목록/집계가 본인 데이터만 반환함을 유스케이스 단위 테스트로 검증한다(`findById`/`remove`는 mutate 측 `loadOwnedX`가 검증하므로 변경 없음).
+
+**남은 후속**: Book Aggregate 의 ownerId 화(쓰기·읽기 측 동일 패턴).
 
 ---
 

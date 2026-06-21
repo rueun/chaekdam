@@ -1,5 +1,6 @@
 import type { Highlight } from '@/lib/domain/highlight/highlight';
 import type { HighlightPage, HighlightRepository } from '@/lib/domain/ports/highlight-repository';
+import { OwnedBy } from '@/lib/domain/highlight/specs/owned-by';
 
 /** 정렬된 목록에 페이지(offset/limit)를 적용한다. */
 function paginate(items: Highlight[], page?: HighlightPage): Highlight[] {
@@ -22,21 +23,22 @@ export class InMemoryHighlightRepository implements HighlightRepository {
     return Promise.resolve(this.items.get(id) ?? null);
   }
 
-  findByBookId(bookId: string): Promise<Highlight[]> {
-    return Promise.resolve(this.sortedByRecent().filter((h) => h.bookId === bookId));
+  findByBookId(userId: string, bookId: string): Promise<Highlight[]> {
+    return Promise.resolve(this.ownedBy(userId).filter((h) => h.bookId === bookId));
   }
 
-  findAll(page?: HighlightPage): Promise<Highlight[]> {
+  findAll(userId: string, page?: HighlightPage): Promise<Highlight[]> {
     // 보관 제외 + 고정 우선, 그 안에서 최신순(어댑터 findAll 정렬과 일치).
-    const active = this.sortedByRecent().filter((h) => !h.archived);
-    const sorted = active.sort((a, b) => Number(b.pinned) - Number(a.pinned));
+    // ownedBy 가 createdAt 최신순으로 준 배열에 고정 우선을 안정 정렬로 덧입힌다(원본 비변형).
+    const active = this.ownedBy(userId).filter((h) => !h.archived);
+    const sorted = [...active].sort((a, b) => Number(b.pinned) - Number(a.pinned));
     return Promise.resolve(paginate(sorted, page));
   }
 
-  findArchived(page?: HighlightPage): Promise<Highlight[]> {
+  findArchived(userId: string, page?: HighlightPage): Promise<Highlight[]> {
     return Promise.resolve(
       paginate(
-        this.sortedByRecent().filter((h) => h.archived),
+        this.ownedBy(userId).filter((h) => h.archived),
         page,
       ),
     );
@@ -47,7 +49,11 @@ export class InMemoryHighlightRepository implements HighlightRepository {
     return Promise.resolve();
   }
 
-  private sortedByRecent(): Highlight[] {
-    return [...this.items.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  /** userId 소유분만 최신순으로(소유 범위 — RLS 없는 Fake 에서 OwnedBy 로 명시 필터, ADR-027). */
+  private ownedBy(userId: string): Highlight[] {
+    const owned = new OwnedBy(userId);
+    return [...this.items.values()]
+      .filter((h) => owned.isSatisfiedBy(h))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 }

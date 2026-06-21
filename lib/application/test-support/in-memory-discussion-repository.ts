@@ -1,5 +1,6 @@
 import type { Discussion } from '@/lib/domain/discussion/discussion';
 import type { DiscussionRepository } from '@/lib/domain/ports/discussion-repository';
+import { OwnedBy } from '@/lib/domain/discussion/specs/owned-by';
 
 /**
  * 테스트용 In-Memory DiscussionRepository — Mock 이 아닌 진짜 저장 동작(testing 규칙).
@@ -17,10 +18,12 @@ export class InMemoryDiscussionRepository implements DiscussionRepository {
     return Promise.resolve(this.items.get(id) ?? null);
   }
 
-  findAll(): Promise<Discussion[]> {
-    const sorted = [...this.items.values()].sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
-    );
+  findAll(userId: string): Promise<Discussion[]> {
+    // userId 소유분만(소유 범위 — RLS 없는 Fake 에서 OwnedBy 로 명시 필터, ADR-027).
+    const owned = new OwnedBy(userId);
+    const sorted = [...this.items.values()]
+      .filter((d) => owned.isSatisfiedBy(d))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     return Promise.resolve(sorted);
   }
 }

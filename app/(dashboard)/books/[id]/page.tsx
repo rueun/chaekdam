@@ -83,7 +83,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
   if (!userId) redirect(ROUTES.AUTH.LOGIN());
 
   const { id } = await params;
-  const detail = await (await createGetBookDetailUseCase()).execute(id);
+  const detail = await (await createGetBookDetailUseCase()).execute(userId, id);
   if (!detail) notFound();
 
   const view = toBookDetailView(detail);

@@ -60,23 +60,26 @@ export class SupabaseHighlightRepository implements HighlightRepository {
     return data ? toDomain(data) : null;
   }
 
-  async findByBookId(bookId: string): Promise<Highlight[]> {
+  async findByBookId(userId: string, bookId: string): Promise<Highlight[]> {
+    // user_id 명시 필터(ADR-027) — RLS(1차)와 이중 방어. 백엔드 분리 시에도 소유 범위 유지.
     const { data, error } = await this.client
       .from('highlights')
       .select('*')
+      .eq('user_id', userId)
       .eq('book_id', bookId)
       .order('created_at', { ascending: false });
     if (error) throw new Error(`Failed to list highlights: ${error.message}`);
     return (data ?? []).map(toDomain);
   }
 
-  async findAll(page?: HighlightPage): Promise<Highlight[]> {
-    // RLS 가 본인 행으로 한정. 보관 제외 + 고정 우선, 그 안에서 최신순(ADR-021).
+  async findAll(userId: string, page?: HighlightPage): Promise<Highlight[]> {
+    // user_id 명시 필터(ADR-027, RLS 와 이중 방어). 보관 제외 + 고정 우선, 그 안에서 최신순(ADR-021).
     // 페이지(ADR-025) — '더보기' 로 offset 만큼 건너뛰고 limit 개. 미지정 시 기본 상한.
     const { offset, limit } = pageBounds(page);
     const { data, error } = await this.client
       .from('highlights')
       .select('*')
+      .eq('user_id', userId)
       .eq('archived', false)
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
@@ -85,12 +88,13 @@ export class SupabaseHighlightRepository implements HighlightRepository {
     return (data ?? []).map(toDomain);
   }
 
-  async findArchived(page?: HighlightPage): Promise<Highlight[]> {
-    // 보관함 — archived = true 만 최신순.
+  async findArchived(userId: string, page?: HighlightPage): Promise<Highlight[]> {
+    // 보관함 — user_id 명시 필터(ADR-027) + archived = true 만 최신순.
     const { offset, limit } = pageBounds(page);
     const { data, error } = await this.client
       .from('highlights')
       .select('*')
+      .eq('user_id', userId)
       .eq('archived', true)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);

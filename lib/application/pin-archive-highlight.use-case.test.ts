@@ -17,7 +17,7 @@ describe('PinHighlightUseCase', () => {
     await useCase.execute({ highlightId: first.id, userId: 'owner', pinned: true });
 
     // 먼저 담긴 것이 고정되어 최신(second)보다 앞에 온다.
-    const pinnedFirst = await highlights.findAll();
+    const pinnedFirst = await highlights.findAll('owner');
     expect(pinnedFirst[0]!.id).toBe(first.id);
     expect(pinnedFirst[0]!.pinned).toBe(true);
 
@@ -54,12 +54,12 @@ describe('ArchiveHighlightUseCase', () => {
     const useCase = new ArchiveHighlightUseCase(highlights);
     await useCase.execute({ highlightId: highlight.id, userId: 'owner', archived: true });
 
-    expect(await highlights.findAll()).toHaveLength(0);
-    expect(await highlights.findArchived()).toHaveLength(1);
+    expect(await highlights.findAll('owner')).toHaveLength(0);
+    expect(await highlights.findArchived('owner')).toHaveLength(1);
 
     await useCase.execute({ highlightId: highlight.id, userId: 'owner', archived: false });
-    expect(await highlights.findAll()).toHaveLength(1);
-    expect(await highlights.findArchived()).toHaveLength(0);
+    expect(await highlights.findAll('owner')).toHaveLength(1);
+    expect(await highlights.findArchived('owner')).toHaveLength(0);
   });
 
   it('보관하면 고정도 해제된다', async () => {
@@ -72,7 +72,7 @@ describe('ArchiveHighlightUseCase', () => {
       userId: 'owner',
       archived: true,
     });
-    expect((await highlights.findArchived())[0]!.pinned).toBe(false);
+    expect((await highlights.findArchived('owner'))[0]!.pinned).toBe(false);
   });
 
   it('없는 한 줄은 보관할 수 없다', async () => {

@@ -36,7 +36,7 @@ describe('CaptureHighlightFromPhotoUseCase', () => {
     });
 
     expect(photos.lastImage).toEqual({ base64: 'AAAA', mediaType: 'image/jpeg' });
-    const saved = (await highlights.findByBookId('b1'))[0]!;
+    const saved = (await highlights.findByBookId('owner', 'b1'))[0]!;
     expect(saved.source).toBe(NoteSource.PHOTO);
     expect(saved.photoUrl).toBe('https://cdn.example/u1/abc.jpg');
     expect(saved.content).toBe('인상 깊은 구절');
@@ -59,7 +59,7 @@ describe('CaptureHighlightFromPhotoUseCase', () => {
         image: { base64: 'AAAA', mediaType: 'image/jpeg' },
       }),
     ).rejects.toThrow('upload down');
-    expect(await highlights.findAll()).toHaveLength(0);
+    expect(await highlights.findAll('owner')).toHaveLength(0);
   });
 
   it('저장이 실패하면 업로드된 사진을 삭제한다(고아 객체 방지)', async () => {
