@@ -17,4 +17,6 @@ export interface DiscussionRepository {
    * 소유 범위를 Port 계약에 명시(ADR-027) — RLS(1차)와 이중 방어.
    */
   findAll(userId: string): Promise<Discussion[]>;
+  /** userId 소유의 토론 중 특정 책의 것만 최신순으로 조회한다(책 상세, 메시지 포함). */
+  findByBookId(userId: string, bookId: string): Promise<Discussion[]>;
 }

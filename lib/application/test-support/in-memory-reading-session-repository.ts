@@ -15,11 +15,18 @@ export class InMemoryReadingSessionRepository implements ReadingSessionRepositor
   }
 
   findAll(userId: string): Promise<ReadingSession[]> {
-    // userId 소유분만 최근순으로(소유 범위 — RLS 없는 Fake 에서 OwnedBy 로 명시 필터, ADR-027).
+    return Promise.resolve(this.ownedBy(userId));
+  }
+
+  findByBookId(userId: string, bookId: string): Promise<ReadingSession[]> {
+    return Promise.resolve(this.ownedBy(userId).filter((s) => s.bookId === bookId));
+  }
+
+  /** userId 소유분만 최근순으로(소유 범위 — RLS 없는 Fake 에서 OwnedBy 로 명시 필터, ADR-027). */
+  private ownedBy(userId: string): ReadingSession[] {
     const owned = new OwnedBy(userId);
-    const sorted = [...this.items.values()]
+    return [...this.items.values()]
       .filter((s) => owned.isSatisfiedBy(s))
       .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime());
-    return Promise.resolve(sorted);
   }
 }

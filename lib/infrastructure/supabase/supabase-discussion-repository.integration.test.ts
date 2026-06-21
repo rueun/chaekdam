@@ -133,6 +133,23 @@ describe('SupabaseDiscussionRepository (통합)', () => {
     expect(await repoB.findById(mine.id)).toBeNull();
   });
 
+  it('findByBookId — 그 책의 방만(메시지 포함), 타 사용자는 제외(ADR-027)', async () => {
+    const room = Discussion.start({
+      ownerId: userAId,
+      bookId: bookAId,
+      personaKey: 'socrates',
+    }).addAiMessage('여는 말');
+    await repoA.save(room);
+
+    const ofBookA = await repoA.findByBookId(userAId, bookAId);
+    expect(ofBookA.some((d) => d.id === room.id)).toBe(true);
+    expect(ofBookA.every((d) => d.bookId === bookAId)).toBe(true); // 그 책만
+    expect(ofBookA.find((d) => d.id === room.id)!.messageCount).toBe(1); // 메시지 포함
+
+    // B 권한으로 A 의 책을 조회해도 0건(소유 + 책 필터 이중)
+    expect(await repoB.findByBookId(userBId, bookAId)).toHaveLength(0);
+  });
+
   it('책을 지우면 토론도 cascade 로 사라진다', async () => {
     const clientA = await signInClient(emailA, password);
     const book = Book.register({ ownerId: userAId, title: `삭제용 ${crypto.randomUUID()}` });
@@ -145,7 +162,7 @@ describe('SupabaseDiscussionRepository (통합)', () => {
     await repoA.save(room);
     expect(await repoA.findById(room.id)).not.toBeNull();
 
-    await new SupabaseBookRepository(clientA).remove(book.id);
+    await new SupabaseBookRepository(clientA).remove(book.id, userAId);
     expect(await repoA.findById(room.id)).toBeNull();
   });
 

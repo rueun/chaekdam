@@ -19,11 +19,18 @@ export class InMemoryDiscussionRepository implements DiscussionRepository {
   }
 
   findAll(userId: string): Promise<Discussion[]> {
-    // userId 소유분만(소유 범위 — RLS 없는 Fake 에서 OwnedBy 로 명시 필터, ADR-027).
+    return Promise.resolve(this.ownedBy(userId));
+  }
+
+  findByBookId(userId: string, bookId: string): Promise<Discussion[]> {
+    return Promise.resolve(this.ownedBy(userId).filter((d) => d.bookId === bookId));
+  }
+
+  /** userId 소유분만 최신순으로(소유 범위 — RLS 없는 Fake 에서 OwnedBy 로 명시 필터, ADR-027). */
+  private ownedBy(userId: string): Discussion[] {
     const owned = new OwnedBy(userId);
-    const sorted = [...this.items.values()]
+    return [...this.items.values()]
       .filter((d) => owned.isSatisfiedBy(d))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    return Promise.resolve(sorted);
   }
 }

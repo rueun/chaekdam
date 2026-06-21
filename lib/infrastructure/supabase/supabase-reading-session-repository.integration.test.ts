@@ -114,6 +114,17 @@ describe('SupabaseReadingSessionRepository (통합)', () => {
     expect(allB.some((s) => s.ownerId === userAId)).toBe(false); // A 소유 세션이 B 에게 안 보임
   });
 
+  it('findByBookId — 그 책의 세션만, 타 사용자/타 책은 제외(ADR-027)', async () => {
+    await repoA.save(ReadingSession.log({ ownerId: userAId, bookId: bookAId, minutes: 11 }));
+
+    const ofBookA = await repoA.findByBookId(userAId, bookAId);
+    expect(ofBookA.length).toBeGreaterThanOrEqual(1);
+    expect(ofBookA.every((s) => s.bookId === bookAId)).toBe(true); // 그 책만
+
+    // B 권한으로 A 의 책을 조회해도 0건(소유 + 책 필터 이중)
+    expect(await repoB.findByBookId(userBId, bookAId)).toHaveLength(0);
+  });
+
   describe('DB 제약·RLS 이중 방어(도메인 우회 raw insert)', () => {
     // 도메인을 우회해 DB 제약/RLS 만 직접 검증한다.
     async function rawClientA(): Promise<SupabaseClient<Database>> {

@@ -42,6 +42,19 @@ export class SupabaseReadingSessionRepository implements ReadingSessionRepositor
     if (error) throw new Error(`Failed to list reading sessions: ${error.message}`);
     return (data ?? []).map(toDomain);
   }
+
+  async findByBookId(userId: string, bookId: string): Promise<ReadingSession[]> {
+    // user_id + book_id DB 필터(ADR-027) — 책 상세에서 전건 조회 없이 해당 책만.
+    const { data, error } = await this.client
+      .from('reading_sessions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('book_id', bookId)
+      .order('occurred_at', { ascending: false })
+      .limit(READING_SESSIONS_LIST_LIMIT);
+    if (error) throw new Error(`Failed to list reading sessions: ${error.message}`);
+    return (data ?? []).map(toDomain);
+  }
 }
 
 /** Supabase row 를 도메인 ReadingSession 으로 복원한다. */

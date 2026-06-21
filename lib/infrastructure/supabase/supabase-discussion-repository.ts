@@ -63,19 +63,13 @@ export class SupabaseDiscussionRepository implements DiscussionRepository {
     if (error) throw new Error(`Failed to find discussion: ${error.message}`);
     if (!room) return null;
 
-    const { data: messages, error: msgError } = await this.client
-      .from('messages')
-      .select('*')
-      .eq('discussion_id', id)
-      .order('created_at', { ascending: true });
-    if (msgError) throw new Error(`Failed to load messages: ${msgError.message}`);
-
-    return toDomain(room, messages ?? []);
+    // 메시지 로딩·정렬은 withMessages 단일 경로에 위임(목록과 동일 기준 보장).
+    const [discussion] = await this.withMessages([room]);
+    return discussion ?? null;
   }
 
   async findAll(userId: string): Promise<Discussion[]> {
-    // user_id 명시 필터(ADR-027) — RLS(1차)와 이중 방어. 방을 최신순으로 가져온 뒤
-    // 메시지를 한 번에 조회해 그룹핑(2 쿼리).
+    // user_id 명시 필터(ADR-027) — RLS(1차)와 이중 방어. 방을 최신순으로.
     const { data: rooms, error } = await this.client
       .from('discussions')
       .select('*')
@@ -83,7 +77,25 @@ export class SupabaseDiscussionRepository implements DiscussionRepository {
       .order('created_at', { ascending: false })
       .limit(DISCUSSIONS_LIST_LIMIT);
     if (error) throw new Error(`Failed to list discussions: ${error.message}`);
-    if (!rooms || rooms.length === 0) return [];
+    return this.withMessages(rooms ?? []);
+  }
+
+  async findByBookId(userId: string, bookId: string): Promise<Discussion[]> {
+    // user_id + book_id DB 필터(ADR-027) — 책 상세에서 전건 조회 없이 해당 책 방만.
+    const { data: rooms, error } = await this.client
+      .from('discussions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('book_id', bookId)
+      .order('created_at', { ascending: false })
+      .limit(DISCUSSIONS_LIST_LIMIT);
+    if (error) throw new Error(`Failed to list discussions: ${error.message}`);
+    return this.withMessages(rooms ?? []);
+  }
+
+  /** 방 row 묶음에 메시지를 한 번에 채워(1 쿼리) 도메인 Discussion[] 으로 복원한다. */
+  private async withMessages(rooms: DiscussionRow[]): Promise<Discussion[]> {
+    if (rooms.length === 0) return [];
 
     const { data: messages, error: msgError } = await this.client
       .from('messages')

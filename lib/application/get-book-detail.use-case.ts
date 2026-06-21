@@ -19,7 +19,7 @@ export interface BookDetailResult {
 /**
  * 책 상세 조회(Query) — 한 책 + 그 책의 한 줄·토론·독서 세션을 모은다(ADR-006 화면 합성).
  * 책이 없으면 null. userId 소유 범위는 한 줄·토론·세션 Repository 계약으로 명시(ADR-027).
- * (discussions/sessions 는 현재 findAll 후 bookId 필터 — 규모 커지면 Port 에 findByBookId 추가.)
+ * 한 줄·토론·세션 모두 Port 의 findByBookId(userId, bookId) 로 DB 에서 책 단위 필터한다.
  */
 export class GetBookDetailUseCase {
   constructor(
@@ -34,17 +34,12 @@ export class GetBookDetailUseCase {
     // 없거나 타인 책이면 null(상세는 notFound 로 표현 — 존재 여부 비노출, ADR-027).
     if (!book || !new OwnedBy(userId).isSatisfiedBy(book)) return null;
 
-    const [highlights, allDiscussions, allSessions] = await Promise.all([
+    const [highlights, discussions, sessions] = await Promise.all([
       this.highlights.findByBookId(userId, bookId),
-      this.discussions.findAll(userId),
-      this.sessions.findAll(userId),
+      this.discussions.findByBookId(userId, bookId),
+      this.sessions.findByBookId(userId, bookId),
     ]);
 
-    return {
-      book,
-      highlights,
-      discussions: allDiscussions.filter((d) => d.bookId === bookId),
-      sessions: allSessions.filter((s) => s.bookId === bookId),
-    };
+    return { book, highlights, discussions, sessions };
   }
 }
