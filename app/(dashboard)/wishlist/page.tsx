@@ -22,7 +22,7 @@ export default async function WishlistPage() {
   const userId = await (await createAuthSession()).getCurrentUserId();
   if (!userId) redirect(ROUTES.AUTH.LOGIN());
 
-  const books = await (await createListBooksUseCase()).execute(BookStatus.WISH);
+  const books = await (await createListBooksUseCase()).execute(userId, BookStatus.WISH);
   const items: WishlistTileView[] = books.map((b) => ({
     id: b.id,
     title: b.title,

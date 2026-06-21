@@ -14,6 +14,8 @@ export const BOOK_TITLE_MAX_LENGTH = 300;
 export class Book {
   private constructor(
     readonly id: string,
+    /** 소유자(책장 주인) — 권한 이중 방어(ADR-027). 생성 시 고정. */
+    readonly ownerId: string,
     readonly title: string,
     readonly author: string,
     readonly status: BookStatus,
@@ -26,8 +28,9 @@ export class Book {
     Object.freeze(this);
   }
 
-  /** 책장에 새로 담는다(기본 상태는 WISH — 읽고 싶은). */
+  /** 책장에 새로 담는다(기본 상태는 WISH — 읽고 싶은). ownerId 가 책장 주인이 된다. */
   static register(props: {
+    ownerId: string;
     title: string;
     author?: string;
     status?: BookStatus;
@@ -36,6 +39,7 @@ export class Book {
   }): Book {
     return new Book(
       generateId(),
+      props.ownerId,
       normalizeTitle(props.title),
       // 저자 미상(익명)·미제공은 빈 문자열 허용 — 도서 API 가 저자를 안 줄 수 있음
       props.author?.trim() ?? '',
@@ -53,6 +57,7 @@ export class Book {
    */
   static restore(props: {
     id: string;
+    ownerId: string;
     title: string;
     author: string;
     status: BookStatus;
@@ -62,6 +67,7 @@ export class Book {
   }): Book {
     return new Book(
       props.id,
+      props.ownerId,
       props.title,
       props.author,
       props.status,
@@ -76,6 +82,7 @@ export class Book {
     if (status === this.status) return this;
     return new Book(
       this.id,
+      this.ownerId,
       this.title,
       this.author,
       status,

@@ -20,7 +20,7 @@ function makeUseCase() {
 describe('StartDiscussionUseCase', () => {
   it('토론을 시작하면 첫 AI 응답이 포함된다', async () => {
     const { useCase, books } = makeUseCase();
-    const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
+    const book = Book.register({ ownerId: 'owner', title: '데미안', author: '헤르만 헤세' });
     await books.save(book);
 
     const room = await useCase.execute({
@@ -37,7 +37,7 @@ describe('StartDiscussionUseCase', () => {
 
   it('시드 한 줄을 컨텍스트로 넘기고 방 제목으로 삼는다', async () => {
     const { useCase, books, highlights, ai } = makeUseCase();
-    const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
+    const book = Book.register({ ownerId: 'owner', title: '데미안', author: '헤르만 헤세' });
     await books.save(book);
     const highlight = Highlight.fromText('owner', book.id, '새는 알에서 나오려고 투쟁한다');
     await highlights.save(highlight);
@@ -57,7 +57,7 @@ describe('StartDiscussionUseCase', () => {
 
   it('저장되어 다시 조회된다', async () => {
     const { useCase, discussions, books } = makeUseCase();
-    const book = Book.register({ title: '데미안' });
+    const book = Book.register({ ownerId: 'owner', title: '데미안' });
     await books.save(book);
 
     const room = await useCase.execute({ userId: 'owner', bookId: book.id, personaKey: 'friend' });
@@ -75,7 +75,7 @@ describe('StartDiscussionUseCase', () => {
 
   it("'작가 본인' 페르소나는 사망 작가 책에서 시작할 수 있다", async () => {
     const { useCase, books } = makeUseCase();
-    const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
+    const book = Book.register({ ownerId: 'owner', title: '데미안', author: '헤르만 헤세' });
     await books.save(book);
 
     const room = await useCase.execute({ userId: 'owner', bookId: book.id, personaKey: 'author' });
@@ -85,7 +85,7 @@ describe('StartDiscussionUseCase', () => {
 
   it("'작가 본인' 페르소나를 생존 작가 책에 쓰면 거부한다(ADR-022)", async () => {
     const { useCase, books } = makeUseCase();
-    const book = Book.register({ title: '일곱 해의 마지막', author: '김연수' });
+    const book = Book.register({ ownerId: 'owner', title: '일곱 해의 마지막', author: '김연수' });
     await books.save(book);
 
     await expect(
@@ -95,7 +95,7 @@ describe('StartDiscussionUseCase', () => {
 
   it('지정한 시드 한 줄이 없으면 시드 없이 진행한다(FK 안전)', async () => {
     const { useCase, books } = makeUseCase();
-    const book = Book.register({ title: '데미안' });
+    const book = Book.register({ ownerId: 'owner', title: '데미안' });
     await books.save(book);
 
     const room = await useCase.execute({

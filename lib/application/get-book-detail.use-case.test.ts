@@ -21,8 +21,8 @@ function makeUseCase() {
 describe('GetBookDetailUseCase', () => {
   it('책과 그 책의 한 줄·토론·세션만 모은다', async () => {
     const { books, highlights, discussions, sessions, useCase } = makeUseCase();
-    const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
-    const other = Book.register({ title: '다른 책' });
+    const book = Book.register({ ownerId: 'owner', title: '데미안', author: '헤르만 헤세' });
+    const other = Book.register({ ownerId: 'owner', title: '다른 책' });
     await books.save(book);
     await books.save(other);
 
@@ -55,7 +55,7 @@ describe('GetBookDetailUseCase', () => {
 
   it('같은 책에 대한 타인의 한 줄·토론·세션은 섞이지 않는다(ADR-027, RLS 없이도 소유 범위)', async () => {
     const { books, highlights, discussions, sessions, useCase } = makeUseCase();
-    const book = Book.register({ title: '데미안' });
+    const book = Book.register({ ownerId: 'owner', title: '데미안' });
     await books.save(book);
 
     await highlights.save(Highlight.fromText('owner', book.id, '내 한 줄'));
@@ -87,7 +87,7 @@ describe('GetBookDetailUseCase', () => {
 
   it('한 줄·토론·세션이 없어도 책만 반환한다', async () => {
     const { books, useCase } = makeUseCase();
-    const book = Book.register({ title: '조용한 책' });
+    const book = Book.register({ ownerId: 'owner', title: '조용한 책' });
     await books.save(book);
 
     const detail = await useCase.execute('owner', book.id);

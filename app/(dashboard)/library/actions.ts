@@ -30,6 +30,7 @@ export async function addBook(input: AddBookInput): Promise<AddBookResult> {
 
     const useCase = await createAddBookToShelfUseCase();
     const { bookId } = await useCase.execute({
+      userId,
       title: parsed.data.title,
       author: parsed.data.author,
       status: toDomainBookStatus(parsed.data.status),
@@ -79,7 +80,7 @@ export interface BookOption {
 export async function listOwnedBookKeys(): Promise<string[]> {
   const userId = await (await createAuthSession()).getCurrentUserId();
   if (!userId) return [];
-  const books = await (await createListBooksUseCase()).execute();
+  const books = await (await createListBooksUseCase()).execute(userId);
   return books.map((b) => ownedBookKey(b.title, b.author));
 }
 
@@ -87,6 +88,6 @@ export async function listOwnedBookKeys(): Promise<string[]> {
 export async function listMyBookOptions(): Promise<BookOption[]> {
   const userId = await (await createAuthSession()).getCurrentUserId();
   if (!userId) return [];
-  const books = await (await createListBooksUseCase()).execute();
+  const books = await (await createListBooksUseCase()).execute(userId);
   return books.map((b) => ({ id: b.id, label: b.author ? `${b.title} · ${b.author}` : b.title }));
 }

@@ -6,6 +6,7 @@ import type { BookRepository } from '@/lib/domain/ports/book-repository';
 import type { HighlightRepository } from '@/lib/domain/ports/highlight-repository';
 import type { DiscussionRepository } from '@/lib/domain/ports/discussion-repository';
 import type { ReadingSessionRepository } from '@/lib/domain/ports/reading-session-repository';
+import { OwnedBy } from '@/lib/domain/book/specs/owned-by';
 
 /** 책 상세 화면에 필요한 한 책의 집계 데이터(도메인 객체 묶음). */
 export interface BookDetailResult {
@@ -30,7 +31,8 @@ export class GetBookDetailUseCase {
 
   async execute(userId: string, bookId: string): Promise<BookDetailResult | null> {
     const book = await this.books.findById(bookId);
-    if (!book) return null;
+    // 없거나 타인 책이면 null(상세는 notFound 로 표현 — 존재 여부 비노출, ADR-027).
+    if (!book || !new OwnedBy(userId).isSatisfiedBy(book)) return null;
 
     const [highlights, allDiscussions, allSessions] = await Promise.all([
       this.highlights.findByBookId(userId, bookId),

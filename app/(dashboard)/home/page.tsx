@@ -47,7 +47,7 @@ export default async function HomePage() {
     createGetReadingLogUseCase(),
   ]);
   const [books, highlights, readingLog] = await Promise.all([
-    listBooks.execute(),
+    listBooks.execute(currentUser.id),
     listHighlights.execute(currentUser.id),
     getReadingLog.execute(currentUser.id, new Date()), // 진입점이 사용자·'오늘' 시각을 주입
   ]);

@@ -49,10 +49,11 @@ describe('SupabaseDiscussionRepository (통합)', () => {
     repoB = new SupabaseDiscussionRepository(clientB);
 
     const bookA = Book.register({
+      ownerId: userAId,
       title: `토론 책 A ${crypto.randomUUID()}`,
       author: '헤르만 헤세',
     });
-    const bookB = Book.register({ title: `토론 책 B ${crypto.randomUUID()}` });
+    const bookB = Book.register({ ownerId: userBId, title: `토론 책 B ${crypto.randomUUID()}` });
     await new SupabaseBookRepository(clientA).save(bookA);
     await new SupabaseBookRepository(clientB).save(bookB);
     bookAId = bookA.id;
@@ -134,7 +135,7 @@ describe('SupabaseDiscussionRepository (통합)', () => {
 
   it('책을 지우면 토론도 cascade 로 사라진다', async () => {
     const clientA = await signInClient(emailA, password);
-    const book = Book.register({ title: `삭제용 ${crypto.randomUUID()}` });
+    const book = Book.register({ ownerId: userAId, title: `삭제용 ${crypto.randomUUID()}` });
     await new SupabaseBookRepository(clientA).save(book);
     const room = Discussion.start({
       ownerId: userAId,

@@ -52,6 +52,13 @@ export class BookNotFoundError extends DomainError {
   }
 }
 
+/** 책에 대한 권한 없음(소유자 아님) — 권한 이중 방어(ADR-027) */
+export class BookAccessDeniedError extends DomainError {
+  constructor(bookId: string) {
+    super(`Book access denied: ${bookId}`);
+  }
+}
+
 /** 한 줄을 찾을 수 없음 */
 export class HighlightNotFoundError extends DomainError {
   constructor(highlightId: string) {

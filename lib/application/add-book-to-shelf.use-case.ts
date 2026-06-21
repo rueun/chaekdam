@@ -3,6 +3,8 @@ import type { BookStatus } from '@/lib/domain/book/book-status';
 import type { BookRepository } from '@/lib/domain/ports/book-repository';
 
 export interface AddBookToShelfCommand {
+  /** 책장 주인(소유자) — 서버 세션에서 주입(ADR-027) */
+  userId: string;
   title: string;
   author?: string;
   /** 담을 책장(기본 WISH — 읽고 싶은) */
@@ -24,7 +26,14 @@ export class AddBookToShelfUseCase {
   constructor(private readonly books: BookRepository) {}
 
   async execute(command: AddBookToShelfCommand): Promise<AddBookToShelfResult> {
-    const book = Book.register(command);
+    const book = Book.register({
+      ownerId: command.userId,
+      title: command.title,
+      author: command.author,
+      status: command.status,
+      coverColor: command.coverColor,
+      coverImageUrl: command.coverImageUrl,
+    });
     await this.books.save(book);
     return { bookId: book.id };
   }

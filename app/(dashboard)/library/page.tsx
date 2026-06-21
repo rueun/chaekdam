@@ -14,7 +14,7 @@ export default async function LibraryPage() {
   const userId = await (await createAuthSession()).getCurrentUserId();
   if (!userId) redirect(ROUTES.AUTH.LOGIN());
 
-  const books = await (await createListBooksUseCase()).execute();
+  const books = await (await createListBooksUseCase()).execute(userId);
   // 도메인 Book → 카드 뷰모델. 별점·북마크 등 풍부한 메타는 ReadingLog 도입 후 연결.
   const views: BookCardView[] = books.map((b) => ({
     id: b.id,

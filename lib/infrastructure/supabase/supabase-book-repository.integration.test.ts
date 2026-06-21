@@ -47,6 +47,7 @@ describe('SupabaseBookRepository (통합)', () => {
 
   it('책을 담고 id 로 조회한다', async () => {
     const book = Book.register({
+      ownerId: userAId,
       title: '데미안',
       author: '헤르만 헤세',
       status: BookStatus.READING,
@@ -64,6 +65,7 @@ describe('SupabaseBookRepository (통합)', () => {
 
   it('상태 전이를 save 로 반영하고, 표지 미지정은 null 로 왕복한다', async () => {
     const wish = Book.register({
+      ownerId: userAId,
       title: `여행의 이유 ${crypto.randomUUID()}`,
       status: BookStatus.WISH,
     });
@@ -78,9 +80,9 @@ describe('SupabaseBookRepository (통합)', () => {
 
   it('상태로 책장을 조회한다', async () => {
     const title = `완독본 ${crypto.randomUUID()}`;
-    await repoA.save(Book.register({ title, status: BookStatus.DONE }));
+    await repoA.save(Book.register({ ownerId: userAId, title, status: BookStatus.DONE }));
 
-    const done = await repoA.findByStatus(BookStatus.DONE);
+    const done = await repoA.findByStatus(userAId, BookStatus.DONE);
     expect(done.some((b) => b.title === title)).toBe(true);
     expect(done.every((b) => b.status === BookStatus.DONE)).toBe(true);
   });
@@ -88,26 +90,32 @@ describe('SupabaseBookRepository (통합)', () => {
   it('RLS — 다른 사용자의 책장은 보이지 않는다', async () => {
     const titleA = `A 책 ${crypto.randomUUID()}`;
     const titleB = `B 책 ${crypto.randomUUID()}`;
-    await repoA.save(Book.register({ title: titleA }));
-    await repoB.save(Book.register({ title: titleB }));
+    await repoA.save(Book.register({ ownerId: userAId, title: titleA }));
+    await repoB.save(Book.register({ ownerId: userBId, title: titleB }));
 
-    const allA = await repoA.findAll();
+    const allA = await repoA.findAll(userAId);
     expect(allA.some((b) => b.title === titleA)).toBe(true);
     expect(allA.some((b) => b.title === titleB)).toBe(false);
 
-    const allB = await repoB.findAll();
+    const allB = await repoB.findAll(userBId);
     expect(allB.some((b) => b.title === titleB)).toBe(true);
     expect(allB.some((b) => b.title === titleA)).toBe(false);
   });
 
+  it('RLS with check — 타인 user_id 로는 책을 담을 수 없다(ADR-027)', async () => {
+    // B 권한 클라이언트로 ownerId=userAId 위조 저장 시도 → insert with check(auth.uid()=user_id) 거부.
+    const forged = Book.register({ ownerId: userAId, title: `위조 ${crypto.randomUUID()}` });
+    await expect(repoB.save(forged)).rejects.toThrow();
+  });
+
   it('책을 제거한다 — 다른 사용자 책은 RLS 로 제거되지 않는다', async () => {
-    const mine = Book.register({ title: `삭제 대상 ${crypto.randomUUID()}` });
+    const mine = Book.register({ ownerId: userAId, title: `삭제 대상 ${crypto.randomUUID()}` });
     await repoA.save(mine);
     await repoA.remove(mine.id);
     expect(await repoA.findById(mine.id)).toBeNull();
 
     // B 가 A 의 책 제거를 시도해도 RLS 로 매칭 0건 → A 의 책은 그대로
-    const aBook = Book.register({ title: `A 전용 ${crypto.randomUUID()}` });
+    const aBook = Book.register({ ownerId: userAId, title: `A 전용 ${crypto.randomUUID()}` });
     await repoA.save(aBook);
     await repoB.remove(aBook.id);
     expect(await repoA.findById(aBook.id)).not.toBeNull();

@@ -13,7 +13,7 @@ async function setupStartedRoom() {
   const ai = new FakeAiDiscussionPartner();
   const books = new InMemoryBookRepository();
   const highlights = new InMemoryHighlightRepository();
-  const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
+  const book = Book.register({ ownerId: 'owner', title: '데미안', author: '헤르만 헤세' });
   await books.save(book);
   const room = await new StartDiscussionUseCase(discussions, ai, books, highlights).execute({
     userId: 'owner',

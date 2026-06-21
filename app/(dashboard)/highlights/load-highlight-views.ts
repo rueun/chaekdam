@@ -33,7 +33,7 @@ export async function loadHighlightViews(
   ]);
   const [highlights, books] = await Promise.all([
     listHighlights.execute(userId, scope, page),
-    listBooks.execute(),
+    listBooks.execute(userId),
   ]);
 
   const bookById = new Map(books.map((b) => [b.id, b]));

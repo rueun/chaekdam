@@ -267,7 +267,9 @@
 
 **읽기 경로 통합(완료)**: 세 Aggregate의 목록 조회 Port에 `userId`를 명시했다 — `HighlightRepository.findAll/findArchived/findByBookId(userId, …)`, `DiscussionRepository.findAll(userId)`, `ReadingSessionRepository.findAll(userId)`. Supabase 어댑터는 `.eq('user_id', userId)`를 RLS 위에 더해(이중 방어), InMemory 어댑터는 각 도메인의 `OwnedBy` Specification으로 필터한다(ReadingSession `OwnedBy`도 이 시점에 소비처가 생겨 추가). 유스케이스(`ListHighlights`/`ListDiscussions`/`GetReadingLog`/`GetBookDetail`)와 진입점이 세션 `userId`를 주입한다. 이로써 RLS 없는 환경에서도 목록/집계가 본인 데이터만 반환함을 유스케이스 단위 테스트로 검증한다(`findById`/`remove`는 mutate 측 `loadOwnedX`가 검증하므로 변경 없음).
 
-**남은 후속**: Book Aggregate 의 ownerId 화(쓰기·읽기 측 동일 패턴).
+**Book 적용(완료 — ADR-027 완결)**: Book 도 동일 패턴으로 마감했다 — `Book.ownerId`(register/restore/withStatus), `lib/domain/book/specs/owned-by.ts`, `loadOwnedBook` 헬퍼. 담기(register 시 ownerId 설정)·상태 변경(setStatus)·제거(remove)는 소유권을 검증하고, 목록(`ListBooks` → `findAll/findByStatus(userId)`)은 어댑터 `.eq('user_id', userId)` + InMemory `OwnedBy` 필터로 읽기 측까지 이중 방어한다. `GetBookDetail` 은 타인 책이면 null(상세 notFound)로 막는다. 이로써 네 Aggregate(Highlight·Discussion·ReadingSession·Book) 전부 쓰기·읽기 양측 소유 범위가 도메인 계약에 명시되어, RLS 없는 백엔드로 이전해도 권한이 유지된다.
+
+**남은 후속**: (성능) `GetBookDetail` 의 discussions/sessions 메모리 필터 → Port `findByBookId(userId, bookId)` 로 DB 필터 이전.
 
 ---
 

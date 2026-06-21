@@ -48,10 +48,12 @@ describe('SupabaseReadingSessionRepository (통합)', () => {
 
     // FK(book_id → books.id) 충족을 위해 사용자별 책을 만든다.
     const bookA = Book.register({
+      ownerId: userAId,
       title: `세션 책 A ${crypto.randomUUID()}`,
       status: BookStatus.READING,
     });
     const bookB = Book.register({
+      ownerId: userBId,
       title: `세션 책 B ${crypto.randomUUID()}`,
       status: BookStatus.READING,
     });

@@ -55,9 +55,9 @@ describe('SupabaseHighlightRepository (통합)', () => {
     // FK 충족용 실제 책 생성
     const bookRepoA = new SupabaseBookRepository(clientA);
     const bookRepoB = new SupabaseBookRepository(clientB);
-    const ba1 = Book.register({ title: 'A 책 1' });
-    const ba2 = Book.register({ title: 'A 책 2' });
-    const bb1 = Book.register({ title: 'B 책 1' });
+    const ba1 = Book.register({ ownerId: userAId, title: 'A 책 1' });
+    const ba2 = Book.register({ ownerId: userAId, title: 'A 책 2' });
+    const bb1 = Book.register({ ownerId: userBId, title: 'B 책 1' });
     await bookRepoA.save(ba1);
     await bookRepoA.save(ba2);
     await bookRepoB.save(bb1);

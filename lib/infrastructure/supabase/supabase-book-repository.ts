@@ -20,11 +20,12 @@ export class SupabaseBookRepository implements BookRepository {
 
   async save(book: Book): Promise<void> {
     // Book 은 가변(상태 전이) — 신규 insert / 기존 update 를 upsert(PK id 충돌) 로 처리.
-    // payload 에 user_id·created_at 을 넣지 않는다: insert 시 DB default(auth.uid()/now()),
-    // update 시 PostgREST 가 payload 컬럼만 SET 하므로 기존 값이 보존된다(RLS 가 본인 행만 허용).
+    // user_id 는 도메인 ownerId 를 권위 있는 값으로 명시(ADR-027). RLS with check(auth.uid()=user_id)
+    // 가 타인 값 위조를 DB 에서 차단해 이중 방어가 된다. created_at 은 payload 에 없어 DB default 보존.
     const { error } = await this.client.from('books').upsert(
       {
         id: book.id,
+        user_id: book.ownerId,
         title: book.title,
         author: book.author,
         status: book.status,
@@ -42,20 +43,24 @@ export class SupabaseBookRepository implements BookRepository {
     return data ? toDomain(data) : null;
   }
 
-  async findAll(): Promise<Book[]> {
+  async findAll(userId: string): Promise<Book[]> {
+    // user_id 명시 필터(ADR-027) — RLS(1차)와 이중 방어.
     const { data, error } = await this.client
       .from('books')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(BOOKS_LIST_LIMIT);
     if (error) throw new Error(`Failed to list books: ${error.message}`);
     return (data ?? []).map(toDomain);
   }
 
-  async findByStatus(status: BookStatus): Promise<Book[]> {
+  async findByStatus(userId: string, status: BookStatus): Promise<Book[]> {
+    // user_id 명시 필터(ADR-027) — RLS(1차)와 이중 방어.
     const { data, error } = await this.client
       .from('books')
       .select('*')
+      .eq('user_id', userId)
       .eq('status', status)
       .order('created_at', { ascending: false })
       .limit(BOOKS_LIST_LIMIT);
@@ -74,6 +79,7 @@ export class SupabaseBookRepository implements BookRepository {
 function toDomain(row: BookRow): Book {
   return Book.restore({
     id: row.id,
+    ownerId: row.user_id,
     title: row.title,
     author: row.author,
     status: toBookStatus(row.status),

@@ -14,7 +14,7 @@ export default async function ReadingPage() {
   const userId = await (await createAuthSession()).getCurrentUserId();
   if (!userId) redirect(ROUTES.AUTH.LOGIN());
 
-  const books = await (await createListBooksUseCase()).execute(BookStatus.READING);
+  const books = await (await createListBooksUseCase()).execute(userId, BookStatus.READING);
   const readingBooks: ReadingBookView[] = books.map((book) => ({
     id: book.id,
     title: book.title,
