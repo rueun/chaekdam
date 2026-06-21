@@ -1,3 +1,4 @@
+import { logError } from '@/lib/logger';
 import { NextResponse, type NextRequest } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/infrastructure/supabase/server-client';
 import { siteUrl } from '@/lib/app-url';
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   if (oauthError) {
     // 사용자가 동의를 거부한 경우 등 — 사유는 로그로만(사용자에겐 일반 메시지).
-    console.error('OAuth callback: provider returned error', oauthError);
+    logError('OAuth callback: provider returned error', oauthError);
     return done(false);
   }
 
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return done(true);
-    console.error('OAuth callback: failed to exchange code', {
+    logError('OAuth callback: failed to exchange code', {
       status: error.status,
       message: error.message,
     });

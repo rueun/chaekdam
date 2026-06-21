@@ -1,5 +1,6 @@
 'use server';
 
+import { logError } from '@/lib/logger';
 import { revalidatePath } from 'next/cache';
 import {
   createAuthSession,
@@ -28,7 +29,7 @@ export async function updateProfile(input: {
     const useCase = await createUpdateUserProfileUseCase();
     await useCase.execute(parsed.data); // bio 는 스키마에서 빈값→null 정규화됨
   } catch (error) {
-    console.error('Failed to update profile', error);
+    logError('Failed to update profile', error);
     return { ok: false, error: '프로필 저장에 실패했어요.' };
   }
 

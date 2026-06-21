@@ -1,5 +1,6 @@
 'use server';
 
+import { logError } from '@/lib/logger';
 import { revalidatePath } from 'next/cache';
 import {
   createAddBookToShelfUseCase,
@@ -41,7 +42,8 @@ export async function addBook(input: AddBookInput): Promise<AddBookResult> {
     revalidatePath(ROUTES.LIBRARY());
     revalidatePath(ROUTES.WISHLIST());
     return { ok: true, bookId };
-  } catch {
+  } catch (error) {
+    logError('Failed to add book', error);
     return { ok: false, error: '담기에 실패했어요. 잠시 후 다시 시도해 주세요.' };
   }
 }
@@ -65,7 +67,7 @@ export async function searchBooks(query: string): Promise<SearchBooksResult> {
     const results = await useCase.execute(trimmed);
     return { ok: true, results };
   } catch (error) {
-    console.error('Failed to search books', error);
+    logError('Failed to search books', error);
     return { ok: false, error: '검색에 실패했어요. 잠시 후 다시 시도해 주세요.' };
   }
 }

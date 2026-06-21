@@ -269,7 +269,11 @@
 
 **Book 적용(완료 — ADR-027 완결)**: Book 도 동일 패턴으로 마감했다 — `Book.ownerId`(register/restore/withStatus), `lib/domain/book/specs/owned-by.ts`, `loadOwnedBook` 헬퍼. 담기(register 시 ownerId 설정)·상태 변경(setStatus)·제거(remove)는 소유권을 검증하고, 목록(`ListBooks` → `findAll/findByStatus(userId)`)은 어댑터 `.eq('user_id', userId)` + InMemory `OwnedBy` 필터로 읽기 측까지 이중 방어한다. `GetBookDetail` 은 타인 책이면 null(상세 notFound)로 막는다. 이로써 네 Aggregate(Highlight·Discussion·ReadingSession·Book) 전부 쓰기·읽기 양측 소유 범위가 도메인 계약에 명시되어, RLS 없는 백엔드로 이전해도 권한이 유지된다.
 
-**남은 후속**: (성능) `GetBookDetail` 의 discussions/sessions 메모리 필터 → Port `findByBookId(userId, bookId)` 로 DB 필터 이전.
+**후속 하드닝(완료)**:
+
+- (성능) `GetBookDetail` 의 discussions/sessions 메모리 필터를 제거하고 Port `findByBookId(userId, bookId)`(Discussion·ReadingSession 추가)로 DB 단위 필터한다.
+- (방어 심화) `remove` 를 `remove(id, userId)` 로 좁혀 어댑터가 `.eq('id').eq('user_id')` 로 매칭한다(Highlight·Book). `loadOwnedX`(도메인)+RLS+어댑터 필터의 3중 방어.
+- (정리) 흩어진 `console.error` 를 `lib/logger.ts` 의 `logError` 단일 seam 으로 일원화(후일 pino·Sentry 교체 지점).
 
 ---
 

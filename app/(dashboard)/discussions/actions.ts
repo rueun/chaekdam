@@ -1,5 +1,6 @@
 'use server';
 
+import { logError } from '@/lib/logger';
 import { revalidatePath } from 'next/cache';
 import { createAuthSession, createStartDiscussionUseCase } from '@/lib/infrastructure/di-container';
 import type { PersonaKey } from '@/lib/domain/persona/persona';
@@ -48,7 +49,7 @@ export async function startDiscussion(input: {
       messages: room.messages.map(toMessageView),
     };
   } catch (error) {
-    console.error('Failed to start discussion', error);
+    logError('Failed to start discussion', error);
     return { ok: false, error: toUserError(error) };
   }
 }

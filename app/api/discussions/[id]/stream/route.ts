@@ -1,3 +1,4 @@
+import { logError } from '@/lib/logger';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import {
@@ -56,7 +57,7 @@ export async function POST(
   try {
     first = await generator.next();
   } catch (error) {
-    console.error('Discussion stream failed to start', error);
+    logError('Discussion stream failed to start', error);
     return NextResponse.json(
       { error: 'AI 응답에 실패했어요. 잠시 후 다시 시도해 주세요.' },
       { status: errorStatus(error) },
@@ -74,7 +75,7 @@ export async function POST(
         controller.close();
       } catch (error) {
         // 스트림 도중 실패 — 유스케이스가 저장하지 않으므로 부분 응답은 버려진다(클라가 롤백).
-        console.error('Discussion stream failed mid-way', error);
+        logError('Discussion stream failed mid-way', error);
         controller.error(error);
       }
     },

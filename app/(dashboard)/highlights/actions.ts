@@ -1,5 +1,6 @@
 'use server';
 
+import { logError } from '@/lib/logger';
 import { revalidatePath } from 'next/cache';
 import {
   createAuthSession,
@@ -83,7 +84,8 @@ export async function captureHighlight(
     revalidatePath(ROUTES.HIGHLIGHTS());
     return { ok: true };
   } catch (error) {
-    // 도메인 불변식 위반(빈 본문 등)은 사용자 메시지로, 그 외는 일반 실패로
+    // 도메인 불변식 위반(빈 본문 등)은 사용자 메시지로, 그 외(인프라·AI 오류)는 로깅 후 일반 실패로
+    if (!(error instanceof DomainError)) logError('Failed to capture highlight', error);
     return {
       ok: false,
       error: error instanceof DomainError ? '문장을 확인해 주세요.' : '저장에 실패했어요.',
@@ -135,6 +137,7 @@ export async function editHighlight(input: {
     revalidatePath(ROUTES.DASHBOARD());
     return { ok: true };
   } catch (error) {
+    if (!(error instanceof DomainError)) logError('Failed to edit highlight', error);
     return {
       ok: false,
       error: error instanceof DomainError ? '문장을 확인해 주세요.' : '수정에 실패했어요.',
@@ -160,6 +163,7 @@ export async function moveHighlight(input: {
     revalidatePath(ROUTES.DASHBOARD());
     return { ok: true };
   } catch (error) {
+    if (!(error instanceof DomainError)) logError('Failed to move highlight', error);
     return {
       ok: false,
       error: error instanceof DomainError ? '옮길 책을 확인해 주세요.' : '이동에 실패했어요.',
@@ -184,7 +188,7 @@ export async function pinHighlight(
     revalidatePath(ROUTES.DASHBOARD());
     return { ok: true };
   } catch (error) {
-    console.error('Failed to pin highlight', error);
+    logError('Failed to pin highlight', error);
     return { ok: false, error: '잠시 후 다시 시도해 주세요.' };
   }
 }
@@ -206,7 +210,7 @@ export async function archiveHighlight(
     revalidatePath(ROUTES.DASHBOARD());
     return { ok: true };
   } catch (error) {
-    console.error('Failed to archive highlight', error);
+    logError('Failed to archive highlight', error);
     return { ok: false, error: '잠시 후 다시 시도해 주세요.' };
   }
 }
@@ -232,7 +236,7 @@ export async function extractHighlightFromImage(dataUrl: string): Promise<Extrac
     const text = await useCase.execute({ base64: parsed.base64, mediaType: parsed.mediaType });
     return { ok: true, text };
   } catch (error) {
-    console.error('Failed to extract highlight from image', error);
+    logError('Failed to extract highlight from image', error);
     return { ok: false, error: '구절 추출에 실패했어요. 직접 입력해 주세요.' };
   }
 }
@@ -252,7 +256,7 @@ export async function deleteHighlight(highlightId: string): Promise<DeleteHighli
     revalidatePath(ROUTES.DASHBOARD());
     return { ok: true };
   } catch (error) {
-    console.error('Failed to delete highlight', error);
+    logError('Failed to delete highlight', error);
     return { ok: false, error: '삭제에 실패했어요. 잠시 후 다시 시도해 주세요.' };
   }
 }
