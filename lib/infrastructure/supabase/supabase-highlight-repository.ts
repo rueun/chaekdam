@@ -102,9 +102,13 @@ export class SupabaseHighlightRepository implements HighlightRepository {
     return (data ?? []).map(toDomain);
   }
 
-  async remove(id: string): Promise<void> {
-    // RLS 가 본인 행만 매칭한다 — 타인 한 줄은 매칭 0건이라 영향 없음.
-    const { error } = await this.client.from('highlights').delete().eq('id', id);
+  async remove(id: string, userId: string): Promise<void> {
+    // id + user_id 명시 매칭(ADR-027) — RLS 와 이중 방어. 타인 한 줄은 매칭 0건.
+    const { error } = await this.client
+      .from('highlights')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
     if (error) throw new Error(`Failed to delete highlight: ${error.message}`);
   }
 }

@@ -25,6 +25,6 @@ export interface HighlightRepository {
   findAll(userId: string, page?: HighlightPage): Promise<Highlight[]>;
   /** userId 소유의 보관한 한 줄 목록을 최신순으로 조회한다(보관함). */
   findArchived(userId: string, page?: HighlightPage): Promise<Highlight[]>;
-  /** 한 줄을 삭제한다(소유 범위는 Adapter/RLS 가 보장). */
-  remove(id: string): Promise<void>;
+  /** userId 소유의 한 줄만 삭제한다(ADR-027 — RLS 와 이중 방어). */
+  remove(id: string, userId: string): Promise<void>;
 }

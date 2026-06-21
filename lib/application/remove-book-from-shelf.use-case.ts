@@ -10,6 +10,6 @@ export class RemoveBookFromShelfUseCase {
 
   async execute(bookId: string, userId: string): Promise<void> {
     await loadOwnedBook(this.books, bookId, userId);
-    await this.books.remove(bookId);
+    await this.books.remove(bookId, userId);
   }
 }

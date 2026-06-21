@@ -68,9 +68,9 @@ export class SupabaseBookRepository implements BookRepository {
     return (data ?? []).map(toDomain);
   }
 
-  async remove(id: string): Promise<void> {
-    // RLS 가 본인 책만 삭제하도록 보장(다른 사용자 행이면 매칭 0건).
-    const { error } = await this.client.from('books').delete().eq('id', id);
+  async remove(id: string, userId: string): Promise<void> {
+    // id + user_id 명시 매칭(ADR-027) — RLS 와 이중 방어. 타인 책은 매칭 0건.
+    const { error } = await this.client.from('books').delete().eq('id', id).eq('user_id', userId);
     if (error) throw new Error(`Failed to remove book: ${error.message}`);
   }
 }

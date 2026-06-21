@@ -111,13 +111,13 @@ describe('SupabaseBookRepository (통합)', () => {
   it('책을 제거한다 — 다른 사용자 책은 RLS 로 제거되지 않는다', async () => {
     const mine = Book.register({ ownerId: userAId, title: `삭제 대상 ${crypto.randomUUID()}` });
     await repoA.save(mine);
-    await repoA.remove(mine.id);
+    await repoA.remove(mine.id, userAId);
     expect(await repoA.findById(mine.id)).toBeNull();
 
     // B 가 A 의 책 제거를 시도해도 RLS 로 매칭 0건 → A 의 책은 그대로
     const aBook = Book.register({ ownerId: userAId, title: `A 전용 ${crypto.randomUUID()}` });
     await repoA.save(aBook);
-    await repoB.remove(aBook.id);
+    await repoB.remove(aBook.id, userBId);
     expect(await repoA.findById(aBook.id)).not.toBeNull();
   });
 });

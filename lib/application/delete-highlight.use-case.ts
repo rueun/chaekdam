@@ -10,6 +10,6 @@ export class DeleteHighlightUseCase {
 
   async execute(highlightId: string, userId: string): Promise<void> {
     await loadOwnedHighlight(this.highlights, highlightId, userId);
-    await this.highlights.remove(highlightId);
+    await this.highlights.remove(highlightId, userId);
   }
 }

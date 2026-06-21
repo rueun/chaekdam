@@ -24,8 +24,10 @@ export class InMemoryBookRepository implements BookRepository {
   findByStatus(userId: string, status: BookStatus): Promise<Book[]> {
     return Promise.resolve(this.ownedBy(userId).filter((b) => b.status === status));
   }
-  remove(id: string): Promise<void> {
-    this.items.delete(id);
+  remove(id: string, userId: string): Promise<void> {
+    // 소유분만 삭제(RLS 없는 Fake 에서 소유 매칭 재현, ADR-027).
+    const found = this.items.get(id);
+    if (found && new OwnedBy(userId).isSatisfiedBy(found)) this.items.delete(id);
     return Promise.resolve();
   }
 
