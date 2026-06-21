@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { HighlightCard, type HighlightView } from './highlight-card';
+import { HighlightCard } from './highlight-card';
+import type { HighlightView } from './highlight-view';
 import { loadMoreHighlights } from '@/app/(dashboard)/highlights/actions';
 import type { HighlightScope } from '@/lib/application/list-highlights.use-case';
 

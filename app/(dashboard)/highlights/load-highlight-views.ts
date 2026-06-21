@@ -4,7 +4,7 @@ import {
   createListHighlightsUseCase,
 } from '@/lib/infrastructure/di-container';
 import type { HighlightScope } from '@/lib/application/list-highlights.use-case';
-import type { HighlightView } from '@/components/feature/highlight/highlight-card';
+import type { HighlightView } from '@/components/feature/highlight/highlight-view';
 
 /** '더보기' 한 페이지 크기(ADR-025). */
 export const HIGHLIGHTS_PAGE_SIZE = 30;

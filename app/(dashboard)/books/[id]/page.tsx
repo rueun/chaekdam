@@ -6,7 +6,7 @@ import {
   type BookDetailRoom,
   type BookDetailSession,
 } from '@/components/feature/book-detail/book-detail';
-import type { HighlightView } from '@/components/feature/highlight/highlight-card';
+import type { HighlightView } from '@/components/feature/highlight/highlight-view';
 import { toBookStatusKey } from '@/components/feature/library/book-status-map';
 import { createAuthSession, createGetBookDetailUseCase } from '@/lib/infrastructure/di-container';
 import type { BookDetailResult } from '@/lib/application/get-book-detail.use-case';
@@ -38,6 +38,10 @@ function toBookDetailView(detail: BookDetailResult): BookDetailView {
     book: book.title,
     page: h.page ?? undefined,
     dateLabel: formatDateLabel(h.createdAt),
+    photoUrl: h.photoUrl ?? undefined,
+    pinned: h.pinned,
+    archived: h.archived,
+    tags: [...h.tags],
   }));
 
   const rooms: BookDetailRoom[] = discussions.map((d) => ({

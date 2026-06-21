@@ -16,7 +16,7 @@ import {
 import { NoteSource } from '@/lib/domain/highlight/note-source';
 import { DomainError } from '@/lib/domain/shared/errors';
 import type { HighlightScope } from '@/lib/application/list-highlights.use-case';
-import type { HighlightView } from '@/components/feature/highlight/highlight-card';
+import type { HighlightView } from '@/components/feature/highlight/highlight-view';
 import { HIGHLIGHTS_PAGE_SIZE, loadHighlightViews } from './load-highlight-views';
 import { ROUTES } from '@/lib/router/routes';
 
