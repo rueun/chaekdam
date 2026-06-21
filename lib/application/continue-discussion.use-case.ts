@@ -1,14 +1,16 @@
 import type { Discussion } from '@/lib/domain/discussion/discussion';
 import { Persona } from '@/lib/domain/persona/persona';
-import { BookNotFoundError, DiscussionNotFoundError } from '@/lib/domain/shared/errors';
+import { BookNotFoundError } from '@/lib/domain/shared/errors';
 import type { DiscussionRepository } from '@/lib/domain/ports/discussion-repository';
 import type { AiDiscussionPartner } from '@/lib/domain/ports/ai-discussion-partner';
 import type { BookRepository } from '@/lib/domain/ports/book-repository';
 import type { HighlightRepository } from '@/lib/domain/ports/highlight-repository';
+import { loadOwnedDiscussion } from './discussion-ownership';
 
-/** 토론 이어가기 명령 — 방 + 사용자 발화. */
+/** 토론 이어가기 명령 — 방 + 사용자 발화. userId 로 소유권을 검증한다(ADR-027). */
 export interface ContinueDiscussionCommand {
   discussionId: string;
+  userId: string;
   content: string;
 }
 
@@ -27,8 +29,8 @@ export class ContinueDiscussionUseCase {
   ) {}
 
   async execute(command: ContinueDiscussionCommand): Promise<Discussion> {
-    const room = await this.discussions.findById(command.discussionId);
-    if (!room) throw new DiscussionNotFoundError(command.discussionId);
+    // 소유권 검증(ADR-027) — 없으면 NotFound, 타인 방이면 AccessDenied.
+    const room = await loadOwnedDiscussion(this.discussions, command.discussionId, command.userId);
 
     // 책·시드 한 줄은 서로 독립이라 병렬 조회.
     const [book, seedHighlight] = await Promise.all([
@@ -57,8 +59,8 @@ export class ContinueDiscussionUseCase {
    * 스트림 중단·실패 시 저장하지 않으므로 부분 응답이 남지 않는다(사용자 재시도 가능).
    */
   async *executeStreaming(command: ContinueDiscussionCommand): AsyncGenerator<string> {
-    const room = await this.discussions.findById(command.discussionId);
-    if (!room) throw new DiscussionNotFoundError(command.discussionId);
+    // 소유권 검증(ADR-027) — 스트림 시작 전에 NotFound/AccessDenied 를 던진다.
+    const room = await loadOwnedDiscussion(this.discussions, command.discussionId, command.userId);
 
     const [book, seedHighlight] = await Promise.all([
       this.books.findById(room.bookId),

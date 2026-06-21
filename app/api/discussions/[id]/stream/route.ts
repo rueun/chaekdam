@@ -4,7 +4,11 @@ import {
   createAuthSession,
   createContinueDiscussionUseCase,
 } from '@/lib/infrastructure/di-container';
-import { BookNotFoundError, DiscussionNotFoundError } from '@/lib/domain/shared/errors';
+import {
+  BookNotFoundError,
+  DiscussionAccessDeniedError,
+  DiscussionNotFoundError,
+} from '@/lib/domain/shared/errors';
 
 /**
  * 토론 이어가기(AI 응답 스트리밍) Route Handler — ADR-017.
@@ -16,7 +20,14 @@ const bodySchema = z.object({ content: z.string().trim().min(1).max(2000) });
 
 /** 도메인 오류 → HTTP 상태(스트림 시작 전 초기 오류 한정). */
 function errorStatus(error: unknown): number {
-  if (error instanceof DiscussionNotFoundError || error instanceof BookNotFoundError) return 404;
+  // 타인 방(AccessDenied)도 404 로 응답해 리소스 존재 여부를 노출하지 않는다.
+  if (
+    error instanceof DiscussionNotFoundError ||
+    error instanceof DiscussionAccessDeniedError ||
+    error instanceof BookNotFoundError
+  ) {
+    return 404;
+  }
   return 502; // AI 호출 실패·빈 응답 등 상류 오류
 }
 
@@ -34,7 +45,11 @@ export async function POST(
   }
 
   const useCase = await createContinueDiscussionUseCase();
-  const generator = useCase.executeStreaming({ discussionId: id, content: parsed.data.content });
+  const generator = useCase.executeStreaming({
+    discussionId: id,
+    userId,
+    content: parsed.data.content,
+  });
 
   // 첫 델타를 먼저 당겨 초기 오류(없는 방·AI 실패)를 200 응답 이전에 잡는다.
   let first: IteratorResult<string>;

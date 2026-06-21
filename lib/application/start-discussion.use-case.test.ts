@@ -23,7 +23,11 @@ describe('StartDiscussionUseCase', () => {
     const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
     await books.save(book);
 
-    const room = await useCase.execute({ bookId: book.id, personaKey: 'socrates' });
+    const room = await useCase.execute({
+      userId: 'owner',
+      bookId: book.id,
+      personaKey: 'socrates',
+    });
 
     expect(room.messageCount).toBe(1);
     expect(room.lastMessage?.role).toBe('AI');
@@ -39,6 +43,7 @@ describe('StartDiscussionUseCase', () => {
     await highlights.save(highlight);
 
     const room = await useCase.execute({
+      userId: 'owner',
       bookId: book.id,
       personaKey: 'critic',
       seedHighlightId: highlight.id,
@@ -55,7 +60,7 @@ describe('StartDiscussionUseCase', () => {
     const book = Book.register({ title: '데미안' });
     await books.save(book);
 
-    const room = await useCase.execute({ bookId: book.id, personaKey: 'friend' });
+    const room = await useCase.execute({ userId: 'owner', bookId: book.id, personaKey: 'friend' });
     const found = await discussions.findById(room.id);
 
     expect(found?.messageCount).toBe(1);
@@ -63,9 +68,9 @@ describe('StartDiscussionUseCase', () => {
 
   it('없는 책으로는 시작할 수 없다', async () => {
     const { useCase } = makeUseCase();
-    await expect(useCase.execute({ bookId: 'nope', personaKey: 'socrates' })).rejects.toThrow(
-      BookNotFoundError,
-    );
+    await expect(
+      useCase.execute({ userId: 'owner', bookId: 'nope', personaKey: 'socrates' }),
+    ).rejects.toThrow(BookNotFoundError);
   });
 
   it("'작가 본인' 페르소나는 사망 작가 책에서 시작할 수 있다", async () => {
@@ -73,7 +78,7 @@ describe('StartDiscussionUseCase', () => {
     const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
     await books.save(book);
 
-    const room = await useCase.execute({ bookId: book.id, personaKey: 'author' });
+    const room = await useCase.execute({ userId: 'owner', bookId: book.id, personaKey: 'author' });
     expect(room.personaKey).toBe('author');
     expect(room.messageCount).toBe(1);
   });
@@ -83,9 +88,9 @@ describe('StartDiscussionUseCase', () => {
     const book = Book.register({ title: '일곱 해의 마지막', author: '김연수' });
     await books.save(book);
 
-    await expect(useCase.execute({ bookId: book.id, personaKey: 'author' })).rejects.toThrow(
-      AuthorPersonaUnavailableError,
-    );
+    await expect(
+      useCase.execute({ userId: 'owner', bookId: book.id, personaKey: 'author' }),
+    ).rejects.toThrow(AuthorPersonaUnavailableError);
   });
 
   it('지정한 시드 한 줄이 없으면 시드 없이 진행한다(FK 안전)', async () => {
@@ -94,6 +99,7 @@ describe('StartDiscussionUseCase', () => {
     await books.save(book);
 
     const room = await useCase.execute({
+      userId: 'owner',
       bookId: book.id,
       personaKey: 'socrates',
       seedHighlightId: 'deleted-highlight',

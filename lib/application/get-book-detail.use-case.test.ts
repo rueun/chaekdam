@@ -29,10 +29,14 @@ describe('GetBookDetailUseCase', () => {
     await highlights.save(Highlight.fromText('owner', book.id, '이 책의 한 줄'));
     await highlights.save(Highlight.fromText('owner', other.id, '다른 책 한 줄'));
     await discussions.save(
-      Discussion.start({ bookId: book.id, personaKey: 'socrates' }).addAiMessage('방'),
+      Discussion.start({ ownerId: 'owner', bookId: book.id, personaKey: 'socrates' }).addAiMessage(
+        '방',
+      ),
     );
     await discussions.save(
-      Discussion.start({ bookId: other.id, personaKey: 'critic' }).addAiMessage('딴방'),
+      Discussion.start({ ownerId: 'owner', bookId: other.id, personaKey: 'critic' }).addAiMessage(
+        '딴방',
+      ),
     );
     await sessions.save(ReadingSession.log({ bookId: book.id, minutes: 30 }));
     await sessions.save(ReadingSession.log({ bookId: other.id, minutes: 10 }));

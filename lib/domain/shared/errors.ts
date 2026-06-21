@@ -121,3 +121,10 @@ export class DiscussionNotFoundError extends DomainError {
     super(`Discussion not found: ${discussionId}`);
   }
 }
+
+/** 토론에 대한 권한 없음(소유자 아님) — 권한 이중 방어(ADR-027) */
+export class DiscussionAccessDeniedError extends DomainError {
+  constructor(discussionId: string) {
+    super(`Discussion access denied: ${discussionId}`);
+  }
+}

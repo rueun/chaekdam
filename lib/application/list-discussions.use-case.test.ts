@@ -7,10 +7,14 @@ describe('ListDiscussionsUseCase', () => {
   it('저장된 토론을 최신순으로 반환한다', async () => {
     const repo = new InMemoryDiscussionRepository();
     await repo.save(
-      Discussion.start({ bookId: 'b1', personaKey: 'socrates' }).addAiMessage('첫 방'),
+      Discussion.start({ ownerId: 'owner', bookId: 'b1', personaKey: 'socrates' }).addAiMessage(
+        '첫 방',
+      ),
     );
     await repo.save(
-      Discussion.start({ bookId: 'b2', personaKey: 'critic' }).addAiMessage('둘째 방'),
+      Discussion.start({ ownerId: 'owner', bookId: 'b2', personaKey: 'critic' }).addAiMessage(
+        '둘째 방',
+      ),
     );
 
     const all = await new ListDiscussionsUseCase(repo).execute();

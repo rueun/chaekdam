@@ -16,6 +16,7 @@ export const DISCUSSION_TITLE_MAX_LENGTH = 40;
 export class Discussion {
   private constructor(
     readonly id: string,
+    readonly ownerId: string,
     readonly bookId: string,
     readonly personaKey: PersonaKey,
     readonly seedHighlightId: string | null,
@@ -30,6 +31,7 @@ export class Discussion {
 
   /** 새 토론 방을 연다. 가용하지 않은 페르소나면 거부한다(작가 본인 보류 등, ADR-015). */
   static start(props: {
+    ownerId: string;
     bookId: string;
     personaKey: PersonaKey;
     seedHighlightId?: string | null;
@@ -40,6 +42,7 @@ export class Discussion {
     }
     return new Discussion(
       generateId(),
+      props.ownerId,
       props.bookId,
       props.personaKey,
       props.seedHighlightId ?? null,
@@ -66,6 +69,7 @@ export class Discussion {
   private append(message: Message): Discussion {
     return new Discussion(
       this.id,
+      this.ownerId,
       this.bookId,
       this.personaKey,
       this.seedHighlightId,
@@ -78,6 +82,7 @@ export class Discussion {
   /** 저장소에서 읽어온 상태로 복원한다(Repository 전용). 저장된 값을 신뢰한다. */
   static restore(props: {
     id: string;
+    ownerId: string;
     bookId: string;
     personaKey: PersonaKey;
     seedHighlightId: string | null;
@@ -87,6 +92,7 @@ export class Discussion {
   }): Discussion {
     return new Discussion(
       props.id,
+      props.ownerId,
       props.bookId,
       props.personaKey,
       props.seedHighlightId,

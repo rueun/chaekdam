@@ -39,7 +39,7 @@ export async function startDiscussion(input: {
 
   try {
     const useCase = await createStartDiscussionUseCase();
-    const room = await useCase.execute(input);
+    const room = await useCase.execute({ ...input, userId });
     revalidatePath(ROUTES.DISCUSSIONS.LIST());
     return {
       ok: true,

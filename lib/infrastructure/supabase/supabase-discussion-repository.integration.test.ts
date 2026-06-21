@@ -70,6 +70,7 @@ describe('SupabaseDiscussionRepository (통합)', () => {
 
   it('토론을 메시지·시드와 함께 저장하고 조회한다', async () => {
     const room = Discussion.start({
+      ownerId: userAId,
       bookId: bookAId,
       personaKey: 'socrates',
       seedHighlightId,
@@ -81,6 +82,7 @@ describe('SupabaseDiscussionRepository (통합)', () => {
 
     const found = await repoA.findById(room.id);
     expect(found).not.toBeNull();
+    expect(found!.ownerId).toBe(userAId); // user_id ↔ ownerId 왕복(ADR-027)
     expect(found!.bookId).toBe(bookAId);
     expect(found!.personaKey).toBe('socrates');
     expect(found!.seedHighlightId).toBe(seedHighlightId);
@@ -93,9 +95,11 @@ describe('SupabaseDiscussionRepository (통합)', () => {
   });
 
   it('이어가기(재저장)는 기존 발화를 재기록하지 않고 새 발화만 더한다', async () => {
-    const room = Discussion.start({ bookId: bookAId, personaKey: 'critic' }).addAiMessage(
-      '여는 말',
-    );
+    const room = Discussion.start({
+      ownerId: userAId,
+      bookId: bookAId,
+      personaKey: 'critic',
+    }).addAiMessage('여는 말');
     await repoA.save(room);
 
     const continued = (await repoA.findById(room.id))!
@@ -108,13 +112,17 @@ describe('SupabaseDiscussionRepository (통합)', () => {
   });
 
   it('RLS — 다른 사용자의 토론은 보이지 않는다', async () => {
-    const mine = Discussion.start({ bookId: bookAId, personaKey: 'friend' }).addAiMessage(
-      'A 의 방',
-    );
+    const mine = Discussion.start({
+      ownerId: userAId,
+      bookId: bookAId,
+      personaKey: 'friend',
+    }).addAiMessage('A 의 방');
     await repoA.save(mine);
-    const theirs = Discussion.start({ bookId: bookBId, personaKey: 'friend' }).addAiMessage(
-      'B 의 방',
-    );
+    const theirs = Discussion.start({
+      ownerId: userBId,
+      bookId: bookBId,
+      personaKey: 'friend',
+    }).addAiMessage('B 의 방');
     await repoB.save(theirs);
 
     const allB = await repoB.findAll();
@@ -128,7 +136,11 @@ describe('SupabaseDiscussionRepository (통합)', () => {
     const clientA = await signInClient(emailA, password);
     const book = Book.register({ title: `삭제용 ${crypto.randomUUID()}` });
     await new SupabaseBookRepository(clientA).save(book);
-    const room = Discussion.start({ bookId: book.id, personaKey: 'socrates' }).addAiMessage('방');
+    const room = Discussion.start({
+      ownerId: userAId,
+      bookId: book.id,
+      personaKey: 'socrates',
+    }).addAiMessage('방');
     await repoA.save(room);
     expect(await repoA.findById(room.id)).not.toBeNull();
 
@@ -142,7 +154,11 @@ describe('SupabaseDiscussionRepository (통합)', () => {
 
   it('DB check 제약 — 잘못된 role 은 거부된다(이중 방어)', async () => {
     const clientA = await signInClient(emailA, password);
-    const room = Discussion.start({ bookId: bookAId, personaKey: 'socrates' }).addAiMessage('방');
+    const room = Discussion.start({
+      ownerId: userAId,
+      bookId: bookAId,
+      personaKey: 'socrates',
+    }).addAiMessage('방');
     await repoA.save(room);
     const { error } = await clientA
       .from('messages')
@@ -152,7 +168,11 @@ describe('SupabaseDiscussionRepository (통합)', () => {
 
   it('RLS — 타인 방에는 발화를 삽입할 수 없다', async () => {
     // A 의 방에 B 가 직접 메시지 insert 시도 → discussion 소유 검증으로 거부.
-    const mine = Discussion.start({ bookId: bookAId, personaKey: 'socrates' }).addAiMessage('방');
+    const mine = Discussion.start({
+      ownerId: userAId,
+      bookId: bookAId,
+      personaKey: 'socrates',
+    }).addAiMessage('방');
     await repoA.save(mine);
     const clientB = await signInClient(emailB, password);
     const { error } = await clientB

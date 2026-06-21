@@ -21,10 +21,12 @@ export class SupabaseDiscussionRepository implements DiscussionRepository {
   constructor(private readonly client: SupabaseClient<Database>) {}
 
   async save(discussion: Discussion): Promise<void> {
-    // 방을 먼저 upsert(메시지 FK 충족). user_id 는 DB default auth.uid() 가 채운다(RLS).
+    // 방을 먼저 upsert(메시지 FK 충족). user_id 는 도메인 ownerId 를 권위 있는 값으로 명시(ADR-027).
+    // RLS with check(auth.uid()=user_id) 가 타인 값 위조를 DB 에서 차단해 이중 방어가 된다.
     const { error: roomError } = await this.client.from('discussions').upsert(
       {
         id: discussion.id,
+        user_id: discussion.ownerId,
         book_id: discussion.bookId,
         persona_key: discussion.personaKey,
         seed_highlight_id: discussion.seedHighlightId,
@@ -36,11 +38,12 @@ export class SupabaseDiscussionRepository implements DiscussionRepository {
 
     if (discussion.messages.length === 0) return;
     // 메시지는 불변 + 고유 id — id 충돌은 무시(insert-or-skip)해 기존 발화 재기록을 피한다.
-    // TODO(perf): 재저장 시 전체 메시지를 페이로드로 보낸다(DB 쓰기는 skip). 대화가 길어지면
-    // Port 에 appendMessages(신규만) 분리를 검토(현재 MVP 규모에선 무방).
+    // user_id 는 방과 같은 소유자(비정규화). TODO(perf): 재저장 시 전체 메시지를 페이로드로 보낸다
+    // (DB 쓰기는 skip). 대화가 길어지면 Port 에 appendMessages(신규만) 분리를 검토(현재 MVP 무방).
     const { error: msgError } = await this.client.from('messages').upsert(
       discussion.messages.map((m) => ({
         id: m.id,
+        user_id: discussion.ownerId,
         discussion_id: m.discussionId,
         role: m.role,
         content: m.content,
@@ -104,6 +107,7 @@ export class SupabaseDiscussionRepository implements DiscussionRepository {
 function toDomain(room: DiscussionRow, messageRows: MessageRow[]): Discussion {
   return Discussion.restore({
     id: room.id,
+    ownerId: room.user_id,
     bookId: room.book_id,
     personaKey: toPersonaKey(room.persona_key),
     seedHighlightId: room.seed_highlight_id,

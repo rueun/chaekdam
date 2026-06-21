@@ -6,7 +6,7 @@ import { InMemoryBookRepository } from './test-support/in-memory-book-repository
 import { InMemoryHighlightRepository } from './test-support/in-memory-highlight-repository';
 import { FakeAiDiscussionPartner } from './test-support/fake-ai-discussion-partner';
 import { Book } from '@/lib/domain/book/book';
-import { DiscussionNotFoundError } from '@/lib/domain/shared/errors';
+import { DiscussionAccessDeniedError, DiscussionNotFoundError } from '@/lib/domain/shared/errors';
 
 async function setupStartedRoom() {
   const discussions = new InMemoryDiscussionRepository();
@@ -16,6 +16,7 @@ async function setupStartedRoom() {
   const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
   await books.save(book);
   const room = await new StartDiscussionUseCase(discussions, ai, books, highlights).execute({
+    userId: 'owner',
     bookId: book.id,
     personaKey: 'socrates',
   });
@@ -28,6 +29,7 @@ describe('ContinueDiscussionUseCase', () => {
     const { continueUseCase, room } = await setupStartedRoom();
 
     const updated = await continueUseCase.execute({
+      userId: 'owner',
       discussionId: room.id,
       content: '저는 이 문장이 두렵게 느껴졌어요',
     });
@@ -42,7 +44,11 @@ describe('ContinueDiscussionUseCase', () => {
   it('AI 에 사용자 발화까지 포함한 이력을 넘긴다', async () => {
     const { continueUseCase, ai, room } = await setupStartedRoom();
 
-    await continueUseCase.execute({ discussionId: room.id, content: '안녕하세요' });
+    await continueUseCase.execute({
+      userId: 'owner',
+      discussionId: room.id,
+      content: '안녕하세요',
+    });
 
     // 여는 말(AI) + 방금 사용자 발화 = 2턴이 컨텍스트로 전달됨
     expect(ai.lastContext?.history).toHaveLength(2);
@@ -52,7 +58,7 @@ describe('ContinueDiscussionUseCase', () => {
   it('변경이 저장되어 다시 조회된다', async () => {
     const { continueUseCase, discussions, room } = await setupStartedRoom();
 
-    await continueUseCase.execute({ discussionId: room.id, content: '한 번 더' });
+    await continueUseCase.execute({ userId: 'owner', discussionId: room.id, content: '한 번 더' });
     const found = await discussions.findById(room.id);
 
     expect(found?.messageCount).toBe(3);
@@ -60,9 +66,19 @@ describe('ContinueDiscussionUseCase', () => {
 
   it('없는 토론은 이어갈 수 없다', async () => {
     const { continueUseCase } = await setupStartedRoom();
-    await expect(continueUseCase.execute({ discussionId: 'nope', content: '...' })).rejects.toThrow(
-      DiscussionNotFoundError,
-    );
+    await expect(
+      continueUseCase.execute({ userId: 'owner', discussionId: 'nope', content: '...' }),
+    ).rejects.toThrow(DiscussionNotFoundError);
+  });
+
+  it('타인의 토론은 이어갈 수 없다(ADR-027)', async () => {
+    const { continueUseCase, discussions, room } = await setupStartedRoom();
+    await expect(
+      continueUseCase.execute({ userId: 'intruder', discussionId: room.id, content: '끼어들기' }),
+    ).rejects.toThrow(DiscussionAccessDeniedError);
+
+    // 타인 발화가 더해지지 않았다(여는 말 1개 그대로).
+    expect((await discussions.findById(room.id))?.messageCount).toBe(1);
   });
 
   describe('executeStreaming', () => {
@@ -71,6 +87,7 @@ describe('ContinueDiscussionUseCase', () => {
 
       const deltas: string[] = [];
       for await (const delta of continueUseCase.executeStreaming({
+        userId: 'owner',
         discussionId: room.id,
         content: '한 줄을 곱씹어 봤어요',
       })) {
@@ -93,6 +110,7 @@ describe('ContinueDiscussionUseCase', () => {
       const { continueUseCase } = await setupStartedRoom();
       const iterate = async () => {
         for await (const chunk of continueUseCase.executeStreaming({
+          userId: 'owner',
           discussionId: 'nope',
           content: '...',
         })) {
@@ -100,6 +118,20 @@ describe('ContinueDiscussionUseCase', () => {
         }
       };
       await expect(iterate()).rejects.toThrow(DiscussionNotFoundError);
+    });
+
+    it('타인의 토론은 스트리밍으로도 이어갈 수 없다(ADR-027)', async () => {
+      const { continueUseCase, room } = await setupStartedRoom();
+      const iterate = async () => {
+        for await (const chunk of continueUseCase.executeStreaming({
+          userId: 'intruder',
+          discussionId: room.id,
+          content: '끼어들기',
+        })) {
+          void chunk; // 스트림 시작 전에 throw 되어야 한다.
+        }
+      };
+      await expect(iterate()).rejects.toThrow(DiscussionAccessDeniedError);
     });
 
     it('스트림이 도중에 실패하면 아무것도 저장하지 않는다', async () => {
@@ -110,6 +142,7 @@ describe('ContinueDiscussionUseCase', () => {
 
       const iterate = async () => {
         for await (const chunk of useCase.executeStreaming({
+          userId: 'owner',
           discussionId: room.id,
           content: '실패를 유도하는 발화',
         })) {

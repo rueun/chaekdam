@@ -259,7 +259,9 @@
 
 **이유**: RLS(1차)만으로도 현재는 안전하지만, 백엔드를 별도 서버(NestJS)로 분리하면 RLS 가 사라진다. 도메인 Specification(2차)으로 같은 규칙을 표현해 두면 인프라가 바뀌어도 권한이 유지되고, 유스케이스 단위 테스트로 권한을 빠르게 검증할 수 있다(Fake repo 로 RLS 없이 거부 경로 확인).
 
-**트레이드오프**: 모든 변경 유스케이스가 `userId` 를 받아야 해 커맨드·Server Action 시그니처가 넓어졌다. 또한 '없는 한 줄 삭제'가 멱등 통과에서 `NotFound` 거부로 동작이 바뀌었다(소유권 검증을 위해 항상 조회 선행). Discussion·ReadingSession·Book 등 다른 Aggregate 로의 동일 패턴 확장은 후속 슬라이스로 남긴다.
+**트레이드오프**: 모든 변경 유스케이스가 `userId` 를 받아야 해 커맨드·Server Action 시그니처가 넓어졌다. 또한 '없는 한 줄 삭제'가 멱등 통과에서 `NotFound` 거부로 동작이 바뀌었다(소유권 검증을 위해 항상 조회 선행).
+
+**확장 현황**: 같은 패턴을 **Discussion Aggregate** 로도 적용했다 — `Discussion.ownerId`(start/restore), `lib/domain/discussion/specs/owned-by.ts`, `loadOwnedDiscussion` 헬퍼로 토론 시작(start)·이어가기(continue, 스트리밍 포함)에서 소유권을 검증한다. 스트리밍 Route Handler 는 타인 방(AccessDenied)도 404 로 응답해 존재 여부를 노출하지 않는다. 남은 Aggregate(ReadingSession·Book)는 후속 슬라이스.
 
 ---
 

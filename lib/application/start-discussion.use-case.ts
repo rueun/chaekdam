@@ -6,8 +6,9 @@ import type { AiDiscussionPartner } from '@/lib/domain/ports/ai-discussion-partn
 import type { BookRepository } from '@/lib/domain/ports/book-repository';
 import type { HighlightRepository } from '@/lib/domain/ports/highlight-repository';
 
-/** 토론 시작 명령 — 책+페르소나(+선택 시드 한 줄). */
+/** 토론 시작 명령 — 책+페르소나(+선택 시드 한 줄). userId 가 방의 소유자가 된다. */
 export interface StartDiscussionCommand {
+  userId: string;
   bookId: string;
   personaKey: PersonaKey;
   seedHighlightId?: string | null;
@@ -45,6 +46,7 @@ export class StartDiscussionUseCase {
 
     // Discussion.start 가 페르소나 가용성을 강제한다(작가 본인 보류 등).
     const room = Discussion.start({
+      ownerId: command.userId,
       bookId: command.bookId,
       personaKey: command.personaKey,
       seedHighlightId,
