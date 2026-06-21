@@ -13,6 +13,8 @@ export const READING_SESSION_MAX_MINUTES = 24 * 60;
 export class ReadingSession {
   private constructor(
     readonly id: string,
+    /** 소유자(기록한 사용자) — 권한 이중 방어(ADR-027). 생성 시 고정. */
+    readonly ownerId: string,
     readonly bookId: string,
     /** 읽은 시간(분) */
     readonly minutes: number,
@@ -25,8 +27,9 @@ export class ReadingSession {
     Object.freeze(this);
   }
 
-  /** 새 독서 세션을 기록한다. */
+  /** 새 독서 세션을 기록한다. ownerId 가 기록 소유자가 된다. */
   static log(props: {
+    ownerId: string;
     bookId: string;
     minutes: number;
     startPage?: number | null;
@@ -39,6 +42,7 @@ export class ReadingSession {
     const now = new Date();
     return new ReadingSession(
       generateId(),
+      props.ownerId,
       props.bookId,
       minutes,
       startPage,
@@ -56,6 +60,7 @@ export class ReadingSession {
    */
   static restore(props: {
     id: string;
+    ownerId: string;
     bookId: string;
     minutes: number;
     startPage: number | null;
@@ -68,6 +73,7 @@ export class ReadingSession {
     }
     return new ReadingSession(
       props.id,
+      props.ownerId,
       props.bookId,
       props.minutes,
       props.startPage,

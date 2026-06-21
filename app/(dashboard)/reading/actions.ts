@@ -5,7 +5,11 @@ import {
   createAuthSession,
   createLogReadingSessionUseCase,
 } from '@/lib/infrastructure/di-container';
-import { DomainError } from '@/lib/domain/shared/errors';
+import {
+  DomainError,
+  InvalidPageRangeError,
+  InvalidSessionMinutesError,
+} from '@/lib/domain/shared/errors';
 import { ROUTES } from '@/lib/router/routes';
 
 export interface LogReadingSessionInput {
@@ -30,6 +34,7 @@ export async function logReadingSession(
 
     const useCase = await createLogReadingSessionUseCase();
     await useCase.execute({
+      userId,
       bookId: input.bookId,
       minutes: input.minutes,
       startPage: input.startPage ?? null,
@@ -41,9 +46,14 @@ export async function logReadingSession(
     revalidatePath(ROUTES.DASHBOARD());
     return { ok: true };
   } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof DomainError ? '세션 정보를 확인해 주세요.' : '기록에 실패했어요.',
-    };
+    return { ok: false, error: toUserError(error) };
   }
+}
+
+/** 도메인 예외 → 사용자가 무엇을 고쳐야 하는지 알 수 있는 한국어 메시지. */
+function toUserError(error: unknown): string {
+  if (error instanceof InvalidSessionMinutesError) return '읽은 시간을 확인해 주세요.';
+  if (error instanceof InvalidPageRangeError) return '페이지 범위를 확인해 주세요.';
+  if (error instanceof DomainError) return '세션 정보를 확인해 주세요.';
+  return '기록에 실패했어요.';
 }

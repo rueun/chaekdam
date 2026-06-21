@@ -11,8 +11,18 @@ describe('GetReadingLogUseCase', () => {
   it('저장된 세션들을 ReadingLog 투영으로 집계한다', async () => {
     const repo = new InMemoryReadingSessionRepository();
     const log = new LogReadingSessionUseCase(repo);
-    await log.execute({ bookId: 'b1', minutes: 40, occurredAt: onDay(2026, 6, 7) });
-    await log.execute({ bookId: 'b1', minutes: 25, occurredAt: onDay(2026, 6, 6) });
+    await log.execute({
+      userId: 'owner',
+      bookId: 'b1',
+      minutes: 40,
+      occurredAt: onDay(2026, 6, 7),
+    });
+    await log.execute({
+      userId: 'owner',
+      bookId: 'b1',
+      minutes: 25,
+      occurredAt: onDay(2026, 6, 6),
+    });
 
     const readingLog = await new GetReadingLogUseCase(repo).execute(TODAY);
 

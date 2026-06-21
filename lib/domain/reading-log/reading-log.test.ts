@@ -6,6 +6,7 @@ import { ReadingSession } from './reading-session';
 function sessionOn(year: number, month: number, day: number, minutes: number): ReadingSession {
   // 정오 KST = UTC 03:00 — 자정 경계에서 멀어 날짜 환산이 안정적.
   return ReadingSession.log({
+    ownerId: 'owner',
     bookId: 'b1',
     minutes,
     occurredAt: new Date(Date.UTC(year, month - 1, day, 3, 0, 0)),
@@ -81,11 +82,13 @@ describe('ReadingLog', () => {
   it('KST 자정 경계의 세션을 서로 다른 날로 집계한다', () => {
     // UTC 14:59(KST 6/6 23:59) 와 UTC 15:00(KST 6/7 00:00) — 하루 차이로 갈려야 한다.
     const lateNight = ReadingSession.log({
+      ownerId: 'owner',
       bookId: 'b1',
       minutes: 10,
       occurredAt: new Date('2026-06-06T14:59:00Z'),
     });
     const justAfterMidnight = ReadingSession.log({
+      ownerId: 'owner',
       bookId: 'b1',
       minutes: 20,
       occurredAt: new Date('2026-06-06T15:00:00Z'),

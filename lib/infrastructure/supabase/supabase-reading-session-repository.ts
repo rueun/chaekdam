@@ -17,9 +17,11 @@ export class SupabaseReadingSessionRepository implements ReadingSessionRepositor
   constructor(private readonly client: SupabaseClient<Database>) {}
 
   async save(session: ReadingSession): Promise<void> {
-    // 세션은 불변 기록 — 항상 신규 삽입. user_id 는 DB default auth.uid() 가 채운다(RLS).
+    // 세션은 불변 기록 — 항상 신규 삽입. user_id 는 도메인 ownerId 를 권위 있는 값으로 명시(ADR-027).
+    // RLS insert with check(auth.uid()=user_id) 가 타인 값 위조를 DB 에서 차단해 이중 방어가 된다.
     const { error } = await this.client.from('reading_sessions').insert({
       id: session.id,
+      user_id: session.ownerId,
       book_id: session.bookId,
       minutes: session.minutes,
       start_page: session.startPage,
@@ -45,6 +47,7 @@ export class SupabaseReadingSessionRepository implements ReadingSessionRepositor
 function toDomain(row: ReadingSessionRow): ReadingSession {
   return ReadingSession.restore({
     id: row.id,
+    ownerId: row.user_id,
     bookId: row.book_id,
     minutes: row.minutes,
     startPage: row.start_page,

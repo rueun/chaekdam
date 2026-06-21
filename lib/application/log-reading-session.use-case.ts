@@ -1,8 +1,9 @@
 import { ReadingSession } from '@/lib/domain/reading-log/reading-session';
 import type { ReadingSessionRepository } from '@/lib/domain/ports/reading-session-repository';
 
-/** 독서 세션 기록 명령 — 읽은 분 + 선택적 페이지 범위/발생 시각. */
+/** 독서 세션 기록 명령 — 읽은 분 + 선택적 페이지 범위/발생 시각. userId 가 기록 소유자가 된다. */
 export interface LogReadingSessionCommand {
+  userId: string;
   bookId: string;
   minutes: number;
   startPage?: number | null;
@@ -22,7 +23,14 @@ export class LogReadingSessionUseCase {
   constructor(private readonly sessions: ReadingSessionRepository) {}
 
   async execute(command: LogReadingSessionCommand): Promise<LogReadingSessionResult> {
-    const session = ReadingSession.log(command);
+    const session = ReadingSession.log({
+      ownerId: command.userId,
+      bookId: command.bookId,
+      minutes: command.minutes,
+      startPage: command.startPage,
+      endPage: command.endPage,
+      occurredAt: command.occurredAt,
+    });
     await this.sessions.save(session);
     return { sessionId: session.id };
   }

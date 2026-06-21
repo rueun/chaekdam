@@ -38,8 +38,8 @@ describe('GetBookDetailUseCase', () => {
         '딴방',
       ),
     );
-    await sessions.save(ReadingSession.log({ bookId: book.id, minutes: 30 }));
-    await sessions.save(ReadingSession.log({ bookId: other.id, minutes: 10 }));
+    await sessions.save(ReadingSession.log({ ownerId: 'owner', bookId: book.id, minutes: 30 }));
+    await sessions.save(ReadingSession.log({ ownerId: 'owner', bookId: other.id, minutes: 10 }));
 
     const detail = await useCase.execute(book.id);
 

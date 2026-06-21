@@ -261,7 +261,11 @@
 
 **트레이드오프**: 모든 변경 유스케이스가 `userId` 를 받아야 해 커맨드·Server Action 시그니처가 넓어졌다. 또한 '없는 한 줄 삭제'가 멱등 통과에서 `NotFound` 거부로 동작이 바뀌었다(소유권 검증을 위해 항상 조회 선행).
 
-**확장 현황**: 같은 패턴을 **Discussion Aggregate** 로도 적용했다 — `Discussion.ownerId`(start/restore), `lib/domain/discussion/specs/owned-by.ts`, `loadOwnedDiscussion` 헬퍼로 토론 시작(start)·이어가기(continue, 스트리밍 포함)에서 소유권을 검증한다. 스트리밍 Route Handler 는 타인 방(AccessDenied)도 404 로 응답해 존재 여부를 노출하지 않는다. 남은 Aggregate(ReadingSession·Book)는 후속 슬라이스.
+**확장 현황**: 같은 패턴을 **Discussion Aggregate** 로도 적용했다 — `Discussion.ownerId`(start/restore), `lib/domain/discussion/specs/owned-by.ts`, `loadOwnedDiscussion` 헬퍼로 토론 시작(start)·이어가기(continue, 스트리밍 포함)에서 소유권을 검증한다. 스트리밍 Route Handler 는 타인 방(AccessDenied)도 404 로 응답해 존재 여부를 노출하지 않는다.
+
+**ReadingSession 적용 범위**: `ReadingSession` 은 **append-only Aggregate**(생성=`log`, 그 외 `findAll` 읽기)라 per-entity 인가 결정 지점(`loadOwnedX`/`OwnedBy` 소비처)이 없다. 따라서 패턴 중 적용 가능한 부분만 — **엔티티 `ownerId`(log/restore) + 생성 시 설정 + 어댑터가 `user_id = ownerId` 를 명시 영속** — 을 적용했다. 소비처 없는 `OwnedBy` Specification 은 YAGNI 라 두지 않는다.
+
+**남은 후속**: 읽기 경로(`Repository.findAll`)는 세 Aggregate 모두 아직 RLS 단독 방어다. 백엔드 분리(RLS 부재) 대비 `findAll(userId)` 형태의 명시적 소유자 필터를 **세 Aggregate 동시에** 도입하는 것이 일관적이라(특히 `GetBookDetail` 이 sessions·discussions 를 함께 조회) 별도 슬라이스로 묶어 진행한다. Book Aggregate 의 ownerId 화도 함께.
 
 ---
 

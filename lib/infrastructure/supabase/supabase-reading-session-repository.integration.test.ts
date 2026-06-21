@@ -69,6 +69,7 @@ describe('SupabaseReadingSessionRepository (통합)', () => {
   it('세션을 저장하고 최근순으로 조회한다(페이지 범위 왕복)', async () => {
     await repoA.save(
       ReadingSession.log({
+        ownerId: userAId,
         bookId: bookAId,
         minutes: 30,
         startPage: 10,
@@ -78,6 +79,7 @@ describe('SupabaseReadingSessionRepository (통합)', () => {
     );
     await repoA.save(
       ReadingSession.log({
+        ownerId: userAId,
         bookId: bookAId,
         minutes: 15,
         occurredAt: new Date('2026-06-06T03:00:00Z'),
@@ -90,6 +92,7 @@ describe('SupabaseReadingSessionRepository (통합)', () => {
     expect(all[0]!.occurredAt.getTime()).toBeGreaterThan(all[1]!.occurredAt.getTime());
 
     const withPages = all.find((s) => s.minutes === 30);
+    expect(withPages?.ownerId).toBe(userAId); // user_id ↔ ownerId 왕복(ADR-027)
     expect(withPages?.startPage).toBe(10);
     expect(withPages?.endPage).toBe(42);
     expect(withPages?.pageSpan).toBe(32);
@@ -100,12 +103,13 @@ describe('SupabaseReadingSessionRepository (통합)', () => {
   });
 
   it('RLS — 다른 사용자의 세션은 보이지 않는다', async () => {
-    await repoA.save(ReadingSession.log({ bookId: bookAId, minutes: 20 }));
-    await repoB.save(ReadingSession.log({ bookId: bookBId, minutes: 99 }));
+    await repoA.save(ReadingSession.log({ ownerId: userAId, bookId: bookAId, minutes: 20 }));
+    await repoB.save(ReadingSession.log({ ownerId: userBId, bookId: bookBId, minutes: 99 }));
 
     const allB = await repoB.findAll();
     expect(allB.some((s) => s.minutes === 99)).toBe(true);
     expect(allB.some((s) => s.bookId === bookAId)).toBe(false);
+    expect(allB.some((s) => s.ownerId === userAId)).toBe(false); // A 소유 세션이 B 에게 안 보임
   });
 
   describe('DB 제약·RLS 이중 방어(도메인 우회 raw insert)', () => {
