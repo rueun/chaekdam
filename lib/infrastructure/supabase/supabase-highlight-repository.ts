@@ -29,11 +29,13 @@ export class SupabaseHighlightRepository implements HighlightRepository {
   constructor(private readonly client: SupabaseClient<Database>) {}
 
   async save(highlight: Highlight): Promise<void> {
-    // upsert — 신규 캡처는 삽입, 수정(같은 id 재저장)은 갱신. user_id 는 DB default auth.uid() 가
-    // 채우고 RLS(insert/update 본인) 가 보호한다. 한 줄은 불변이라 항상 전체 필드를 다시 쓴다.
+    // upsert — 신규 캡처는 삽입, 수정(같은 id 재저장)은 갱신. 한 줄은 불변이라 항상 전체 필드를 다시 쓴다.
+    // user_id 는 도메인 ownerId 를 권위 있는 값으로 명시(ADR-027). RLS insert/update
+    // with check(auth.uid()=user_id) 가 타인 값 위조를 DB 에서 차단해 이중 방어가 된다.
     const { error } = await this.client.from('highlights').upsert(
       {
         id: highlight.id,
+        user_id: highlight.ownerId,
         book_id: highlight.bookId,
         source: highlight.source,
         content: highlight.content,
@@ -45,8 +47,6 @@ export class SupabaseHighlightRepository implements HighlightRepository {
       },
       { onConflict: 'id' }, // 충돌 기준을 PK 로 명시(PostgREST 기본값 의존 제거)
     );
-    // user_id 는 payload 에 없어 INSERT 는 default auth.uid(), UPDATE 는 기존 값 유지.
-    // 타인 행 변조는 RLS update with check(auth.uid()=user_id) 가 차단한다.
     if (error) throw new Error(`Failed to save highlight: ${error.message}`);
   }
 
@@ -109,6 +109,7 @@ export class SupabaseHighlightRepository implements HighlightRepository {
 function toDomain(row: HighlightRow): Highlight {
   return Highlight.restore({
     id: row.id,
+    ownerId: row.user_id,
     bookId: row.book_id,
     source: toNoteSource(row.source),
     content: row.content,

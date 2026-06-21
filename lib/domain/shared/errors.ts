@@ -59,6 +59,13 @@ export class HighlightNotFoundError extends DomainError {
   }
 }
 
+/** 한 줄에 대한 권한 없음(소유자 아님) — 권한 이중 방어(ADR-027) */
+export class HighlightAccessDeniedError extends DomainError {
+  constructor(highlightId: string) {
+    super(`Highlight access denied: ${highlightId}`);
+  }
+}
+
 /** 책 식별자가 비어 있음(이동 대상 미지정 등) */
 export class EmptyBookIdError extends DomainError {
   constructor() {

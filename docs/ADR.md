@@ -253,6 +253,14 @@
 
 **트레이드오프**: 사용자가 가이드를 수동으로 닫거나 다시 볼 수 없다(책·한 줄을 모두 지우면 재노출). 단계별 완료 체크나 인터랙티브 투어가 아니라 정적 안내다 — 본격 온보딩(스텝 진행·툴팁 투어)은 후속.
 
+### ADR-027: 권한 이중 방어 — 도메인 소유권 Specification (Highlight 기준 구현)
+
+**결정**: ADR-004(RLS + 도메인 이중 방어)를 **Highlight Aggregate 에 레퍼런스로 구현**한다. `Highlight` 에 `ownerId` 필드를 추가하고(`fromText`/`fromPhoto`/`restore` 의 첫 인자), 소유권 규칙을 `lib/domain/highlight/specs/owned-by.ts` 의 `OwnedBy` Specification 으로 표현한다. 변경 유스케이스(edit·move·pin·archive·delete)는 `loadOwnedHighlight(highlights, id, userId)` 헬퍼로 **조회 → 없으면 `HighlightNotFoundError` → 소유자 아니면 `HighlightAccessDeniedError`** 순서를 거친 뒤에만 변경한다. Server Action 은 인증 세션의 `userId` 를 유스케이스 커맨드에 실어 전달한다. 저장 시 `user_id` 는 여전히 DB default(`auth.uid()`)+RLS 가 채우고 보호하며, 어댑터의 `toDomain` 이 `row.user_id → ownerId` 로 매핑한다.
+
+**이유**: RLS(1차)만으로도 현재는 안전하지만, 백엔드를 별도 서버(NestJS)로 분리하면 RLS 가 사라진다. 도메인 Specification(2차)으로 같은 규칙을 표현해 두면 인프라가 바뀌어도 권한이 유지되고, 유스케이스 단위 테스트로 권한을 빠르게 검증할 수 있다(Fake repo 로 RLS 없이 거부 경로 확인).
+
+**트레이드오프**: 모든 변경 유스케이스가 `userId` 를 받아야 해 커맨드·Server Action 시그니처가 넓어졌다. 또한 '없는 한 줄 삭제'가 멱등 통과에서 `NotFound` 거부로 동작이 바뀌었다(소유권 검증을 위해 항상 조회 선행). Discussion·ReadingSession·Book 등 다른 Aggregate 로의 동일 패턴 확장은 후속 슬라이스로 남긴다.
+
 ---
 
 **관련 문서**: [`PRD.md`](./PRD.md) (제품 요구사항), [`ARCHITECTURE.md`](./ARCHITECTURE.md) (디렉토리·도메인 모델·전환 매트릭스), [`specs/`](./specs/) (기능별 상세 설계)

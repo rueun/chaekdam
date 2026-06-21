@@ -35,7 +35,7 @@ describe('StartDiscussionUseCase', () => {
     const { useCase, books, highlights, ai } = makeUseCase();
     const book = Book.register({ title: '데미안', author: '헤르만 헤세' });
     await books.save(book);
-    const highlight = Highlight.fromText(book.id, '새는 알에서 나오려고 투쟁한다');
+    const highlight = Highlight.fromText('owner', book.id, '새는 알에서 나오려고 투쟁한다');
     await highlights.save(highlight);
 
     const room = await useCase.execute({

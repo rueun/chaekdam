@@ -1,13 +1,15 @@
 import type { HighlightRepository } from '@/lib/domain/ports/highlight-repository';
+import { loadOwnedHighlight } from './highlight-ownership';
 
 /**
- * 한 줄 삭제 유스케이스. 소유 범위는 Repository/RLS 가 보장한다(타인 한 줄은 영향 없음).
- * 없는 id 삭제는 조용히 통과(멱등).
+ * 한 줄 삭제 유스케이스 — 소유권을 검증한 뒤 삭제한다(ADR-027, 권한 이중 방어).
+ * 없거나 타인 한 줄이면 도메인 예외(NotFound/AccessDenied)로 막는다.
  */
 export class DeleteHighlightUseCase {
   constructor(private readonly highlights: HighlightRepository) {}
 
-  execute(highlightId: string): Promise<void> {
-    return this.highlights.remove(highlightId);
+  async execute(highlightId: string, userId: string): Promise<void> {
+    await loadOwnedHighlight(this.highlights, highlightId, userId);
+    await this.highlights.remove(highlightId);
   }
 }

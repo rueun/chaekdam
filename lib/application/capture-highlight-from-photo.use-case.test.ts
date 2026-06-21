@@ -28,6 +28,7 @@ describe('CaptureHighlightFromPhotoUseCase', () => {
     const useCase = new CaptureHighlightFromPhotoUseCase(photos, highlights);
 
     await useCase.execute({
+      userId: 'owner',
       bookId: 'b1',
       content: '인상 깊은 구절',
       image: { base64: 'AAAA', mediaType: 'image/jpeg' },
@@ -52,6 +53,7 @@ describe('CaptureHighlightFromPhotoUseCase', () => {
 
     await expect(
       useCase.execute({
+        userId: 'owner',
         bookId: 'b1',
         content: '구절',
         image: { base64: 'AAAA', mediaType: 'image/jpeg' },
@@ -74,6 +76,7 @@ describe('CaptureHighlightFromPhotoUseCase', () => {
 
     await expect(
       useCase.execute({
+        userId: 'owner',
         bookId: 'b1',
         content: '구절',
         image: { base64: 'AAAA', mediaType: 'image/jpeg' },

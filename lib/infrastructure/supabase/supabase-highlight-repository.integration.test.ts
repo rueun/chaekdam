@@ -73,7 +73,7 @@ describe('SupabaseHighlightRepository (통합)', () => {
   });
 
   it('한 줄을 저장하고 id 로 조회한다', async () => {
-    const highlight = Highlight.fromText(bookA1, '통합 테스트 문장', 'p.7');
+    const highlight = Highlight.fromText(userAId, bookA1, '통합 테스트 문장', 'p.7');
 
     await repoA.save(highlight);
     const found = await repoA.findById(highlight.id);
@@ -84,10 +84,11 @@ describe('SupabaseHighlightRepository (통합)', () => {
     expect(found!.bookId).toBe(bookA1);
     expect(found!.page).toBe('p.7');
     expect(found!.source).toBe('TEXT');
+    expect(found!.ownerId).toBe(userAId); // user_id ↔ ownerId 왕복(ADR-027)
   });
 
   it('사진 한 줄도 photo_url 과 함께 왕복한다', async () => {
-    const highlight = Highlight.fromPhoto(bookA1, 'https://x/y.jpg', '사진 추출 문장');
+    const highlight = Highlight.fromPhoto(userAId, bookA1, 'https://x/y.jpg', '사진 추출 문장');
 
     await repoA.save(highlight);
     const found = await repoA.findById(highlight.id);
@@ -97,9 +98,9 @@ describe('SupabaseHighlightRepository (통합)', () => {
   });
 
   it('책 id 로 그 책의 한 줄만 조회된다', async () => {
-    await repoA.save(Highlight.fromText(bookA2, '첫 문장'));
-    await repoA.save(Highlight.fromText(bookA2, '둘째 문장'));
-    await repoA.save(Highlight.fromText(bookA1, '다른 책 문장'));
+    await repoA.save(Highlight.fromText(userAId, bookA2, '첫 문장'));
+    await repoA.save(Highlight.fromText(userAId, bookA2, '둘째 문장'));
+    await repoA.save(Highlight.fromText(userAId, bookA1, '다른 책 문장'));
 
     const list = await repoA.findByBookId(bookA2);
     expect(list).toHaveLength(2);
@@ -111,6 +112,7 @@ describe('SupabaseHighlightRepository (통합)', () => {
     const useCase = new CaptureHighlightUseCase(repoA);
     const { highlightId } = await useCase.execute({
       source: NoteSource.TEXT,
+      userId: userAId,
       bookId: bookA1,
       content: '유스케이스로 담은 문장',
       page: 'p.3',
@@ -125,8 +127,8 @@ describe('SupabaseHighlightRepository (통합)', () => {
   it('findAll — 본인 한 줄 목록만 돌려준다(RLS 범위)', async () => {
     const markerA = `A 마커 ${crypto.randomUUID()}`;
     const markerB = `B 마커 ${crypto.randomUUID()}`;
-    await repoA.save(Highlight.fromText(bookA1, markerA));
-    await repoB.save(Highlight.fromText(bookB1, markerB));
+    await repoA.save(Highlight.fromText(userAId, bookA1, markerA));
+    await repoB.save(Highlight.fromText(userBId, bookB1, markerB));
 
     const allA = await repoA.findAll();
     expect(allA.some((h) => h.content === markerA)).toBe(true);
@@ -138,7 +140,7 @@ describe('SupabaseHighlightRepository (통합)', () => {
   });
 
   it('RLS — 다른 사용자의 한 줄은 조회되지 않는다', async () => {
-    const secret = Highlight.fromText(bookA1, 'A 만의 문장');
+    const secret = Highlight.fromText(userAId, bookA1, 'A 만의 문장');
     await repoA.save(secret);
 
     // B 권한으로는 A 의 한 줄이 보이지 않아야 한다
@@ -147,13 +149,13 @@ describe('SupabaseHighlightRepository (통합)', () => {
   });
 
   it('한 줄을 삭제한다 — 타인 것은 RLS 로 삭제되지 않는다', async () => {
-    const mine = Highlight.fromText(bookA1, `삭제 대상 ${crypto.randomUUID()}`);
+    const mine = Highlight.fromText(userAId, bookA1, `삭제 대상 ${crypto.randomUUID()}`);
     await repoA.save(mine);
     await repoA.remove(mine.id);
     expect(await repoA.findById(mine.id)).toBeNull();
 
     // B 가 A 의 한 줄 삭제를 시도해도 RLS 로 매칭 0건 → 그대로 남는다
-    const aOnly = Highlight.fromText(bookA1, `A 전용 ${crypto.randomUUID()}`);
+    const aOnly = Highlight.fromText(userAId, bookA1, `A 전용 ${crypto.randomUUID()}`);
     await repoA.save(aOnly);
     await repoB.remove(aOnly.id);
     expect(await repoA.findById(aOnly.id)).not.toBeNull();

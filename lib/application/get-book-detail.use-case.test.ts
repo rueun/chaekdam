@@ -26,8 +26,8 @@ describe('GetBookDetailUseCase', () => {
     await books.save(book);
     await books.save(other);
 
-    await highlights.save(Highlight.fromText(book.id, '이 책의 한 줄'));
-    await highlights.save(Highlight.fromText(other.id, '다른 책 한 줄'));
+    await highlights.save(Highlight.fromText('owner', book.id, '이 책의 한 줄'));
+    await highlights.save(Highlight.fromText('owner', other.id, '다른 책 한 줄'));
     await discussions.save(
       Discussion.start({ bookId: book.id, personaKey: 'socrates' }).addAiMessage('방'),
     );

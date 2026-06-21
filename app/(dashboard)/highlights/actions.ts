@@ -62,6 +62,7 @@ export async function captureHighlight(
       }
       const photoUseCase = await createCaptureHighlightFromPhotoUseCase();
       await photoUseCase.execute({
+        userId,
         bookId: input.bookId,
         content: input.content,
         image: { base64: parsed.base64, mediaType: parsed.mediaType },
@@ -72,6 +73,7 @@ export async function captureHighlight(
       const useCase = await createCaptureHighlightUseCase();
       await useCase.execute({
         source: NoteSource.TEXT,
+        userId,
         bookId: input.bookId,
         content: input.content,
         page: input.page ?? null,
@@ -121,6 +123,7 @@ export async function editHighlight(input: {
     const useCase = await createEditHighlightUseCase();
     await useCase.execute({
       highlightId: input.highlightId,
+      userId,
       content: trimmed,
       page: input.page ?? null,
       tags: input.tags,
@@ -149,7 +152,7 @@ export async function moveHighlight(input: {
     if (!input.bookId) return { ok: false, error: '옮길 책을 선택해 주세요.' };
 
     const useCase = await createMoveHighlightUseCase();
-    await useCase.execute({ highlightId: input.highlightId, bookId: input.bookId });
+    await useCase.execute({ highlightId: input.highlightId, userId, bookId: input.bookId });
     revalidatePath(ROUTES.HIGHLIGHTS());
     revalidatePath(ROUTES.DASHBOARD());
     return { ok: true };
@@ -173,7 +176,7 @@ export async function pinHighlight(
     if (!userId) return { ok: false, error: '로그인이 필요해요.' };
 
     const useCase = await createPinHighlightUseCase();
-    await useCase.execute({ highlightId, pinned });
+    await useCase.execute({ highlightId, userId, pinned });
     revalidatePath(ROUTES.HIGHLIGHTS());
     revalidatePath(ROUTES.DASHBOARD());
     return { ok: true };
@@ -195,7 +198,7 @@ export async function archiveHighlight(
     if (!userId) return { ok: false, error: '로그인이 필요해요.' };
 
     const useCase = await createArchiveHighlightUseCase();
-    await useCase.execute({ highlightId, archived });
+    await useCase.execute({ highlightId, userId, archived });
     revalidatePath(ROUTES.HIGHLIGHTS());
     revalidatePath(ROUTES.DASHBOARD());
     return { ok: true };
@@ -240,7 +243,7 @@ export async function deleteHighlight(highlightId: string): Promise<DeleteHighli
     if (!userId) return { ok: false, error: '로그인이 필요해요.' };
 
     const useCase = await createDeleteHighlightUseCase();
-    await useCase.execute(highlightId);
+    await useCase.execute(highlightId, userId);
     // 한 줄이 보이는 화면 갱신(현재 화면은 클라이언트 router.refresh 가 처리).
     revalidatePath(ROUTES.HIGHLIGHTS());
     revalidatePath(ROUTES.DASHBOARD());

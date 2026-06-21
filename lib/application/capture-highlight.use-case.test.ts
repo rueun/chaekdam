@@ -44,6 +44,7 @@ describe('CaptureHighlightUseCase', () => {
   it('텍스트 한 줄을 담아 저장하고 id 를 돌려준다', async () => {
     const result = await useCase.execute({
       source: NoteSource.TEXT,
+      userId: 'owner',
       bookId: 'book-1',
       content: '인상 깊은 한 구절',
       page: 'p.42',
@@ -61,6 +62,7 @@ describe('CaptureHighlightUseCase', () => {
   it('사진 한 줄을 담으면 사진 URL 과 함께 저장된다', async () => {
     const result = await useCase.execute({
       source: NoteSource.PHOTO,
+      userId: 'owner',
       bookId: 'book-1',
       content: '추출된 문장',
       photoUrl: 'https://x/y.jpg',
@@ -76,14 +78,29 @@ describe('CaptureHighlightUseCase', () => {
 
   it('빈 본문은 도메인 예외로 거부되고 저장되지 않는다', async () => {
     await expect(
-      useCase.execute({ source: NoteSource.TEXT, bookId: 'book-1', content: '   ' }),
+      useCase.execute({
+        source: NoteSource.TEXT,
+        userId: 'owner',
+        bookId: 'book-1',
+        content: '   ',
+      }),
     ).rejects.toThrow(EmptyHighlightContentError);
     expect(repo.saved).toHaveLength(0);
   });
 
   it('저장한 한 줄은 책 id 로 조회된다', async () => {
-    await useCase.execute({ source: NoteSource.TEXT, bookId: 'book-1', content: '문장 A' });
-    await useCase.execute({ source: NoteSource.TEXT, bookId: 'book-2', content: '문장 B' });
+    await useCase.execute({
+      source: NoteSource.TEXT,
+      userId: 'owner',
+      bookId: 'book-1',
+      content: '문장 A',
+    });
+    await useCase.execute({
+      source: NoteSource.TEXT,
+      userId: 'owner',
+      bookId: 'book-2',
+      content: '문장 B',
+    });
 
     const book1 = await repo.findByBookId('book-1');
     expect(book1).toHaveLength(1);

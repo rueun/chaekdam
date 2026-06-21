@@ -12,8 +12,8 @@ async function repoWith(...highlights: Highlight[]): Promise<InMemoryHighlightRe
 describe('ListHighlightsUseCase', () => {
   it('기본(active) 범위는 보관하지 않은 한 줄을 돌려준다', async () => {
     const repo = await repoWith(
-      Highlight.fromText('b1', '문장 1'),
-      Highlight.fromText('b2', '문장 2').archive(),
+      Highlight.fromText('owner', 'b1', '문장 1'),
+      Highlight.fromText('owner', 'b2', '문장 2').archive(),
     );
     const result = await new ListHighlightsUseCase(repo).execute();
     expect(result).toHaveLength(1);
@@ -21,8 +21,8 @@ describe('ListHighlightsUseCase', () => {
   });
 
   it('고정한 한 줄을 목록 상단에 둔다', async () => {
-    const first = Highlight.fromText('b1', '먼저');
-    const second = Highlight.fromText('b1', '나중').pin();
+    const first = Highlight.fromText('owner', 'b1', '먼저');
+    const second = Highlight.fromText('owner', 'b1', '나중').pin();
     const repo = await repoWith(first, second);
     const result = await new ListHighlightsUseCase(repo).execute();
     expect(result[0]!.content).toBe('나중'); // 고정 우선
@@ -30,8 +30,8 @@ describe('ListHighlightsUseCase', () => {
 
   it("'archived' 범위는 보관한 한 줄만 돌려준다", async () => {
     const repo = await repoWith(
-      Highlight.fromText('b1', '문장 1'),
-      Highlight.fromText('b2', '보관됨').archive(),
+      Highlight.fromText('owner', 'b1', '문장 1'),
+      Highlight.fromText('owner', 'b2', '보관됨').archive(),
     );
     const result = await new ListHighlightsUseCase(repo).execute('archived');
     expect(result).toHaveLength(1);
@@ -45,7 +45,7 @@ describe('ListHighlightsUseCase', () => {
 
   it('페이지(limit/offset)로 나눠 겹치지 않게 가져온다(ADR-025)', async () => {
     const repo = await repoWith(
-      ...Array.from({ length: 5 }, (_v, i) => Highlight.fromText('b1', `문장 ${i}`)),
+      ...Array.from({ length: 5 }, (_v, i) => Highlight.fromText('owner', 'b1', `문장 ${i}`)),
     );
     const useCase = new ListHighlightsUseCase(repo);
     const p1 = await useCase.execute('active', { limit: 2, offset: 0 });

@@ -4,6 +4,7 @@ import type { PhotoStorage } from '@/lib/domain/ports/photo-storage';
 
 /** 사진 한 줄 담기 명령 — 검토한 본문 + 원본 이미지(base64). */
 export interface CaptureHighlightFromPhotoCommand {
+  userId: string;
   bookId: string;
   content: string;
   image: { base64: string; mediaType: string };
@@ -26,6 +27,7 @@ export class CaptureHighlightFromPhotoUseCase {
     const photoUrl = await this.photos.store(command.image);
     try {
       const highlight = Highlight.fromPhoto(
+        command.userId,
         command.bookId,
         photoUrl,
         command.content,

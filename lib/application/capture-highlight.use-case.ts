@@ -9,6 +9,7 @@ import type { HighlightRepository } from '@/lib/domain/ports/highlight-repositor
 export type CaptureHighlightCommand =
   | {
       source: typeof NoteSource.TEXT;
+      userId: string;
       bookId: string;
       content: string;
       page?: string | null;
@@ -16,6 +17,7 @@ export type CaptureHighlightCommand =
     }
   | {
       source: typeof NoteSource.PHOTO;
+      userId: string;
       bookId: string;
       content: string;
       photoUrl: string;
@@ -39,8 +41,15 @@ export class CaptureHighlightUseCase {
     const tags = command.tags ?? [];
     const highlight =
       command.source === NoteSource.PHOTO
-        ? Highlight.fromPhoto(command.bookId, command.photoUrl, command.content, page, tags)
-        : Highlight.fromText(command.bookId, command.content, page, tags);
+        ? Highlight.fromPhoto(
+            command.userId,
+            command.bookId,
+            command.photoUrl,
+            command.content,
+            page,
+            tags,
+          )
+        : Highlight.fromText(command.userId, command.bookId, command.content, page, tags);
 
     await this.highlights.save(highlight);
     return { highlightId: highlight.id };

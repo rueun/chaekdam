@@ -58,7 +58,7 @@ describe('SupabaseDiscussionRepository (통합)', () => {
     bookAId = bookA.id;
     bookBId = bookB.id;
 
-    const seed = Highlight.fromText(bookAId, '새는 알에서 나오려고 투쟁한다');
+    const seed = Highlight.fromText(userAId, bookAId, '새는 알에서 나오려고 투쟁한다');
     await new SupabaseHighlightRepository(clientA).save(seed);
     seedHighlightId = seed.id;
   });

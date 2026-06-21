@@ -24,6 +24,8 @@ export const HIGHLIGHT_TAG_MAX_LENGTH = 30;
 export class Highlight {
   private constructor(
     readonly id: string,
+    /** 소유자(사용자) id — 권한 이중 방어의 기준(ADR-004/027) */
+    readonly ownerId: string,
     readonly bookId: string,
     readonly source: NoteSource,
     readonly content: string,
@@ -41,8 +43,9 @@ export class Highlight {
     Object.freeze(this);
   }
 
-  /** 직접 입력한 텍스트로 한 줄을 만든다. */
+  /** 직접 입력한 텍스트로 한 줄을 만든다(ownerId = 만든 사용자). */
   static fromText(
+    ownerId: string,
     bookId: string,
     content: string,
     page: string | null = null,
@@ -50,6 +53,7 @@ export class Highlight {
   ): Highlight {
     return new Highlight(
       generateId(),
+      ownerId,
       bookId,
       NoteSource.TEXT,
       normalizeContent(content),
@@ -62,8 +66,9 @@ export class Highlight {
     );
   }
 
-  /** 사진에서 추출한 구절로 한 줄을 만든다. */
+  /** 사진에서 추출한 구절로 한 줄을 만든다(ownerId = 만든 사용자). */
   static fromPhoto(
+    ownerId: string,
     bookId: string,
     photoUrl: string,
     extractedText: string,
@@ -74,6 +79,7 @@ export class Highlight {
     if (!url) throw new MissingPhotoUrlError();
     return new Highlight(
       generateId(),
+      ownerId,
       bookId,
       NoteSource.PHOTO,
       normalizeContent(extractedText),
@@ -93,6 +99,7 @@ export class Highlight {
    */
   static restore(props: {
     id: string;
+    ownerId: string;
     bookId: string;
     source: NoteSource;
     content: string;
@@ -108,6 +115,7 @@ export class Highlight {
     }
     return new Highlight(
       props.id,
+      props.ownerId,
       props.bookId,
       props.source,
       props.content,
@@ -128,6 +136,7 @@ export class Highlight {
   edit(props: { content: string; page?: string | null; tags?: readonly string[] }): Highlight {
     return new Highlight(
       this.id,
+      this.ownerId,
       this.bookId,
       this.source,
       normalizeContent(props.content),
@@ -178,6 +187,7 @@ export class Highlight {
   private copyWith(changes: { bookId?: string; pinned?: boolean; archived?: boolean }): Highlight {
     return new Highlight(
       this.id,
+      this.ownerId,
       changes.bookId ?? this.bookId,
       this.source,
       this.content,
