@@ -10,6 +10,7 @@ import { WishlistCard, type WishlistBookView } from '@/components/feature/librar
 import { HighlightCard, type HighlightView } from '@/components/feature/highlight/highlight-card';
 import { BookSearchTrigger } from '@/components/feature/book-search/book-search-trigger';
 import { CaptureTrigger } from '@/components/feature/capture/capture-trigger';
+import { OnboardingGuide } from '@/components/feature/onboarding/onboarding-guide';
 import { toBookStatusKey } from '@/components/feature/library/book-status-map';
 import { toReadingLogView } from '@/components/feature/reading-log/reading-log-view';
 import {
@@ -50,6 +51,9 @@ export default async function HomePage() {
     listHighlights.execute(),
     getReadingLog.execute(new Date()), // 진입점이 '오늘' 시각을 주입
   ]);
+
+  // 신규 사용자(책·한 줄 0) — 온보딩 가이드 노출. 첫 행동 후 데이터가 생기면 자연 소멸(ADR-026).
+  const isNewUser = books.length === 0 && highlights.length === 0;
 
   const readingLogView = toReadingLogView(readingLog);
   // 완독 권수: 책장 전체에서 집계(현재 findAll 상한 500). 한 줄 수도 한 줄 findAll 상한(200)에
@@ -110,6 +114,8 @@ export default async function HomePage() {
           </CaptureTrigger>
         }
       />
+
+      {isNewUser ? <OnboardingGuide userName={currentUser.name} /> : null}
 
       <Hero
         minutesToday={readingLogView.minutesToday}
